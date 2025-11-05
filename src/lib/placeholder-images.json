@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "pizzeria-1",
+      "description": "A classic pepperoni pizza on a wooden board.",
+      "imageUrl": "https://images.unsplash.com/photo-1609795829951-325b91a41471?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwZXBwZXJvbmklMjBwaXp6YXxlbnwwfHx8fDE3NjIzNDk4MDR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "pepperoni pizza"
+    },
+    {
+      "id": "pizzeria-2",
+      "description": "A vegetarian pizza with fresh vegetables.",
+      "imageUrl": "https://images.unsplash.com/photo-1717250180588-8737e18314d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx2ZWdldGFyaWFuJTIwcGl6emF8ZW58MHx8fHwxNzYyMjcyNDU4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "vegetarian pizza"
+    },
+    {
+      "id": "pizzeria-3",
+      "description": "Interior of a modern pizzeria.",
+      "imageUrl": "https://images.unsplash.com/photo-1542018508502-daaee0fb76c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwaXp6ZXJpYSUyMGludGVyaW9yfGVufDB8fHx8MTc2MjI3MTEzMHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "pizzeria interior"
+    },
+    {
+      "id": "pizzeria-4",
+      "description": "A Neapolitan pizza coming out of a wood-fired oven.",
+      "imageUrl": "https://images.unsplash.com/photo-1579751626657-72bc17010498?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxuZWFwb2xpdGFuJTIwcGl6emF8ZW58MHx8fHwxNzYyMzUwMTA2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "neapolitan pizza"
+    },
+    {
+      "id": "pizzeria-5",
+      "description": "A person slicing a large pizza.",
+      "imageUrl": "https://images.unsplash.com/photo-1646257095839-dac9280eb677?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c2xpY2luZyUyMHBpenphfGVufDB8fHx8MTc2MjM4NDg5NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "slicing pizza"
+    },
+    {
+      "id": "pizzeria-6",
+      "description": "A variety of pizzas on a table.",
+      "imageUrl": "https://images.unsplash.com/photo-1731703698022-2bcf47d3d09b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwaXp6YXMlMjB0YWJsZXxlbnwwfHx8fDE3NjIzODQ4OTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "pizzas table"
+    }
+  ]
 }
