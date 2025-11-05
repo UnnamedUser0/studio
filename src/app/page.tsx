@@ -9,6 +9,8 @@ import PizzeriaDetail from '@/components/pizzeria/pizzeria-detail';
 import { Button } from '@/components/ui/button';
 import { List } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { pizzerias } from '@/lib/pizzeria-data';
+import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
 
 export default function Home() {
   const [selectedPizzeria, setSelectedPizzeria] = useState<Pizzeria | null>(null);
@@ -18,8 +20,8 @@ export default function Home() {
   };
 
   return (
-    <div className="h-full w-full">
-      <div className="absolute inset-0">
+    <div className="h-full w-full relative overflow-y-auto">
+      <div className="h-[60vh] w-full">
         <PizzaMap onMarkerClick={handleSelectPizzeria} selectedPizzeria={selectedPizzeria} />
       </div>
 
@@ -39,6 +41,18 @@ export default function Home() {
       
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm md:max-w-md lg:max-w-lg px-4">
         <SmartSearch />
+      </div>
+
+      <div id="ranking" className="container py-12">
+        <h2 className="text-3xl font-headline text-center mb-8">Ranking de Pizzerías</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {pizzerias
+            .sort((a, b) => b.rating - a.rating)
+            .slice(0, 3)
+            .map((pizzeria) => (
+              <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} onClick={() => handleSelectPizzeria(pizzeria)} />
+            ))}
+        </div>
       </div>
 
       <Sheet open={!!selectedPizzeria} onOpenChange={(open) => !open && setSelectedPizzeria(null)}>

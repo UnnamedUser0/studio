@@ -28,7 +28,7 @@ export default function RootLayout({
         <AuthProvider>
           <div className="relative flex min-h-screen flex-col">
             <Header />
-            <main className="flex-grow" style={{ height: 'calc(100vh - 4rem)' }}>
+            <main className="flex-grow">
               {children}
             </main>
             <Toaster />
