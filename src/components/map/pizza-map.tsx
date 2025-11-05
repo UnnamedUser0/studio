@@ -16,12 +16,17 @@ const HERMOSILLO_COORDS = { lat: 29.085, lng: -110.977 };
 
 export default function PizzaMap({ onMarkerClick, selectedPizzeria }: PizzaMapProps) {
   const [apiKey, setApiKey] = useState<string | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
+    // Directly access the environment variable.
+    // In Next.js, public environment variables are inlined at build time.
+    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    setApiKey(key);
+    setLoading(false);
   }, []);
 
-  if (apiKey === undefined) {
+  if (loading) {
     return <Skeleton className="h-full w-full" />;
   }
 
@@ -30,7 +35,7 @@ export default function PizzaMap({ onMarkerClick, selectedPizzeria }: PizzaMapPr
       <div className="flex flex-col items-center justify-center h-full bg-muted/50 text-center p-4">
         <h3 className='font-headline text-xl text-foreground mb-2'>Error de Configuración del Mapa</h3>
         <p className="text-muted-foreground max-w-md">
-          La clave de API de Google Maps no está configurada. Para mostrar el mapa, por favor, añade tu clave al archivo <code className='font-code p-1 bg-primary/10 rounded-sm text-primary'>.env.local</code> como <code className='font-code p-1 bg-primary/10 rounded-sm text-primary'>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>.
+          La clave de API de Google Maps no está configurada. Para mostrar el mapa, por favor, añade tu clave al archivo <code className='font-code p-1 bg-primary/10 rounded-sm text-primary'>.env</code> como <code className='font-code p-1 bg-primary/10 rounded-sm text-primary'>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>.
         </p>
       </div>
     );
