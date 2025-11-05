@@ -1,74 +1,82 @@
 'use client';
 
-import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css';
+import 'leaflet-defaulticon-compatibility';
+
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import { pizzerias } from '@/lib/pizzeria-data';
 import type { Pizzeria } from '@/lib/pizzeria-data';
+import { divIcon } from 'leaflet';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { PizzaSliceIcon } from '@/components/icons/pizza-slice-icon';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 type PizzaMapProps = {
   onMarkerClick: (pizzeria: Pizzeria) => void;
   selectedPizzeria: Pizzeria | null;
 };
 
-const HERMOSILLO_COORDS = { lat: 29.085, lng: -110.977 };
+const HERMOSILLO_COORDS: [number, number] = [29.085, -110.977];
+
+// Component to handle map view changes
+function ChangeView({ center, zoom }: { center: [number, number], zoom: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom, {
+      animate: true,
+      pan: {
+        duration: 0.5,
+      },
+    });
+  }, [center, zoom, map]);
+  return null;
+}
 
 export default function PizzaMap({ onMarkerClick, selectedPizzeria }: PizzaMapProps) {
-  const [apiKey, setApiKey] = useState<string | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Directly access the environment variable.
-    // In Next.js, public environment variables are inlined at build time.
-    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    setApiKey(key);
-    setLoading(false);
-  }, []);
-
-  if (loading) {
-    return <Skeleton className="h-full w-full" />;
-  }
-
-  if (!apiKey) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full bg-muted/50 text-center p-4">
-        <h3 className='font-headline text-xl text-foreground mb-2'>Error de Configuración del Mapa</h3>
-        <p className="text-muted-foreground max-w-md">
-          La clave de API de Google Maps no está configurada. Para mostrar el mapa, por favor, añade tu clave al archivo <code className='font-code p-1 bg-primary/10 rounded-sm text-primary'>.env</code> como <code className='font-code p-1 bg-primary/10 rounded-sm text-primary'>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>.
-        </p>
-      </div>
+  const customIcon = (isSelected: boolean) => {
+    const iconMarkup = renderToStaticMarkup(
+      <PizzaSliceIcon className={`
+        h-8 w-8 transition-all duration-300 transform
+        ${isSelected 
+          ? 'text-white fill-primary stroke-background' 
+          : 'text-primary-foreground fill-accent stroke-primary'
+        }
+      `}/>
     );
-  }
+    return divIcon({
+      html: iconMarkup,
+      className: 'bg-transparent border-none',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32],
+    });
+  };
+  
+  const center: [number, number] = selectedPizzeria
+    ? [selectedPizzeria.lat, selectedPizzeria.lng]
+    : HERMOSILLO_COORDS;
+  const zoom = selectedPizzeria ? 15 : 13;
 
   return (
-    <APIProvider apiKey={apiKey}>
-      <Map
-        center={selectedPizzeria ? { lat: selectedPizzeria.lat, lng: selectedPizzeria.lng } : HERMOSILLO_COORDS}
-        zoom={selectedPizzeria ? 15 : 13}
-        mapId="pizzapp_map_main"
-        gestureHandling={'greedy'}
-        disableDefaultUI={true}
-        className="transition-all duration-500"
-        tilt={45}
-        mapTypeId='roadmap'
-      >
-        {pizzerias.map((pizzeria) => (
-          <AdvancedMarker
-            key={pizzeria.id}
-            position={{ lat: pizzeria.lat, lng: pizzeria.lng }}
-            onClick={() => onMarkerClick(pizzeria)}
-          >
-            <PizzaSliceIcon className={`
-              h-8 w-8 transition-all duration-300 transform hover:scale-125
-              ${selectedPizzeria?.id === pizzeria.id 
-                ? 'text-white fill-primary stroke-background' 
-                : 'text-primary-foreground fill-accent stroke-primary'
-              }
-            `}/>
-          </AdvancedMarker>
-        ))}
-      </Map>
-    </APIProvider>
+    <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className="h-full w-full" style={{ zIndex: 0 }}>
+      <ChangeView center={center} zoom={zoom} />
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      {pizzerias.map((pizzeria) => (
+        <Marker
+          key={pizzeria.id}
+          position={[pizzeria.lat, pizzeria.lng]}
+          eventHandlers={{
+            click: () => {
+              onMarkerClick(pizzeria);
+            },
+          }}
+          icon={customIcon(selectedPizzeria?.id === pizzeria.id)}
+        />
+      ))}
+    </MapContainer>
   );
 }
