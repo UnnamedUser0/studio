@@ -1,14 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import 'leaflet/dist/leaflet.css';
-import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css';
-import 'leaflet-defaulticon-compatibility';
-
-import L from 'leaflet';
+import { useState, useEffect } from 'react';
+import { ReactBingmaps } from 'react-bingmaps';
 import type { Pizzeria } from '@/lib/pizzeria-data';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { PizzaSliceIcon } from '@/components/icons/pizza-slice-icon';
+import { Button } from '@/components/ui/button';
+import { Map, Globe } from 'lucide-react';
 
 type PizzaMapProps = {
   pizzerias: Pizzeria[];
@@ -16,84 +12,97 @@ type PizzaMapProps = {
   selectedPizzeria: Pizzeria | null;
 };
 
-const HERMOSILLO_COORDS: L.LatLngTuple = [29.085, -110.977];
+const HERMOSILLO_CENTER = [29.085, -110.977];
 
 export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
-  const mapRef = useRef<L.Map | null>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<L.Marker[]>([]);
+  const [mapType, setMapType] = useState<'road' | 'aerial'>('road');
+  const [isClient, setIsClient] = useState(false);
 
-  const customIcon = (isSelected: boolean) => {
-    const iconMarkup = renderToStaticMarkup(
-      <PizzaSliceIcon className={`
-        h-8 w-8 transition-all duration-300 transform
-        ${isSelected 
-          ? 'text-white fill-primary stroke-background' 
-          : 'text-primary-foreground fill-accent stroke-primary'
-        }
-      `}/>
-    );
-    return L.divIcon({
-      html: iconMarkup,
-      className: 'bg-transparent border-none',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -32],
-    });
-  };
-
-  // Initialize map
   useEffect(() => {
-    if (mapContainerRef.current && !mapRef.current) {
-      mapRef.current = L.map(mapContainerRef.current).setView(HERMOSILLO_COORDS, 12);
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(mapRef.current);
-    }
-
-    const map = mapRef.current;
-    
-    return () => {
-      if (map) {
-        map.remove();
-        mapRef.current = null;
-      }
-    };
+    setIsClient(true);
   }, []);
 
-  // Update markers and view
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
+  const bingMapsKey = process.env.NEXT_PUBLIC_BING_MAPS_API_KEY;
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
+  if (!isClient) {
+    return <div className="h-full w-full bg-muted animate-pulse" />;
+  }
 
-    // Add new markers from pizzerias prop
-    pizzerias.forEach((pizzeria) => {
-      const isSelected = selectedPizzeria?.id === pizzeria.id;
-      const marker = L.marker([pizzeria.lat, pizzeria.lng], {
-        icon: customIcon(isSelected),
-      })
-      .addTo(map)
-      .on('click', () => onMarkerClick(pizzeria));
-      
-      markersRef.current.push(marker);
-    });
+  if (!bingMapsKey || bingMapsKey === 'YOUR_API_KEY_HERE') {
+    return (
+      <div className="h-full w-full bg-muted flex flex-col items-center justify-center text-center p-4">
+        <h3 className="font-headline text-xl text-foreground mb-2">Configuración del Mapa Requerida</h3>
+        <p className="text-muted-foreground">
+          Para mostrar el mapa de Bing, por favor, añade tu clave de API en el archivo `.env` como `NEXT_PUBLIC_BING_MAPS_API_KEY`.
+        </p>
+      </div>
+    );
+  }
 
-    // Update map view logic
-    if (selectedPizzeria) {
-        map.setView([selectedPizzeria.lat, selectedPizzeria.lng], 15, { animate: true, pan: { duration: 0.5 } });
-    } else if (pizzerias.length > 0) {
-        const bounds = L.latLngBounds(pizzerias.map(p => [p.lat, p.lng]));
-        map.fitBounds(bounds, { padding: [50, 50], animate: true });
-    } else {
-        map.setView(HERMOSILLO_COORDS, 12, { animate: true, pan: { duration: 0.5 } });
-    }
+  const pushPins = pizzerias.map(pizzeria => ({
+    location: [pizzeria.lat, pizzeria.lng],
+    option: { 
+      color: selectedPizzeria?.id === pizzeria.id ? 'red' : 'orange'
+    },
+    addHandler: {
+      type: 'click',
+      callback: () => onMarkerClick(pizzeria),
+    },
+  }));
+  
+  let center = HERMOSILLO_CENTER;
+  let zoom = 12;
+  let boundary = undefined;
 
-  }, [pizzerias, selectedPizzeria, onMarkerClick]);
+  if (selectedPizzeria) {
+    center = [selectedPizzeria.lat, selectedPizzeria.lng];
+    zoom = 15;
+  } else if (pizzerias.length > 0) {
+     const locations = pizzerias.map(p => ({ latitude: p.lat, longitude: p.lng }));
+     boundary = {
+        location: locations,
+        option: {
+            padding: 100
+        }
+     }
+  }
 
-  return <div ref={mapContainerRef} className="h-full w-full" style={{ zIndex: 0 }} />;
+
+  return (
+    <div className="h-full w-full relative">
+      <ReactBingmaps
+        bingmapKey={bingMapsKey}
+        pushPins={pushPins}
+        center={center}
+        zoom={zoom}
+        mapTypeId={mapType}
+        boundary={boundary}
+        mapOptions={{
+            showLocateMeButton: false,
+            showMapTypeSelector: false,
+            showZoomButtons: true,
+        }}
+      />
+      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+        <Button 
+          size="icon" 
+          onClick={() => setMapType('road')} 
+          variant={mapType === 'road' ? 'default' : 'secondary'}
+          className="shadow-lg"
+        >
+          <Map className="h-5 w-5" />
+          <span className="sr-only">Vista de Carreteras</span>
+        </Button>
+        <Button 
+          size="icon" 
+          onClick={() => setMapType('aerial')}
+          variant={mapType === 'aerial' ? 'default' : 'secondary'}
+          className="shadow-lg"
+        >
+          <Globe className="h-5 w-5" />
+          <span className="sr-only">Vista Aérea</span>
+        </Button>
+      </div>
+    </div>
+  );
 }
