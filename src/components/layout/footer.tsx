@@ -47,13 +47,16 @@ export default function Footer() {
                 <p className="text-sm">
                     Encuentra las mejores pizzerías en Hermosillo con un solo clic. Tu guía definitiva para la pizza.
                 </p>
-                <div className="flex space-x-2">
+                <div className="flex space-x-4 pt-2">
                     {socialLinks.map((link, index) => (
                         <a 
                             key={index} 
                             href={link.href} 
                             aria-label={link['aria-label']} 
-                            className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-800 text-gray-400 hover:bg-primary hover:text-white transition-all duration-300"
+                            className="h-10 w-10 flex items-center justify-center rounded-full bg-gray-800 text-gray-400
+                                       transition-all duration-300 ease-in-out
+                                       hover:text-white hover:bg-primary hover:shadow-[0_0_15px_hsl(var(--primary))]
+                                       hover:-translate-y-1"
                         >
                             {link.icon}
                         </a>
