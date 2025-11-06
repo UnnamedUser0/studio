@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Pizza, Facebook, Instagram, Twitter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const footerSections = [
     {
@@ -53,17 +54,20 @@ export default function Footer() {
                 </p>
                 <div className="flex space-x-4 pt-2">
                     {socialLinks.map((link, index) => (
-                        <a 
-                            key={index} 
-                            href={link.href} 
-                            aria-label={link['aria-label']} 
-                            className="h-10 w-10 flex items-center justify-center rounded-full bg-gray-800 text-gray-400
-                                       transition-all duration-300 ease-in-out
-                                       hover:text-white hover:bg-primary hover:shadow-[0_0_15px_hsl(var(--primary))]
-                                       hover:-translate-y-1"
+                        <Button
+                            key={index}
+                            asChild
+                            variant="outline"
+                            size="icon"
+                            className="rounded-full bg-gray-800 text-gray-400 border-gray-700 hover:bg-primary hover:text-white hover:border-primary"
                         >
-                            {link.icon}
-                        </a>
+                            <a 
+                                href={link.href} 
+                                aria-label={link['aria-label']}
+                            >
+                                {link.icon}
+                            </a>
+                        </Button>
                     ))}
                 </div>
             </div>
