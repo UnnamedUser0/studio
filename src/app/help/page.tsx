@@ -1,56 +1,89 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import Footer from '@/components/layout/footer';
 import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { QuestionMarkIcon } from '@/components/icons/question-mark-icon';
+import { HeadsetIcon } from '@/components/icons/headset-icon';
+import { ShieldIcon } from '@/components/icons/shield-icon';
+import { DocumentIcon } from '@/components/icons/document-icon';
+import Footer from '@/components/layout/footer';
 
-const helpTopics = [
-    {
-        question: 'Primeros Pasos: ¿Cómo exploro las pizzerías?',
-        answer: 'Puedes explorar de dos maneras principales: usando el mapa interactivo en la página de inicio para ver las ubicaciones, o abriendo la lista de "Explorar Pizzerías" para ver el ranking de las mejores calificadas. Haz clic en cualquier pizzería para ver sus detalles.',
-    },
-    {
-        question: '¿Cómo funciona el buscador inteligente?',
-        answer: 'Simplemente escribe el nombre de una pizzería, una dirección, una colonia o incluso un tipo de pizza en la barra de búsqueda. Nuestra IA te dará sugerencias y encontrará los resultados más relevantes para ti.',
-    },
-    {
-        question: '¿Cómo puedo dejar una opinión o calificación?',
-        answer: 'Para dejar una opinión, primero debes iniciar sesión. Una vez que hayas accedido a tu cuenta, selecciona una pizzería, y en el panel de detalles encontrarás un formulario para escribir tu comentario y asignar una calificación de 1 a 5 estrellas.',
-    },
-    {
-        question: '¿Necesito una cuenta para todo?',
-        answer: 'No. Puedes explorar el mapa, buscar y ver toda la información de las pizzerías sin necesidad de una cuenta. Solo necesitas registrarte e iniciar sesión para poder calificar y dejar comentarios.',
-    },
-    {
-        question: 'Soy dueño de una pizzería, ¿cómo puedo agregar mi negocio?',
-        answer: 'Actualmente, el panel para que los dueños de negocios administren sus locales está en desarrollo. ¡Muy pronto podrás registrar tu pizzería y gestionar tu información directamente desde la plataforma!',
-    },
-    {
-        question: '¿Cómo puedo contactar a soporte?',
-        answer: 'Si tienes más preguntas o necesitas ayuda, no dudes en visitar nuestra página de Contacto. Puedes enviarnos un correo a la dirección indicada allí. Para ir, haz clic aquí: <Link href="/contact" className="text-primary underline">Contacto</Link>.',
-    },
+const supportCards = [
+  {
+    icon: <QuestionMarkIcon className="h-8 w-8 text-primary" />,
+    title: 'Preguntas Frecuentes',
+    description: 'Consulta nuestra sección de preguntas frecuentes para encontrar respuestas rápidas a los problemas más comunes.',
+    buttonText: 'Ver FAQ',
+    link: '/faq',
+  },
+  {
+    icon: <HeadsetIcon className="h-8 w-8 text-primary" />,
+    title: 'Contacta con Nosotros',
+    description: '¿No encuentras lo que buscas? Nuestro equipo de soporte está listo para ayudarte personalmente.',
+    buttonText: 'Contactar',
+    link: '/contact',
+  },
+  {
+    icon: <ShieldIcon className="h-8 w-8 text-primary" />,
+    title: 'Política de Privacidad',
+    description: 'Lee nuestra política de privacidad para entender cómo manejamos tus datos personales.',
+    buttonText: 'Leer Política',
+    link: '/privacy',
+  },
+  {
+    icon: <DocumentIcon className="h-8 w-8 text-primary" />,
+    title: 'Términos de Uso',
+    description: 'Consulta los términos y condiciones que rigen el uso de la aplicación PizzApp.',
+    buttonText: 'Ver Términos',
+    link: '/terms',
+  },
 ];
 
 export default function HelpPage() {
   return (
-    <div className="flex flex-col min-h-full">
-        <div className="flex-grow container py-12 md:py-20">
-            <div className="max-w-3xl mx-auto text-center">
-                <h1 className="font-headline text-4xl md:text-5xl font-bold">Centro de Ayuda</h1>
-                <p className="mt-4 text-lg text-muted-foreground">
-                    Aquí encontrarás respuestas a tus preguntas sobre cómo usar PizzApp.
-                </p>
-            </div>
-            <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto mt-12">
-                {helpTopics.map((topic, i) => (
-                    <AccordionItem value={`item-${i}`} key={i}>
-                        <AccordionTrigger className="text-left text-lg hover:no-underline">{topic.question}</AccordionTrigger>
-                        <AccordionContent className="text-base text-muted-foreground space-y-2">
-                           <p>{topic.answer}</p>
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
+    <div className="flex flex-col min-h-full bg-muted/30">
+      <div className="flex-grow container py-12 md:py-20">
+        <div className="max-w-3xl mx-auto text-center mb-16">
+          <h1 className="font-headline text-4xl md:text-5xl font-bold">Centro de Soporte</h1>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Estamos aquí para ayudarte. Encuentra los recursos que necesitas.
+          </p>
         </div>
-        <Footer />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {supportCards.slice(0, 3).map((card, index) => (
+            <Card key={index} className="text-center shadow-lg rounded-xl flex flex-col hover:border-primary/50 transition-colors">
+              <CardHeader className="items-center">
+                <div className="bg-primary/10 rounded-full p-4">
+                  {card.icon}
+                </div>
+              </CardHeader>
+              <CardContent className="flex-grow flex flex-col">
+                <CardTitle className="font-headline text-2xl mb-2">{card.title}</CardTitle>
+                <CardDescription className="flex-grow mb-6">{card.description}</CardDescription>
+                <Button asChild variant="outline">
+                  <Link href={card.link}>{card.buttonText}</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+           <div className="md:col-span-2 lg:col-span-1 lg:col-start-2">
+             <Card className="text-center shadow-lg rounded-xl flex flex-col hover:border-primary/50 transition-colors h-full">
+                <CardHeader className="items-center">
+                    <div className="bg-primary/10 rounded-full p-4">
+                    {supportCards[3].icon}
+                    </div>
+                </CardHeader>
+                <CardContent className="flex-grow flex flex-col">
+                    <CardTitle className="font-headline text-2xl mb-2">{supportCards[3].title}</CardTitle>
+                    <CardDescription className="flex-grow mb-6">{supportCards[3].description}</CardDescription>
+                    <Button asChild variant="outline">
+                    <Link href={supportCards[3].link}>{supportCards[3].buttonText}</Link>
+                    </Button>
+                </CardContent>
+             </Card>
+           </div>
+        </div>
+      </div>
+      <Footer />
     </div>
   );
 }
