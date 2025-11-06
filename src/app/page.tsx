@@ -99,17 +99,14 @@ export default function Home() {
              <div className="absolute bottom-0 w-full flex items-end">
                  {/* 2nd place */}
                  <div className="w-1/3 h-24 bg-primary relative flex justify-center">
-                     
                      <span className="absolute bottom-4 font-bold text-5xl text-white/80" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>2</span>
                  </div>
                  {/* 1st place */}
                  <div className="w-1/3 h-36 bg-primary relative flex justify-center">
-                     
                      <span className="absolute bottom-4 font-bold text-6xl text-white" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.5)' }}>1</span>
                  </div>
                  {/* 3rd place */}
                  <div className="w-1/3 h-20 bg-primary relative flex justify-center">
-                     
                      <span className="absolute bottom-4 font-bold text-4xl text-white/70" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>3</span>
                  </div>
              </div>
