@@ -30,11 +30,9 @@ export default function Home() {
   const handleSearchResults = (results: Pizzeria[]) => {
     setSearchResults(results);
     setIsSearching(true);
-    if (results.length === 1) {
-      setSelectedPizzeria(results[0]);
-    } else {
-      setSelectedPizzeria(null);
-    }
+    // Do not automatically select a pizzeria if there is only one result
+    // Let the user click on it to see details.
+    setSelectedPizzeria(null);
   };
   
   const handleClearSearch = () => {

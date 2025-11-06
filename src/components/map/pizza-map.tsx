@@ -16,7 +16,7 @@ type PizzaMapProps = {
   selectedPizzeria: Pizzeria | null;
 };
 
-const HERMOSILLO_COORDS: [number, number] = [29.085, -110.977];
+const HERMOSILLO_COORDS: L.LatLngTuple = [29.085, -110.977];
 
 export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
   const mapRef = useRef<L.Map | null>(null);
@@ -52,7 +52,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
       }).addTo(mapRef.current);
     }
 
-    // Cleanup on unmount
+    // Cleanup on unmount. This is important to avoid the "Map container is already initialized" error.
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
@@ -83,15 +83,16 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
     });
 
     // Update view
-    const center: [number, number] = selectedPizzeria
-      ? [selectedPizzeria.lat, selectedPizzeria.lng]
-      : (pizzerias.length === 1 ? [pizzerias[0].lat, pizzerias[0].lng] : HERMOSILLO_COORDS);
-    
-    const zoom = selectedPizzeria ? 15 : (pizzerias.length > 0 ? 13 : 12);
-    
-    map.setView(center, zoom, { animate: true, pan: { duration: 0.5 } });
+    if (selectedPizzeria) {
+        map.setView([selectedPizzeria.lat, selectedPizzeria.lng], 15, { animate: true, pan: { duration: 0.5 } });
+    } else if (pizzerias.length > 0) {
+        const bounds = L.latLngBounds(pizzerias.map(p => [p.lat, p.lng]));
+        map.fitBounds(bounds, { padding: [50, 50], animate: true });
+    } else {
+        map.setView(HERMOSILLO_COORDS, 12, { animate: true, pan: { duration: 0.5 } });
+    }
 
-  }, [pizzerias, selectedPizzeria, onMarkerClick]);
+  }, [pizzerias, selectedPizzeria]);
 
   return <div ref={mapContainerRef} className="h-full w-full" style={{ zIndex: 0 }} />;
 }
