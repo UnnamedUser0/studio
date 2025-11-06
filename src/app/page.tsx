@@ -12,6 +12,7 @@ import { pizzerias as allPizzerias } from '@/lib/pizzeria-data';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
+import TestimonialsCarousel from '@/components/testimonial/testimonials-carousel';
 
 const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), { 
   ssr: false,
@@ -52,7 +53,7 @@ export default function Home() {
     <div className="h-full w-full relative overflow-y-auto">
       <div className="h-[60vh] w-full">
         <PizzaMap 
-          pizzerias={isSearching ? visiblePizzerias : allPizzerias}
+          pizzerias={isSearching ? visiblePizzerias : []}
           onMarkerClick={handleSelectPizzeria} 
           selectedPizzeria={selectedPizzeria} 
           visiblePizzeriasOnSearch={visiblePizzerias}
@@ -89,6 +90,20 @@ export default function Home() {
             {pizzeriasForRanking.map((pizzeria) => (
                 <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} onClick={() => handleSelectPizzeria(pizzeria)} />
               ))}
+          </div>
+        </div>
+      )}
+      
+      {!isSearching && (
+        <div id="testimonials" className="bg-muted/50 py-16">
+          <div className="container">
+            <div className="max-w-3xl mx-auto text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-headline font-bold">Lo que nuestra comunidad opina</h2>
+                <p className="mt-4 text-lg text-muted-foreground">
+                    Descubre por qué a los amantes de la pizza les encanta PizzApp.
+                </p>
+            </div>
+            <TestimonialsCarousel />
           </div>
         </div>
       )}
