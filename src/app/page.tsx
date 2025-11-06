@@ -54,6 +54,8 @@ export default function Home() {
   const pizzeriasForRanking = allPizzerias.sort((a, b) => b.rating - a.rating).slice(0, 3);
   const pizzeriasToShowInList = isSearching ? visiblePizzerias : pizzeriasForRanking;
 
+  const podiumOrder = [1, 0, 2]; // 2nd, 1st, 3rd
+
   return (
     <div className="h-full w-full relative overflow-y-auto">
       <div className="h-[60vh] w-full">
@@ -90,10 +92,30 @@ export default function Home() {
       {!isSearching && (
         <div id="ranking" className="container py-12">
           <h2 className="text-3xl font-headline text-center mb-8">Ranking de Pizzerías</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pizzeriasForRanking.map((pizzeria) => (
-                <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} onClick={() => handleSelectPizzeria(pizzeria)} />
-              ))}
+          <div className="flex justify-center items-end gap-x-4 md:gap-x-8 mt-12">
+              {podiumOrder.map((index) => {
+                  const pizzeria = pizzeriasForRanking[index];
+                  const place = index + 1;
+                  let placeClass = '';
+                  if (place === 1) placeClass = 'h-full';
+                  if (place === 2) placeClass = 'h-[85%]';
+                  if (place === 3) placeClass = 'h-[70%]';
+
+                  return (
+                      <div
+                          key={pizzeria.id}
+                          className={`w-1/3 max-w-sm flex flex-col relative transition-all duration-300 ease-in-out
+                            ${place === 1 ? 'md:mb-8' : 'self-end'}
+                            ${place === 1 ? 'order-2' : place === 2 ? 'order-1' : 'order-3'}`}
+                      >
+                          <PizzeriaCard
+                              pizzeria={pizzeria}
+                              onClick={() => handleSelectPizzeria(pizzeria)}
+                              rankingPlace={place}
+                          />
+                      </div>
+                  );
+              })}
           </div>
         </div>
       )}
