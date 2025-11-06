@@ -4,6 +4,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/context/auth-context';
 import Header from '@/components/layout/header';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { cn } from '@/lib/utils';
+import { fontHeadline, fontBody } from '@/app/fonts';
 
 export const metadata: Metadata = {
   title: 'PizzApp - Hermosillo Pizza Finder',
@@ -17,15 +19,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=Playfair+Display:wght@400;700;900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="font-body antialiased bg-background text-foreground">
+      <body 
+        className={cn(
+          "font-body antialiased bg-background text-foreground",
+          fontHeadline.variable,
+          fontBody.variable
+        )}
+      >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <div className="relative flex min-h-screen flex-col">
