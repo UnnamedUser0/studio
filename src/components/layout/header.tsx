@@ -48,8 +48,8 @@ export default function Header() {
           </Link>
         </div>
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          <Link href="/#ranking" className="transition-colors hover:text-primary">
-            Ranking
+          <Link href="/" className="transition-colors hover:text-primary">
+            Inicio
           </Link>
           <Link href="/faq" className="transition-colors hover:text-primary">
             Preguntas Frecuentes
