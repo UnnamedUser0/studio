@@ -39,7 +39,9 @@ export default function Header() {
       <div className="container flex h-full items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <Pizza className="h-7 w-7 text-primary" />
-          <span className="font-bold font-headline text-xl inline-block">PizzApp</span>
+          <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap typing-animation">
+            PizzApp
+          </span>
         </Link>
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           <Link href="/#ranking" className="transition-colors hover:text-primary">
