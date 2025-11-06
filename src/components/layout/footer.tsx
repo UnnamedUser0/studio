@@ -13,6 +13,9 @@ export default function Footer() {
           <Link href="/about" className="hover:text-primary transition-colors">
             Sobre Nosotros
           </Link>
+          <Link href="/help" className="hover:text-primary transition-colors">
+            Centro de Ayuda
+          </Link>
           <Link href="/contact" className="hover:text-primary transition-colors">
             Contacto
           </Link>
