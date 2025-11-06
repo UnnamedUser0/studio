@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Autoplay from 'embla-carousel-autoplay';
 
-import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { testimonials } from '@/lib/testimonial-data';
 import TestimonialCard from './testimonial-card';
 
@@ -28,6 +28,8 @@ export default function TestimonialsCarousel() {
           </CarouselItem>
         ))}
       </CarouselContent>
+      <CarouselPrevious className="hidden sm:flex" />
+      <CarouselNext className="hidden sm:flex" />
     </Carousel>
   );
 }
