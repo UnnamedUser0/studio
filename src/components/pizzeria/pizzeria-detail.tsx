@@ -9,17 +9,20 @@ import type { Pizzeria, Review } from '@/lib/pizzeria-data';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { useState } from 'react';
 
-const StarRating = ({ rating }: { rating: number }) => (
+const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => (
     <div className="flex items-center">
         {[1, 2, 3, 4, 5].map((star) => (
             <Star
                 key={star}
-                className={`w-4 h-4 ${rating >= star ? 'text-accent fill-accent' : 'text-muted-foreground/50'}`}
+                className={`w-5 h-5 cursor-pointer transition-colors ${rating >= star ? 'text-accent fill-accent' : 'text-muted-foreground/50 hover:text-accent'}`}
+                onClick={() => setRating(star)}
             />
         ))}
     </div>
 );
+
 
 const ReviewCard = ({ review }: {review: Review}) => (
     <Card>
@@ -31,7 +34,14 @@ const ReviewCard = ({ review }: {review: Review}) => (
             <div className="flex-1">
                 <div className="flex items-center justify-between">
                     <p className="font-semibold">{review.author}</p>
-                    <StarRating rating={review.rating} />
+                    <div className="flex items-center">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                              key={star}
+                              className={`w-4 h-4 ${review.rating >= star ? 'text-accent fill-accent' : 'text-muted-foreground/50'}`}
+                          />
+                      ))}
+                  </div>
                 </div>
             </div>
         </CardHeader>
@@ -43,6 +53,7 @@ const ReviewCard = ({ review }: {review: Review}) => (
 
 const AddReview = () => {
     const { user } = useAuth();
+    const [rating, setRating] = useState(0);
 
     if (!user) {
         return (
@@ -62,7 +73,7 @@ const AddReview = () => {
             <CardContent className="space-y-4">
                 <Textarea placeholder={`¿Qué te pareció, ${user.name}?`}/>
                 <div className="flex justify-between items-center">
-                    <StarRating rating={0} />
+                    <StarRatingInput rating={rating} setRating={setRating} />
                     <Button>Publicar</Button>
                 </div>
             </CardContent>
