@@ -14,6 +14,9 @@ type PizzaMapProps = {
 
 const HERMOSILLO_CENTER = [29.085, -110.977];
 
+// Directly use the environment variable as it's loaded by Next.js
+const bingMapsKey = process.env.NEXT_PUBLIC_BING_MAPS_API_KEY;
+
 export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
   const [mapType, setMapType] = useState<'road' | 'aerial'>('road');
   const [isClient, setIsClient] = useState(false);
@@ -22,12 +25,10 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
     setIsClient(true);
   }, []);
 
-  const bingMapsKey = process.env.NEXT_PUBLIC_BING_MAPS_API_KEY;
-
   if (!isClient) {
     return <div className="h-full w-full bg-muted animate-pulse" />;
   }
-
+  
   if (!bingMapsKey || bingMapsKey === 'YOUR_API_KEY_HERE') {
     return (
       <div className="h-full w-full bg-muted flex flex-col items-center justify-center text-center p-4">
