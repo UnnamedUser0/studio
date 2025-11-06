@@ -91,32 +91,32 @@ export default function Home() {
 
       {!isSearching && (
          <div id="ranking" className="container py-12">
-         <h2 className="text-3xl font-headline text-center mb-24">Ranking de pizzerias</h2>
+         <h2 className="text-3xl font-headline text-center mb-24">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
          <div className="relative w-full max-w-4xl mx-auto h-[250px]">
 
              {/* Podium Base Structure */}
              <div className="absolute bottom-0 w-full flex items-end">
                  {/* 2nd place */}
                  <div className="w-1/3 h-24 bg-primary relative flex justify-center">
-                     <div className="absolute inset-0 bg-black/10"></div>
+                     
                      <span className="absolute bottom-4 font-bold text-5xl text-white/80" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>2</span>
                  </div>
                  {/* 1st place */}
                  <div className="w-1/3 h-36 bg-primary relative flex justify-center">
-                     <div className="absolute inset-0 bg-black/10"></div>
+                     
                      <span className="absolute bottom-4 font-bold text-6xl text-white" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.5)' }}>1</span>
                  </div>
                  {/* 3rd place */}
                  <div className="w-1/3 h-20 bg-primary relative flex justify-center">
-                     <div className="absolute inset-0 bg-black/10"></div>
+                     
                      <span className="absolute bottom-4 font-bold text-4xl text-white/70" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>3</span>
                  </div>
              </div>
              
              {/* Podium Platform Top */}
-             <div className="absolute bottom-[80px] w-[calc(100%+20px)] left-[-10px] h-4 bg-gray-400/30 rounded-t-lg shadow-inner z-0"></div>
-             <div className="absolute bottom-[96px] w-[calc(33.33%+20px)] left-[calc(33.33%-10px)] h-4 bg-gray-400/30 rounded-t-lg shadow-inner z-0"></div>
-             <div className="absolute bottom-[144px] w-[calc(33.33%+20px)] left-[calc(33.33%-10px)] h-4 bg-gray-400/30 rounded-t-lg shadow-inner z-0"></div>
+             <div className="absolute bottom-[80px] w-[calc(100%+20px)] left-[-10px] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
+             <div className="absolute bottom-[96px] w-[calc(33.33%+20px)] left-[calc(33.33%-10px)] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
+             <div className="absolute bottom-[144px] w-[calc(33.33%+20px)] left-[calc(33.33%-10px)] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
 
              {/* Separator Shadows */}
              <div className="absolute bottom-0 top-0 left-1/3 w-1 bg-black/20 z-10 h-[144px]"></div>
