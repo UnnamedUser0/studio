@@ -22,11 +22,18 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
+        protocol: 'https/g',
         hostname: 'picsum.photos',
         port: '',
         pathname: '/**',
       },
+    ],
+  },
+  experimental: {
+    // This is to allow the Next.js dev server to be accessed from the
+    // preview URL of the remote development environment.
+    allowedDevOrigins: [
+      'https://*.cluster-thle3dudhffpwss7zs5hxaeu2o.cloudworkstations.dev',
     ],
   },
 };
