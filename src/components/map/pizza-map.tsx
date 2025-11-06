@@ -59,8 +59,13 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
   
   const zoom = selectedPizzeria ? 15 : (pizzerias.length > 0 ? 13 : 12);
 
+  // By providing a key that changes only when we want a full re-render,
+  // we can avoid the "Map container is already initialized" error.
+  // A simple key from selectedPizzeria's id or the number of pizzerias will work.
+  const mapKey = selectedPizzeria?.id || pizzerias.length;
+
   return (
-    <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className="h-full w-full" style={{ zIndex: 0 }}>
+    <MapContainer key={mapKey} center={center} zoom={zoom} scrollWheelZoom={true} className="h-full w-full" style={{ zIndex: 0 }}>
       <ChangeView center={center} zoom={zoom} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
