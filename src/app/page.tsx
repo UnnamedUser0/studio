@@ -102,9 +102,9 @@ export default function Home() {
                   rankingPlace={2}
                 />
               </div>
-              <div className="relative w-full h-24 bg-[#00608B] border-b-8 border-b-[#003F5C]">
+              <div className="relative w-full h-24 bg-primary border-b-8 border-b-primary/70">
                 <div className="absolute inset-0 bg-black/10"></div>
-                <div className="absolute -right-1 top-0 h-full w-1 bg-black/20"></div>
+                <div className="absolute -right-1 top-0 h-full w-1 bg-black/20 z-10"></div>
                 <span className="absolute inset-0 flex items-center justify-center font-bold text-5xl text-white/80" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>2</span>
               </div>
             </div>
@@ -118,10 +118,10 @@ export default function Home() {
                   rankingPlace={1}
                 />
               </div>
-              <div className="relative w-full h-36 bg-[#00608B] border-b-8 border-b-[#003F5C]">
+              <div className="relative w-full h-36 bg-primary border-b-8 border-b-primary/70">
                 <div className="absolute inset-0 bg-black/10"></div>
-                <div className="absolute -left-1 top-0 h-full w-1 bg-black/20"></div>
-                 <div className="absolute -right-1 top-0 h-full w-1 bg-black/20"></div>
+                <div className="absolute -left-1 top-0 h-full w-1 bg-black/20 z-10"></div>
+                 <div className="absolute -right-1 top-0 h-full w-1 bg-black/20 z-10"></div>
                 <span className="absolute inset-0 flex items-center justify-center font-bold text-6xl text-white" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.5)' }}>1</span>
               </div>
             </div>
@@ -135,9 +135,9 @@ export default function Home() {
                   rankingPlace={3}
                 />
               </div>
-              <div className="relative w-full h-20 bg-[#00608B] border-b-8 border-b-[#003F5C]">
+              <div className="relative w-full h-20 bg-primary border-b-8 border-b-primary/70">
                  <div className="absolute inset-0 bg-black/10"></div>
-                 <div className="absolute -left-1 top-0 h-full w-1 bg-black/20"></div>
+                 <div className="absolute -left-1 top-0 h-full w-1 bg-black/20 z-10"></div>
                  <span className="absolute inset-0 flex items-center justify-center font-bold text-4xl text-white/70" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>3</span>
               </div>
             </div>
