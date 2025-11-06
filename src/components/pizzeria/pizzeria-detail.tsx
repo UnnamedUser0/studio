@@ -116,8 +116,8 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
           <div id="ranking">
             <h3 className="font-headline text-xl mb-4 text-foreground">Opiniones</h3>
             <div className="space-y-4">
-                <AddReview />
                 {pizzeria.reviews.map(review => <ReviewCard key={review.id} review={review} />)}
+                <AddReview />
             </div>
           </div>
         </div>
