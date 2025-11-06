@@ -13,6 +13,7 @@ import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
 import TestimonialsCarousel from '@/components/testimonial/testimonials-carousel';
+import WhyChoosePizzapp from '@/components/layout/why-choose-pizzapp';
 
 const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), { 
   ssr: false,
@@ -111,6 +112,9 @@ export default function Home() {
         </div>
       )}
 
+      {!isSearching && (
+        <WhyChoosePizzapp />
+      )}
 
       <Sheet open={!!selectedPizzeria} onOpenChange={(open) => !open && handleCloseDetail()}>
         <SheetContent side="right" className="w-[90vw] max-w-[440px] p-0 flex flex-col" aria-describedby={undefined}>
