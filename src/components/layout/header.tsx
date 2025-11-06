@@ -34,6 +34,8 @@ function ThemeSwitcher() {
 export default function Header() {
   const { user, logout, isAdmin } = useAuth();
 
+  const navLinkClasses = "relative text-sm font-medium transition-colors hover:text-primary after:content-[''] after:absolute after:left-1/2 after:-bottom-1.5 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-primary after:transition-all after:duration-300 hover:after:w-full";
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-16">
       <div className="container flex h-full items-center">
@@ -41,23 +43,23 @@ export default function Header() {
           <Link href="/" className="flex items-center space-x-2">
             <Pizza className="h-7 w-7 text-primary" />
             <div className="relative w-[7ch]">
-              <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap border-r-4 border-r-primary typing-animation">
+              <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap">
                 PizzApp
               </span>
             </div>
           </Link>
         </div>
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          <Link href="/" className="transition-colors hover:text-primary">
+        <nav className="hidden md:flex items-center space-x-8 text-sm font-medium">
+          <Link href="/" className={navLinkClasses}>
             Inicio
           </Link>
-          <Link href="/faq" className="transition-colors hover:text-primary">
+          <Link href="/faq" className={navLinkClasses}>
             Preguntas Frecuentes
           </Link>
-          <Link href="/help" className="transition-colors hover:text-primary">
+          <Link href="/help" className={navLinkClasses}>
             Centro de Ayuda
           </Link>
-          <Link href="/contact" className="transition-colors hover:text-primary">
+          <Link href="/contact" className={navLinkClasses}>
             Contacto
           </Link>
         </nav>
