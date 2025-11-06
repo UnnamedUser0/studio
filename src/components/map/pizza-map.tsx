@@ -14,12 +14,11 @@ type PizzaMapProps = {
   pizzerias: Pizzeria[];
   onMarkerClick: (pizzeria: Pizzeria) => void;
   selectedPizzeria: Pizzeria | null;
-  visiblePizzeriasOnSearch: Pizzeria[];
 };
 
 const HERMOSILLO_COORDS: L.LatLngTuple = [29.085, -110.977];
 
-export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, visiblePizzeriasOnSearch }: PizzaMapProps) {
+export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -53,10 +52,11 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, v
       }).addTo(mapRef.current);
     }
 
-    // Cleanup on unmount
+    const map = mapRef.current;
+    
     return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
+      if (map) {
+        map.remove();
         mapRef.current = null;
       }
     };
@@ -86,14 +86,14 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, v
     // Update map view logic
     if (selectedPizzeria) {
         map.setView([selectedPizzeria.lat, selectedPizzeria.lng], 15, { animate: true, pan: { duration: 0.5 } });
-    } else if (visiblePizzeriasOnSearch.length > 0) {
-        const bounds = L.latLngBounds(visiblePizzeriasOnSearch.map(p => [p.lat, p.lng]));
+    } else if (pizzerias.length > 0) {
+        const bounds = L.latLngBounds(pizzerias.map(p => [p.lat, p.lng]));
         map.fitBounds(bounds, { padding: [50, 50], animate: true });
     } else {
         map.setView(HERMOSILLO_COORDS, 12, { animate: true, pan: { duration: 0.5 } });
     }
 
-  }, [pizzerias, selectedPizzeria, onMarkerClick, visiblePizzeriasOnSearch]);
+  }, [pizzerias, selectedPizzeria, onMarkerClick]);
 
   return <div ref={mapContainerRef} className="h-full w-full" style={{ zIndex: 0 }} />;
 }

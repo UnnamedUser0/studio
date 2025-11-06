@@ -46,6 +46,10 @@ export default function Home() {
     setSelectedPizzeria(null);
   }
 
+  const handleCloseDetail = () => {
+    setSelectedPizzeria(null);
+  }
+
   const pizzeriasForRanking = allPizzerias.sort((a, b) => b.rating - a.rating).slice(0, 3);
   const pizzeriasToShowInList = isSearching ? visiblePizzerias : pizzeriasForRanking;
 
@@ -53,10 +57,9 @@ export default function Home() {
     <div className="h-full w-full relative overflow-y-auto">
       <div className="h-[60vh] w-full">
         <PizzaMap 
-          pizzerias={isSearching ? visiblePizzerias : []}
+          pizzerias={visiblePizzerias}
           onMarkerClick={handleSelectPizzeria} 
           selectedPizzeria={selectedPizzeria} 
-          visiblePizzeriasOnSearch={visiblePizzerias}
         />
       </div>
 
@@ -109,7 +112,7 @@ export default function Home() {
       )}
 
 
-      <Sheet open={!!selectedPizzeria} onOpenChange={(open) => !open && setSelectedPizzeria(null)}>
+      <Sheet open={!!selectedPizzeria} onOpenChange={(open) => !open && handleCloseDetail()}>
         <SheetContent side="right" className="w-[90vw] max-w-[440px] p-0 flex flex-col" aria-describedby={undefined}>
           {selectedPizzeria && <PizzeriaDetail pizzeria={selectedPizzeria} />}
         </SheetContent>
