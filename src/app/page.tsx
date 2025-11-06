@@ -30,7 +30,13 @@ export default function Home() {
   const handleSearchResults = (results: Pizzeria[]) => {
     setVisiblePizzerias(results);
     setIsSearching(true);
-    setSelectedPizzeria(null);
+    // If search results are empty, close any open detail panel.
+    if (results.length === 0) {
+      setSelectedPizzeria(null);
+    } else {
+      // If there are results, clear the specific selection to allow the map to zoom out to the bounds.
+      setSelectedPizzeria(null);
+    }
   };
   
   const handleClearSearch = () => {
@@ -46,9 +52,10 @@ export default function Home() {
     <div className="h-full w-full relative overflow-y-auto">
       <div className="h-[60vh] w-full">
         <PizzaMap 
-          pizzerias={visiblePizzerias}
+          pizzerias={isSearching ? visiblePizzerias : allPizzerias}
           onMarkerClick={handleSelectPizzeria} 
           selectedPizzeria={selectedPizzeria} 
+          visiblePizzeriasOnSearch={visiblePizzerias}
         />
       </div>
 

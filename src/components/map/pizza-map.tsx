@@ -14,11 +14,12 @@ type PizzaMapProps = {
   pizzerias: Pizzeria[];
   onMarkerClick: (pizzeria: Pizzeria) => void;
   selectedPizzeria: Pizzeria | null;
+  visiblePizzeriasOnSearch: Pizzeria[];
 };
 
 const HERMOSILLO_COORDS: L.LatLngTuple = [29.085, -110.977];
 
-export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
+export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, visiblePizzeriasOnSearch }: PizzaMapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -52,7 +53,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
       }).addTo(mapRef.current);
     }
 
-    // Cleanup on unmount. This is important to avoid the "Map container is already initialized" error.
+    // Cleanup on unmount
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
@@ -61,7 +62,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
     };
   }, []);
 
-  // Update view and markers when pizzerias or selection change
+  // Update markers and view
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -70,7 +71,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
 
-    // Add new markers
+    // Add new markers from pizzerias prop
     pizzerias.forEach((pizzeria) => {
       const isSelected = selectedPizzeria?.id === pizzeria.id;
       const marker = L.marker([pizzeria.lat, pizzeria.lng], {
@@ -82,17 +83,17 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
       markersRef.current.push(marker);
     });
 
-    // Update view
+    // Update map view logic
     if (selectedPizzeria) {
         map.setView([selectedPizzeria.lat, selectedPizzeria.lng], 15, { animate: true, pan: { duration: 0.5 } });
-    } else if (pizzerias.length > 0) {
-        const bounds = L.latLngBounds(pizzerias.map(p => [p.lat, p.lng]));
+    } else if (visiblePizzeriasOnSearch.length > 0) {
+        const bounds = L.latLngBounds(visiblePizzeriasOnSearch.map(p => [p.lat, p.lng]));
         map.fitBounds(bounds, { padding: [50, 50], animate: true });
     } else {
         map.setView(HERMOSILLO_COORDS, 12, { animate: true, pan: { duration: 0.5 } });
     }
 
-  }, [pizzerias, selectedPizzeria]);
+  }, [pizzerias, selectedPizzeria, onMarkerClick, visiblePizzeriasOnSearch]);
 
   return <div ref={mapContainerRef} className="h-full w-full" style={{ zIndex: 0 }} />;
 }
