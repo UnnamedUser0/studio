@@ -92,42 +92,46 @@ export default function Home() {
       {!isSearching && (
         <div id="ranking" className="container py-12">
           <h2 className="text-3xl font-headline text-center mb-16">Ranking de Pizzerías</h2>
-          <div className="flex justify-center items-end gap-x-4 md:gap-x-2 mt-12 w-full max-w-4xl mx-auto">
-            {/* 2nd Place */}
-            <div className="w-1/3 flex flex-col items-center">
-              <PizzeriaCard
-                pizzeria={pizzeriasForRanking[1]}
-                onClick={() => handleSelectPizzeria(pizzeriasForRanking[1])}
-                rankingPlace={2}
-              />
-              <div className="w-full bg-secondary rounded-b-lg h-24 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
-                <span className="text-4xl font-black text-muted-foreground opacity-20">2</span>
+          <div className="mt-12 w-full max-w-4xl mx-auto">
+            <div className="flex justify-center items-end gap-x-4 md:gap-x-2">
+              {/* 2nd Place */}
+              <div className="w-1/3 flex flex-col items-center">
+                <PizzeriaCard
+                  pizzeria={pizzeriasForRanking[1]}
+                  onClick={() => handleSelectPizzeria(pizzeriasForRanking[1])}
+                  rankingPlace={2}
+                />
+                <div className="w-full bg-secondary rounded-b-lg h-24 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
+                  <span className="text-4xl font-black text-muted-foreground opacity-20">2</span>
+                </div>
               </div>
-            </div>
-            
-            {/* 1st Place */}
-            <div className="w-1/3 flex flex-col items-center">
-              <PizzeriaCard
-                pizzeria={pizzeriasForRanking[0]}
-                onClick={() => handleSelectPizzeria(pizzeriasForRanking[0])}
-                rankingPlace={1}
-              />
-              <div className="w-full bg-secondary rounded-b-lg h-36 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
-                <span className="text-5xl font-black text-muted-foreground opacity-25">1</span>
+              
+              {/* 1st Place */}
+              <div className="w-1/3 flex flex-col items-center">
+                <PizzeriaCard
+                  pizzeria={pizzeriasForRanking[0]}
+                  onClick={() => handleSelectPizzeria(pizzeriasForRanking[0])}
+                  rankingPlace={1}
+                />
+                <div className="w-full bg-secondary rounded-b-lg h-36 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
+                  <span className="text-5xl font-black text-muted-foreground opacity-25">1</span>
+                </div>
               </div>
-            </div>
 
-            {/* 3rd Place */}
-            <div className="w-1/3 flex flex-col items-center">
-              <PizzeriaCard
-                pizzeria={pizzeriasForRanking[2]}
-                onClick={() => handleSelectPizzeria(pizzeriasForRanking[2])}
-                rankingPlace={3}
-              />
-              <div className="w-full bg-secondary rounded-b-lg h-16 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
-                <span className="text-3xl font-black text-muted-foreground opacity-15">3</span>
+              {/* 3rd Place */}
+              <div className="w-1/3 flex flex-col items-center">
+                <PizzeriaCard
+                  pizzeria={pizzeriasForRanking[2]}
+                  onClick={() => handleSelectPizzeria(pizzeriasForRanking[2])}
+                  rankingPlace={3}
+                />
+                <div className="w-full bg-secondary rounded-b-lg h-16 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
+                  <span className="text-3xl font-black text-muted-foreground opacity-15">3</span>
+                </div>
               </div>
             </div>
+            {/* Podium Base */}
+            <div className="h-4 bg-muted/80 rounded-b-lg shadow-inner mt-0"></div>
           </div>
         </div>
       )}
