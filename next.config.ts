@@ -32,10 +32,10 @@ const nextConfig: NextConfig = {
   experimental: {
     // This is to allow the Next.js dev server to be accessed from the
     // preview URL of the remote development environment.
-    allowedDevOrigins: [
-      'https://*.cluster-thle3dudhffpwss7zs5hxaeu2o.cloudworkstations.dev',
-    ],
   },
+  allowedDevOrigins: [
+    'https://*.cluster-thle3dudhffpwss7zs5hxaeu2o.cloudworkstations.dev',
+  ],
 };
 
 export default nextConfig;
