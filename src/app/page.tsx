@@ -91,7 +91,7 @@ export default function Home() {
 
       {!isSearching && (
         <div id="ranking" className="container py-12">
-          <h2 className="text-3xl font-headline text-center mb-16">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
+          <h2 className="text-3xl font-headline text-center mb-16">Ranking de pizzerias</h2>
           <div className="relative w-full max-w-4xl mx-auto flex items-end justify-center gap-1">
             <div className="absolute bottom-0 w-full h-[220px]">
               <div className="relative h-full flex items-end">
