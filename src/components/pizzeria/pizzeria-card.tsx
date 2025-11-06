@@ -13,20 +13,21 @@ type PizzeriaCardProps = {
 
 export default function PizzeriaCard({ pizzeria, onClick, rankingPlace }: PizzeriaCardProps) {
     
-  const getGlowClass = (place: number) => {
+  const getGlowClass = (place?: number) => {
+    if (!place) return '';
     switch (place) {
-      case 1: return 'animate-glow-gold'; // Gold
-      case 2: return 'animate-glow-silver'; // Silver
-      case 3: return 'animate-glow-bronze'; // Bronze
+      case 1: return 'glow-gold';
+      case 2: return 'glow-silver';
+      case 3: return 'glow-bronze';
       default: return '';
     }
   }
 
   return (
-    <div className="relative h-full">
+    <div className="relative h-full w-full z-10">
       {rankingPlace && (
         <div className={cn(
-            "absolute -top-5 -right-3 z-10 h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg",
+            "absolute -top-5 -right-3 z-20 h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg",
             "border-2",
             rankingPlace === 1 && "bg-yellow-400 border-yellow-500",
             rankingPlace === 2 && "bg-slate-300 border-slate-400",
@@ -38,7 +39,7 @@ export default function PizzeriaCard({ pizzeria, onClick, rankingPlace }: Pizzer
       <Card 
           className={cn(
               "overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 h-full",
-              rankingPlace && getGlowClass(rankingPlace)
+              getGlowClass(rankingPlace)
           )} 
           onClick={onClick}
           tabIndex={0}

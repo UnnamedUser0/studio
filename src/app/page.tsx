@@ -91,26 +91,37 @@ export default function Home() {
 
       {!isSearching && (
         <div id="ranking" className="container py-12">
-          <h2 className="text-3xl font-headline text-center mb-8">Ranking de Pizzerías</h2>
-          <div className="flex justify-center items-end gap-x-4 md:gap-x-8 mt-12">
-              {podiumOrder.map((index) => {
-                  const pizzeria = pizzeriasForRanking[index];
-                  const place = index + 1;
-                  return (
-                      <div
-                          key={pizzeria.id}
-                          className={`w-1/3 max-w-sm flex flex-col relative transition-all duration-300 ease-in-out
-                            ${place === 1 ? 'md:mb-8' : 'self-end'}
-                            ${place === 1 ? 'order-2' : place === 2 ? 'order-1' : 'order-3'}`}
-                      >
-                          <PizzeriaCard
-                              pizzeria={pizzeria}
-                              onClick={() => handleSelectPizzeria(pizzeria)}
-                              rankingPlace={place}
-                          />
-                      </div>
-                  );
-              })}
+          <h2 className="text-3xl font-headline text-center mb-16">Ranking de Pizzerías</h2>
+          <div className="flex justify-center items-end gap-x-4 md:gap-x-2 mt-12 w-full max-w-4xl mx-auto">
+            {/* 2nd Place */}
+            <div className="w-1/3 flex flex-col items-center">
+              <PizzeriaCard
+                pizzeria={pizzeriasForRanking[1]}
+                onClick={() => handleSelectPizzeria(pizzeriasForRanking[1])}
+                rankingPlace={2}
+              />
+              <div className="w-full bg-secondary rounded-b-lg h-24 mt-[-1rem] pt-6 shadow-inner"></div>
+            </div>
+            
+            {/* 1st Place */}
+            <div className="w-1/3 flex flex-col items-center">
+              <PizzeriaCard
+                pizzeria={pizzeriasForRanking[0]}
+                onClick={() => handleSelectPizzeria(pizzeriasForRanking[0])}
+                rankingPlace={1}
+              />
+              <div className="w-full bg-secondary rounded-b-lg h-36 mt-[-1rem] pt-6 shadow-inner"></div>
+            </div>
+
+            {/* 3rd Place */}
+            <div className="w-1/3 flex flex-col items-center">
+              <PizzeriaCard
+                pizzeria={pizzeriasForRanking[2]}
+                onClick={() => handleSelectPizzeria(pizzeriasForRanking[2])}
+                rankingPlace={3}
+              />
+              <div className="w-full bg-secondary rounded-b-lg h-16 mt-[-1rem] pt-6 shadow-inner"></div>
+            </div>
           </div>
         </div>
       )}
@@ -135,7 +146,7 @@ export default function Home() {
 
       <Sheet open={!!selectedPizzeria} onOpenChange={(open) => !open && handleCloseDetail()}>
         <SheetContent side="right" className="w-[90vw] max-w-[440px] p-0 flex flex-col" aria-describedby={undefined}>
-          {selectedPizzeria && <PizzeriaDetail pizzeria={pizzeria} />}
+          {selectedPizzeria && <PizzeriaDetail pizzeria={selectedPizzeria} />}
         </SheetContent>
       </Sheet>
     </div>

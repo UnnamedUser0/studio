@@ -71,3 +71,15 @@
     50% { border-color: hsl(var(--primary)); }
   }
 }
+
+@layer utilities {
+  .glow-gold {
+    box-shadow: 0 0 8px #FBBF24, 0 0 12px #FBBF24;
+  }
+  .glow-silver {
+    box-shadow: 0 0 8px #D1D5DB, 0 0 12px #D1D5DB;
+  }
+  .glow-bronze {
+    box-shadow: 0 0 8px #F97316, 0 0 12px #F97316;
+  }
+}
