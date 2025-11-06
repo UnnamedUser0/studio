@@ -4,8 +4,14 @@ import { Input } from '@/components/ui/input';
 import { Search, Loader2 } from 'lucide-react';
 import { getSmartSearchSuggestions } from '@/ai/flows/smart-search-suggestions';
 import { Card, CardContent } from '@/components/ui/card';
+import { pizzerias } from '@/lib/pizzeria-data';
+import type { Pizzeria } from '@/lib/pizzeria-data';
 
-export default function SmartSearch() {
+type SmartSearchProps = {
+  onSearch: (results: Pizzeria[]) => void;
+};
+
+export default function SmartSearch({ onSearch }: SmartSearchProps) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -20,13 +26,35 @@ export default function SmartSearch() {
       clearTimeout(handler);
     };
   }, [query]);
+  
+  const performSearch = (searchQuery: string) => {
+    if (!searchQuery) {
+      onSearch([]);
+      return;
+    }
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    const results = pizzerias.filter(p => 
+      p.name.toLowerCase().includes(lowerCaseQuery) ||
+      p.address.toLowerCase().includes(lowerCaseQuery)
+    );
+    onSearch(results);
+    setSuggestions([]);
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      performSearch(query);
+    }
+  };
 
   const fetchSuggestions = useCallback((currentQuery: string) => {
-    if (currentQuery) {
+    if (currentQuery.length > 2) {
       startTransition(async () => {
         try {
           const result = await getSmartSearchSuggestions({ query: currentQuery });
-          setSuggestions(result.suggestions);
+          // Filter out suggestions that are too similar to the query itself
+          const filteredSuggestions = result.suggestions.filter(s => s.toLowerCase() !== currentQuery.toLowerCase());
+          setSuggestions(filteredSuggestions);
         } catch (error) {
           console.error("Error fetching suggestions:", error);
           setSuggestions([]);
@@ -46,11 +74,12 @@ export default function SmartSearch() {
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
         <Input
-          placeholder="Busca pizzerías, ej. 'Pizza Hut' o 'Colosio'"
+          placeholder="Busca por nombre o dirección..."
           className="pl-11 h-12 text-base shadow-lg rounded-full"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => fetchSuggestions(debouncedQuery)}
+          onKeyDown={handleKeyDown}
         />
         {isPending && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />}
       </div>
@@ -62,7 +91,7 @@ export default function SmartSearch() {
                 <li key={i} className="p-3 text-sm rounded-lg hover:bg-accent/50 cursor-pointer"
                   onClick={() => {
                     setQuery(s);
-                    setSuggestions([]);
+                    performSearch(s);
                   }}
                 >
                   {s}

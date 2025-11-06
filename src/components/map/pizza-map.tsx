@@ -5,7 +5,6 @@ import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 import 'leaflet-defaulticon-compatibility';
 
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import { pizzerias } from '@/lib/pizzeria-data';
 import type { Pizzeria } from '@/lib/pizzeria-data';
 import { divIcon } from 'leaflet';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -13,6 +12,7 @@ import { PizzaSliceIcon } from '@/components/icons/pizza-slice-icon';
 import { useEffect } from 'react';
 
 type PizzaMapProps = {
+  pizzerias: Pizzeria[];
   onMarkerClick: (pizzeria: Pizzeria) => void;
   selectedPizzeria: Pizzeria | null;
 };
@@ -33,7 +33,7 @@ function ChangeView({ center, zoom }: { center: [number, number], zoom: number }
   return null;
 }
 
-export default function PizzaMap({ onMarkerClick, selectedPizzeria }: PizzaMapProps) {
+export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
   const customIcon = (isSelected: boolean) => {
     const iconMarkup = renderToStaticMarkup(
       <PizzaSliceIcon className={`
@@ -55,8 +55,9 @@ export default function PizzaMap({ onMarkerClick, selectedPizzeria }: PizzaMapPr
   
   const center: [number, number] = selectedPizzeria
     ? [selectedPizzeria.lat, selectedPizzeria.lng]
-    : HERMOSILLO_COORDS;
-  const zoom = selectedPizzeria ? 15 : 13;
+    : (pizzerias.length === 1 ? [pizzerias[0].lat, pizzerias[0].lng] : HERMOSILLO_COORDS);
+  
+  const zoom = selectedPizzeria ? 15 : (pizzerias.length > 0 ? 13 : 12);
 
   return (
     <MapContainer center={center} zoom={zoom} scrollWheelZoom={true} className="h-full w-full" style={{ zIndex: 0 }}>
