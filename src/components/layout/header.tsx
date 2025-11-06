@@ -40,7 +40,7 @@ export default function Header() {
         <div className="flex items-center space-x-2 mr-8">
           <Link href="/" className="flex items-center space-x-2">
             <Pizza className="h-7 w-7 text-primary" />
-            <div className="relative">
+            <div className="relative w-[7ch]">
               <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap border-r-4 border-r-primary typing-animation">
                 PizzApp
               </span>
