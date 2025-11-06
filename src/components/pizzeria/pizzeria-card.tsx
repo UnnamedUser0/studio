@@ -25,17 +25,6 @@ export default function PizzeriaCard({ pizzeria, onClick, rankingPlace }: Pizzer
 
   return (
     <div className="relative h-full w-full z-10">
-      {rankingPlace && (
-        <div className={cn(
-            "absolute -top-5 -right-3 z-20 h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg",
-            "border-2",
-            rankingPlace === 1 && "bg-yellow-400 border-yellow-500",
-            rankingPlace === 2 && "bg-slate-300 border-slate-400",
-            rankingPlace === 3 && "bg-orange-400 border-orange-500"
-        )}>
-          {rankingPlace}
-        </div>
-      )}
       <Card 
           className={cn(
               "overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 h-full",

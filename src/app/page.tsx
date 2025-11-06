@@ -100,7 +100,9 @@ export default function Home() {
                 onClick={() => handleSelectPizzeria(pizzeriasForRanking[1])}
                 rankingPlace={2}
               />
-              <div className="w-full bg-secondary rounded-b-lg h-24 mt-[-1rem] pt-6 shadow-inner"></div>
+              <div className="w-full bg-secondary rounded-b-lg h-24 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
+                <span className="text-4xl font-black text-muted-foreground opacity-20">2</span>
+              </div>
             </div>
             
             {/* 1st Place */}
@@ -110,7 +112,9 @@ export default function Home() {
                 onClick={() => handleSelectPizzeria(pizzeriasForRanking[0])}
                 rankingPlace={1}
               />
-              <div className="w-full bg-secondary rounded-b-lg h-36 mt-[-1rem] pt-6 shadow-inner"></div>
+              <div className="w-full bg-secondary rounded-b-lg h-36 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
+                <span className="text-5xl font-black text-muted-foreground opacity-25">1</span>
+              </div>
             </div>
 
             {/* 3rd Place */}
@@ -120,7 +124,9 @@ export default function Home() {
                 onClick={() => handleSelectPizzeria(pizzeriasForRanking[2])}
                 rankingPlace={3}
               />
-              <div className="w-full bg-secondary rounded-b-lg h-16 mt-[-1rem] pt-6 shadow-inner"></div>
+              <div className="w-full bg-secondary rounded-b-lg h-16 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
+                <span className="text-3xl font-black text-muted-foreground opacity-15">3</span>
+              </div>
             </div>
           </div>
         </div>
