@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star } from 'lucide-react';
 import type { Pizzeria } from '@/lib/pizzeria-data';
+import { cn } from '@/lib/utils';
 
 type PizzeriaCardProps = {
   pizzeria: Pizzeria;
@@ -11,24 +12,34 @@ type PizzeriaCardProps = {
 };
 
 export default function PizzeriaCard({ pizzeria, onClick, rankingPlace }: PizzeriaCardProps) {
-  const getPlaceColor = (place: number) => {
+    
+  const getGlowClass = (place: number) => {
     switch (place) {
-      case 1: return 'bg-yellow-400 border-yellow-500'; // Gold
-      case 2: return 'bg-slate-300 border-slate-400'; // Silver
-      case 3: return 'bg-orange-400 border-orange-500'; // Bronze
-      default: return 'bg-gray-200';
+      case 1: return 'animate-glow-gold'; // Gold
+      case 2: return 'animate-glow-silver'; // Silver
+      case 3: return 'animate-glow-bronze'; // Bronze
+      default: return '';
     }
   }
 
   return (
     <div className="relative h-full">
       {rankingPlace && (
-        <div className={`absolute -top-5 -right-3 z-10 h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg border-2 ${getPlaceColor(rankingPlace)}`}>
+        <div className={cn(
+            "absolute -top-5 -right-3 z-10 h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg",
+            "border-2",
+            rankingPlace === 1 && "bg-yellow-400 border-yellow-500",
+            rankingPlace === 2 && "bg-slate-300 border-slate-400",
+            rankingPlace === 3 && "bg-orange-400 border-orange-500"
+        )}>
           {rankingPlace}
         </div>
       )}
       <Card 
-          className="overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 h-full" 
+          className={cn(
+              "overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 h-full",
+              rankingPlace && getGlowClass(rankingPlace)
+          )} 
           onClick={onClick}
           tabIndex={0}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}

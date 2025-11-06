@@ -96,11 +96,6 @@ export default function Home() {
               {podiumOrder.map((index) => {
                   const pizzeria = pizzeriasForRanking[index];
                   const place = index + 1;
-                  let placeClass = '';
-                  if (place === 1) placeClass = 'h-full';
-                  if (place === 2) placeClass = 'h-[85%]';
-                  if (place === 3) placeClass = 'h-[70%]';
-
                   return (
                       <div
                           key={pizzeria.id}
@@ -140,7 +135,7 @@ export default function Home() {
 
       <Sheet open={!!selectedPizzeria} onOpenChange={(open) => !open && handleCloseDetail()}>
         <SheetContent side="right" className="w-[90vw] max-w-[440px] p-0 flex flex-col" aria-describedby={undefined}>
-          {selectedPizzeria && <PizzeriaDetail pizzeria={selectedPizzeria} />}
+          {selectedPizzeria && <PizzeriaDetail pizzeria={pizzeria} />}
         </SheetContent>
       </Sheet>
     </div>
