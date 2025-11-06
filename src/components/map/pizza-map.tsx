@@ -1,15 +1,14 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css';
 import 'leaflet-defaulticon-compatibility';
 
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import type { Pizzeria } from '@/lib/pizzeria-data';
-import { divIcon } from 'leaflet';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PizzaSliceIcon } from '@/components/icons/pizza-slice-icon';
-import { useEffect } from 'react';
 
 type PizzaMapProps = {
   pizzerias: Pizzeria[];
@@ -19,21 +18,11 @@ type PizzaMapProps = {
 
 const HERMOSILLO_COORDS: [number, number] = [29.085, -110.977];
 
-// Component to handle map view changes
-function ChangeView({ center, zoom }: { center: [number, number], zoom: number }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView(center, zoom, {
-      animate: true,
-      pan: {
-        duration: 0.5,
-      },
-    });
-  }, [center, zoom, map]);
-  return null;
-}
-
 export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
+  const mapRef = useRef<L.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const markersRef = useRef<L.Marker[]>([]);
+
   const customIcon = (isSelected: boolean) => {
     const iconMarkup = renderToStaticMarkup(
       <PizzaSliceIcon className={`
@@ -44,7 +33,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
         }
       `}/>
     );
-    return divIcon({
+    return L.divIcon({
       html: iconMarkup,
       className: 'bg-transparent border-none',
       iconSize: [32, 32],
@@ -52,37 +41,57 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
       popupAnchor: [0, -32],
     });
   };
-  
-  const center: [number, number] = selectedPizzeria
-    ? [selectedPizzeria.lat, selectedPizzeria.lng]
-    : (pizzerias.length === 1 ? [pizzerias[0].lat, pizzerias[0].lng] : HERMOSILLO_COORDS);
-  
-  const zoom = selectedPizzeria ? 15 : (pizzerias.length > 0 ? 13 : 12);
 
-  // By providing a key that changes only when we want a full re-render,
-  // we can avoid the "Map container is already initialized" error.
-  // A simple key from selectedPizzeria's id or the number of pizzerias will work.
-  const mapKey = selectedPizzeria?.id || pizzerias.length;
+  // Initialize map
+  useEffect(() => {
+    if (mapContainerRef.current && !mapRef.current) {
+      mapRef.current = L.map(mapContainerRef.current).setView(HERMOSILLO_COORDS, 12);
 
-  return (
-    <MapContainer key={mapKey} center={center} zoom={zoom} scrollWheelZoom={true} className="h-full w-full" style={{ zIndex: 0 }}>
-      <ChangeView center={center} zoom={zoom} />
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {pizzerias.map((pizzeria) => (
-        <Marker
-          key={pizzeria.id}
-          position={[pizzeria.lat, pizzeria.lng]}
-          eventHandlers={{
-            click: () => {
-              onMarkerClick(pizzeria);
-            },
-          }}
-          icon={customIcon(selectedPizzeria?.id === pizzeria.id)}
-        />
-      ))}
-    </MapContainer>
-  );
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(mapRef.current);
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  // Update view and markers when pizzerias or selection change
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+
+    // Add new markers
+    pizzerias.forEach((pizzeria) => {
+      const isSelected = selectedPizzeria?.id === pizzeria.id;
+      const marker = L.marker([pizzeria.lat, pizzeria.lng], {
+        icon: customIcon(isSelected),
+      })
+      .addTo(map)
+      .on('click', () => onMarkerClick(pizzeria));
+      
+      markersRef.current.push(marker);
+    });
+
+    // Update view
+    const center: [number, number] = selectedPizzeria
+      ? [selectedPizzeria.lat, selectedPizzeria.lng]
+      : (pizzerias.length === 1 ? [pizzerias[0].lat, pizzerias[0].lng] : HERMOSILLO_COORDS);
+    
+    const zoom = selectedPizzeria ? 15 : (pizzerias.length > 0 ? 13 : 12);
+    
+    map.setView(center, zoom, { animate: true, pan: { duration: 0.5 } });
+
+  }, [pizzerias, selectedPizzeria, onMarkerClick]);
+
+  return <div ref={mapContainerRef} className="h-full w-full" style={{ zIndex: 0 }} />;
 }
