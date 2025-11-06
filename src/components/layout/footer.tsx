@@ -42,7 +42,11 @@ export default function Footer() {
             <div className="space-y-4">
                 <Link href="/" className="flex items-center space-x-2">
                     <Pizza className="h-8 w-8 text-primary" />
-                    <span className="font-bold font-headline text-2xl text-white">PizzApp</span>
+                    <div className="relative">
+                      <span className="font-bold font-headline text-2xl text-white inline-block overflow-hidden whitespace-nowrap border-r-4 border-r-primary typing-animation">
+                        PizzApp
+                      </span>
+                    </div>
                 </Link>
                 <p className="text-sm">
                     Encuentra las mejores pizzerías en Hermosillo con un solo clic. Tu guía definitiva para la pizza.
