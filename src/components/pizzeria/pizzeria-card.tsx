@@ -24,10 +24,10 @@ export default function PizzeriaCard({ pizzeria, onClick, rankingPlace }: Pizzer
   }
 
   return (
-    <div className="relative h-full w-full z-10">
+    <div className="relative h-full w-full">
       <Card 
           className={cn(
-              "overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 h-full",
+              "overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 h-full z-10",
               getGlowClass(rankingPlace)
           )} 
           onClick={onClick}
