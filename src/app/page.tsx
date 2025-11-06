@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -119,8 +120,8 @@ export default function Home() {
              <div className="absolute bottom-[144px] w-[calc(33.33%+20px)] left-[calc(33.33%-10px)] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
 
              {/* Separator Shadows */}
-             <div className="absolute bottom-0 top-0 left-1/3 w-1 bg-black/20 z-10 h-[144px]"></div>
-             <div className="absolute bottom-0 top-0 left-2/3 w-1 bg-black/20 z-10 h-[144px]"></div>
+             <div className="absolute bottom-0 top-0 left-1/3 w-px bg-black/20 z-10 h-[144px]"></div>
+             <div className="absolute bottom-0 top-0 left-2/3 w-px bg-black/20 z-10 h-[144px]"></div>
              
 
              {/* Pizzeria Cards - positioned absolutely */}
