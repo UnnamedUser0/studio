@@ -2,7 +2,7 @@ import Footer from '@/components/layout/footer';
 
 export default function AboutPage() {
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-screen">
       <div className="flex-grow container py-20 text-center">
         <h1 className="font-headline text-5xl">Sobre Nosotros</h1>
         <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">

@@ -1,28 +1,85 @@
 import Link from 'next/link';
-import { Pizza } from 'lucide-react';
+import { Pizza, Facebook, Instagram, Twitter } from 'lucide-react';
+
+const footerSections = [
+    {
+        title: 'Enlaces Rápidos',
+        links: [
+            { text: 'Inicio', href: '/' },
+            { text: 'Buscar Pizzerías', href: '/#ranking' },
+            { text: 'Preguntas Frecuentes', href: '/faq' },
+            { text: 'Centro de Ayuda', href: '/help' },
+        ],
+    },
+    {
+        title: 'Legal',
+        links: [
+            { text: 'Términos de Uso', href: '/terms' },
+            { text: 'Política de Privacidad', href: '/privacy' },
+        ],
+    },
+    {
+        title: 'Contacto',
+        links: [
+            { text: 'Formulario de Contacto', href: '/contact' },
+            { text: 'info@pizzapp.com', href: 'mailto:info@pizzapp.com' },
+        ],
+    },
+];
+
+const socialLinks = [
+    { icon: <Facebook className="h-5 w-5" />, href: '#', 'aria-label': 'Facebook' },
+    { icon: <Instagram className="h-5 w-5" />, href: '#', 'aria-label': 'Instagram' },
+    { icon: <Twitter className="h-5 w-5" />, href: '#', 'aria-label': 'Twitter' },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-muted/50 text-muted-foreground border-t">
-      <div className="container py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Pizza className="h-5 w-5 text-primary" />
-          <p className="text-sm font-bold">PizzApp &copy; {new Date().getFullYear()}</p>
+    <footer className="bg-gray-900 text-gray-300">
+      <div className="container py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Pizzapp Section */}
+            <div className="space-y-4">
+                <Link href="/" className="flex items-center space-x-2">
+                    <Pizza className="h-8 w-8 text-primary" />
+                    <span className="font-bold font-headline text-2xl text-white">PizzApp</span>
+                </Link>
+                <p className="text-sm">
+                    Encuentra las mejores pizzerías en Hermosillo con un solo clic. Tu guía definitiva para la pizza.
+                </p>
+                <div className="flex space-x-4">
+                    {socialLinks.map((link, index) => (
+                        <a key={index} href={link.href} aria-label={link['aria-label']} className="text-gray-400 hover:text-primary transition-colors">
+                            {link.icon}
+                        </a>
+                    ))}
+                </div>
+            </div>
+
+            {/* Links Sections */}
+            {footerSections.map((section, index) => (
+                <div key={index} className="space-y-4">
+                    <h3 className="font-headline text-lg font-semibold text-white relative">
+                        {section.title}
+                        <span className="absolute -bottom-1 left-0 h-0.5 w-10 bg-primary"></span>
+                    </h3>
+                    <ul className="space-y-2">
+                        {section.links.map((link, linkIndex) => (
+                            <li key={linkIndex}>
+                                <Link href={link.href} className="text-sm hover:text-primary hover:underline transition-colors">
+                                    {link.text}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ))}
         </div>
-        <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
-          <Link href="/about" className="hover:text-primary transition-colors">
-            Sobre Nosotros
-          </Link>
-          <Link href="/help" className="hover:text-primary transition-colors">
-            Centro de Ayuda
-          </Link>
-          <Link href="/contact" className="hover:text-primary transition-colors">
-            Contacto
-          </Link>
-          <Link href="/privacy" className="hover:text-primary transition-colors">
-            Política de Privacidad
-          </Link>
-        </nav>
+      </div>
+      <div className="border-t border-gray-800">
+        <div className="container py-4 text-center text-sm text-gray-500">
+            <p>&copy; {new Date().getFullYear()} PizzApp. Todos los derechos reservados.</p>
+        </div>
       </div>
     </footer>
   );

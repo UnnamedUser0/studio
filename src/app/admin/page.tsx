@@ -12,7 +12,7 @@ function AdminDashboard() {
   const { user } = useAuth();
   
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-screen">
       <div className="flex-grow container py-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>

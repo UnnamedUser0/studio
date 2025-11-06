@@ -80,7 +80,7 @@ const CustomAccordionTrigger = ({ children }: { children: React.ReactNode }) => 
 
 export default function FAQPage() {
   return (
-    <div className="flex flex-col min-h-full bg-muted/30">
+    <div className="flex flex-col min-h-screen bg-muted/30">
         <div className="flex-grow container py-12 md:py-20">
             <div className="max-w-3xl mx-auto text-center">
                 <h1 className="font-headline text-4xl md:text-5xl font-bold">Preguntas Frecuentes</h1>

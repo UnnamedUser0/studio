@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 
 export default function ContactPage() {
   return (
-    <div className="flex flex-col min-h-full bg-muted/30">
+    <div className="flex flex-col min-h-screen bg-muted/30">
       <div className="flex-grow container py-12 md:py-20 flex items-center justify-center">
         <Card className="w-full max-w-2xl shadow-xl">
           <CardHeader className="text-center">
