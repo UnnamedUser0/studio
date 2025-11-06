@@ -20,7 +20,7 @@ const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), {
 
 export default function Home() {
   const [selectedPizzeria, setSelectedPizzeria] = useState<Pizzeria | null>(null);
-  const [searchResults, setSearchResults] = useState<Pizzeria[]>([]);
+  const [visiblePizzerias, setVisiblePizzerias] = useState<Pizzeria[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   const handleSelectPizzeria = (pizzeria: Pizzeria) => {
@@ -28,26 +28,25 @@ export default function Home() {
   };
 
   const handleSearchResults = (results: Pizzeria[]) => {
-    setSearchResults(results);
+    setVisiblePizzerias(results);
     setIsSearching(true);
-    // Do not automatically select a pizzeria if there is only one result
-    // Let the user click on it to see details.
     setSelectedPizzeria(null);
   };
   
   const handleClearSearch = () => {
-    setSearchResults([]);
+    setVisiblePizzerias([]);
     setIsSearching(false);
     setSelectedPizzeria(null);
   }
 
-  const pizzeriasToShow = isSearching ? searchResults : allPizzerias.sort((a, b) => b.rating - a.rating).slice(0, 3);
+  const pizzeriasForRanking = allPizzerias.sort((a, b) => b.rating - a.rating).slice(0, 3);
+  const pizzeriasToShowInList = isSearching ? visiblePizzerias : pizzeriasForRanking;
 
   return (
     <div className="h-full w-full relative overflow-y-auto">
       <div className="h-[60vh] w-full">
         <PizzaMap 
-          pizzerias={isSearching ? searchResults: []}
+          pizzerias={visiblePizzerias}
           onMarkerClick={handleSelectPizzeria} 
           selectedPizzeria={selectedPizzeria} 
         />
@@ -63,7 +62,7 @@ export default function Home() {
           </SheetTrigger>
           <SheetContent side="left" className="w-[90vw] max-w-[440px] p-0 flex flex-col">
             <PizzeriaList 
-                pizzerias={pizzeriasToShow}
+                pizzerias={pizzeriasToShowInList}
                 onPizzeriaSelect={handleSelectPizzeria} 
                 isSearching={isSearching}
                 onClearSearch={handleClearSearch}
@@ -80,10 +79,7 @@ export default function Home() {
         <div id="ranking" className="container py-12">
           <h2 className="text-3xl font-headline text-center mb-8">Ranking de Pizzerías</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {allPizzerias
-              .sort((a, b) => b.rating - a.rating)
-              .slice(0, 3)
-              .map((pizzeria) => (
+            {pizzeriasForRanking.map((pizzeria) => (
                 <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} onClick={() => handleSelectPizzeria(pizzeria)} />
               ))}
           </div>

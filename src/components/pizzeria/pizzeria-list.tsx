@@ -14,14 +14,19 @@ type PizzeriaListProps = {
 };
 
 export default function PizzeriaList({ pizzerias, onPizzeriaSelect, isSearching, onClearSearch }: PizzeriaListProps) {
+  const title = isSearching ? 'Resultados de Búsqueda' : 'Mejores Pizzerías';
+  const description = isSearching 
+    ? `Se encontraron ${pizzerias.length} pizzerías.` 
+    : 'Explora las pizzerías mejor calificadas de Hermosillo.';
+
   return (
     <>
       <SheetHeader className="p-6 border-b text-left">
         <div className="flex justify-between items-center">
           <div>
-            <SheetTitle className="font-headline text-3xl">{isSearching ? 'Resultados' : 'Pizzerías'}</SheetTitle>
+            <SheetTitle className="font-headline text-3xl">{title}</SheetTitle>
             <SheetDescription>
-              {isSearching ? `Se encontraron ${pizzerias.length} pizzerías.` : 'Explora las pizzerías de Hermosillo.'}
+              {description}
             </SheetDescription>
           </div>
           {isSearching && (
@@ -40,8 +45,8 @@ export default function PizzeriaList({ pizzerias, onPizzeriaSelect, isSearching,
             ))
           ) : (
             <div className="text-center text-muted-foreground py-10">
-              <p>No se encontraron resultados.</p>
-              <p className="text-sm">Intenta con otro término de búsqueda.</p>
+              <p>{isSearching ? 'No se encontraron resultados.' : 'No hay pizzerías para mostrar.'}</p>
+              {isSearching && <p className="text-sm">Intenta con otro término de búsqueda.</p>}
             </div>
           )}
         </div>
