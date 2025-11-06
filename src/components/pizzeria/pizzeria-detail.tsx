@@ -54,6 +54,7 @@ const ReviewCard = ({ review }: {review: Review}) => (
 const AddReview = () => {
     const { user } = useAuth();
     const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
 
     if (!user) {
         return (
@@ -71,7 +72,11 @@ const AddReview = () => {
                 <h4 className="font-headline text-lg">Deja tu opinión</h4>
             </CardHeader>
             <CardContent className="space-y-4">
-                <Textarea placeholder={`¿Qué te pareció, ${user.name}?`}/>
+                <Textarea 
+                    placeholder={`¿Qué te pareció, ${user.name}?`}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                />
                 <div className="flex justify-between items-center">
                     <StarRatingInput rating={rating} setRating={setRating} />
                     <Button>Publicar</Button>
