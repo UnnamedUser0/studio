@@ -26,7 +26,7 @@ function ThemeSwitcher() {
       aria-label="Toggle theme"
     >
       <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <Moon className="absolute h-[1.2rem] w-[1_2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
     </Button>
   );
 }
@@ -42,8 +42,8 @@ export default function Header() {
         <div className="flex items-center space-x-2 mr-8">
           <Link href="/" className="flex items-center space-x-2">
             <Pizza className="h-7 w-7 text-primary" />
-            <div className="relative w-[7ch]">
-              <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap">
+            <div className="relative">
+              <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap border-r-4 border-r-primary typing-animation">
                 PizzApp
               </span>
             </div>
