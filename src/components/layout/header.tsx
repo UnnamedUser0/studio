@@ -37,12 +37,16 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-16">
       <div className="container flex h-full items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
-          <Pizza className="h-7 w-7 text-primary" />
-          <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap typing-animation">
-            PizzApp
-          </span>
-        </Link>
+        <div className="flex items-center space-x-2 mr-8">
+          <Link href="/" className="flex items-center space-x-2">
+            <Pizza className="h-7 w-7 text-primary" />
+            <div className="w-[4.5em]">
+              <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap typing-animation">
+                PizzApp
+              </span>
+            </div>
+          </Link>
+        </div>
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           <Link href="/#ranking" className="transition-colors hover:text-primary">
             Ranking
