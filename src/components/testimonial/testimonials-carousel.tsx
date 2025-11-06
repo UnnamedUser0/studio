@@ -8,11 +8,9 @@ import { testimonials } from '@/lib/testimonial-data';
 import TestimonialCard from './testimonial-card';
 
 export default function TestimonialsCarousel() {
-  const plugin = React.useRef(Autoplay({ delay: 3000, stopOnInteraction: true, stopOnMouseEnter: true }));
-
   return (
     <Carousel
-      plugins={[plugin.current]}
+      plugins={[Autoplay({ delay: 3000, stopOnInteraction: true, stopOnMouseEnter: true })]}
       className="w-full"
       opts={{
         align: 'start',
