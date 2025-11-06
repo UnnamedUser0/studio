@@ -60,11 +60,13 @@
   }
 
   @keyframes typing {
-    from {
-      width: 0;
-    }
-    to {
-      width: 100%;
-    }
+    0% { width: 0; }
+    14% { width: 1ch; }
+    28% { width: 2ch; }
+    42% { width: 3ch; }
+    56% { width: 4ch; }
+    70% { width: 5ch; }
+    84% { width: 6ch; }
+    100% { width: 7ch; }
   }
 }
