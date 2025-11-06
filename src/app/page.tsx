@@ -54,7 +54,7 @@ export default function Home() {
   const pizzeriasForRanking = allPizzerias.sort((a, b) => b.rating - a.rating).slice(0, 3);
   const pizzeriasToShowInList = isSearching ? visiblePizzerias : pizzeriasForRanking;
 
-  const podiumOrder = [1, 0, 2]; // 2nd, 1st, 3rd
+  const podiumOrder = [1, 0, 2];
 
   return (
     <div className="h-full w-full relative overflow-y-auto">
@@ -92,46 +92,57 @@ export default function Home() {
       {!isSearching && (
         <div id="ranking" className="container py-12">
           <h2 className="text-3xl font-headline text-center mb-16">Ranking de Pizzerías</h2>
-          <div className="mt-12 w-full max-w-4xl mx-auto">
-            <div className="flex justify-center items-end gap-x-4 md:gap-x-2">
-              {/* 2nd Place */}
-              <div className="w-1/3 flex flex-col items-center">
+          <div className="relative w-full max-w-4xl mx-auto flex items-end justify-center gap-1">
+            {/* 2nd Place */}
+            <div className="w-1/3 flex flex-col items-center">
+              <div className="mb-2 w-full max-w-xs">
                 <PizzeriaCard
                   pizzeria={pizzeriasForRanking[1]}
                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[1])}
                   rankingPlace={2}
                 />
-                <div className="w-full bg-secondary rounded-b-lg h-24 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
-                  <span className="text-4xl font-black text-muted-foreground opacity-20">2</span>
-                </div>
               </div>
-              
-              {/* 1st Place */}
-              <div className="w-1/3 flex flex-col items-center">
+              <div className="relative w-full h-24 bg-[#00608B] border-b-8 border-b-[#003F5C]">
+                <div className="absolute inset-0 bg-black/10"></div>
+                <div className="absolute -right-1 top-0 h-full w-1 bg-black/20"></div>
+                <span className="absolute inset-0 flex items-center justify-center font-bold text-5xl text-white/80" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>2</span>
+              </div>
+            </div>
+            
+            {/* 1st Place */}
+            <div className="w-1/3 flex flex-col items-center">
+              <div className="mb-2 w-full max-w-xs">
                 <PizzeriaCard
                   pizzeria={pizzeriasForRanking[0]}
                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[0])}
                   rankingPlace={1}
                 />
-                <div className="w-full bg-secondary rounded-b-lg h-36 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
-                  <span className="text-5xl font-black text-muted-foreground opacity-25">1</span>
-                </div>
               </div>
+              <div className="relative w-full h-36 bg-[#00608B] border-b-8 border-b-[#003F5C]">
+                <div className="absolute inset-0 bg-black/10"></div>
+                <div className="absolute -left-1 top-0 h-full w-1 bg-black/20"></div>
+                 <div className="absolute -right-1 top-0 h-full w-1 bg-black/20"></div>
+                <span className="absolute inset-0 flex items-center justify-center font-bold text-6xl text-white" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.5)' }}>1</span>
+              </div>
+            </div>
 
-              {/* 3rd Place */}
-              <div className="w-1/3 flex flex-col items-center">
+            {/* 3rd Place */}
+            <div className="w-1/3 flex flex-col items-center">
+              <div className="mb-2 w-full max-w-xs">
                 <PizzeriaCard
                   pizzeria={pizzeriasForRanking[2]}
                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[2])}
                   rankingPlace={3}
                 />
-                <div className="w-full bg-secondary rounded-b-lg h-16 mt-[-1rem] pt-6 shadow-inner flex items-center justify-center">
-                  <span className="text-3xl font-black text-muted-foreground opacity-15">3</span>
-                </div>
+              </div>
+              <div className="relative w-full h-20 bg-[#00608B] border-b-8 border-b-[#003F5C]">
+                 <div className="absolute inset-0 bg-black/10"></div>
+                 <div className="absolute -left-1 top-0 h-full w-1 bg-black/20"></div>
+                 <span className="absolute inset-0 flex items-center justify-center font-bold text-4xl text-white/70" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>3</span>
               </div>
             </div>
-            {/* Podium Base */}
-            <div className="h-4 bg-muted/80 rounded-b-lg shadow-inner mt-0"></div>
+             {/* Base Shadow */}
+            <div className="absolute bottom-[-15px] h-8 w-[105%] bg-gray-400/30 rounded-[50%] blur-md z-[-1]"></div>
           </div>
         </div>
       )}
