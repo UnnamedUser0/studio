@@ -48,6 +48,12 @@ export default function Header() {
           <Link href="/faq" className="transition-colors hover:text-primary">
             Preguntas Frecuentes
           </Link>
+          <Link href="/help" className="transition-colors hover:text-primary">
+            Centro de Ayuda
+          </Link>
+          <Link href="/contact" className="transition-colors hover:text-primary">
+            Contacto
+          </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <ThemeSwitcher />
