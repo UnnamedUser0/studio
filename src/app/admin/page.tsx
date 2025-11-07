@@ -1,15 +1,17 @@
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
+import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import Footer from '@/components/layout/footer';
 
+const ADMIN_EMAILS = ['admin@pizzapp.com', 'test@example.com'];
+
 function AdminDashboard() {
-  const { user } = useAuth();
+  const { user } = useUser();
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -17,7 +19,7 @@ function AdminDashboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="font-headline text-4xl">Panel de Administración</h1>
-            <p className="text-muted-foreground">Bienvenido, {user?.name}.</p>
+            <p className="text-muted-foreground">Bienvenido, {user?.displayName || user?.email}.</p>
           </div>
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -42,17 +44,17 @@ function AdminDashboard() {
 }
 
 export default function AdminPage() {
-  const { isAdmin, user } = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
 
   useEffect(() => {
-    // A simple client-side check. A real app needs server-side protection.
-    if (user === null) {
+    if (!isUserLoading && !user) {
       router.push('/login');
     }
-  }, [isAdmin, user, router]);
+  }, [isUserLoading, user, router]);
 
-  if (user === null) {
+  if (isUserLoading || !user) {
     return <div className="container py-12"><Skeleton className="w-full h-64" /></div>;
   }
 

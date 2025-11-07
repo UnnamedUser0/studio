@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Pizzeria, Review } from '@/lib/pizzeria-data';
-import { useAuth } from '@/context/auth-context';
+import { useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
@@ -52,7 +52,7 @@ const ReviewCard = ({ review }: {review: Review}) => (
 )
 
 const AddReview = () => {
-    const { user } = useAuth();
+    const { user } = useUser();
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
 
@@ -73,7 +73,7 @@ const AddReview = () => {
             </CardHeader>
             <CardContent className="space-y-4">
                 <Textarea 
-                    placeholder={`¿Qué te pareció, ${user.name}?`}
+                    placeholder={`¿Qué te pareció, ${user.displayName || user.email}?`}
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                 />
