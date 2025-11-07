@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css';
@@ -31,7 +31,7 @@ type PizzaMapProps = {
   selectedPizzeria: Pizzeria | null;
 };
 
-// This component will handle map view changes
+// This component will handle map view changes imperatively
 function ChangeView({ center, zoom }: { center: L.LatLngTuple; zoom: number }) {
   const map = useMap();
   useEffect(() => {
