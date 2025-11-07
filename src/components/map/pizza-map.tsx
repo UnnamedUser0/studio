@@ -1,10 +1,13 @@
 'use client';
-
-import { useState, useEffect } from 'react';
-import { ReactBingmaps } from 'react-bingmaps';
+import { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css'; // Re-uses images from ~leaflet package
+import * as L from 'leaflet';
+import 'leaflet-defaulticon-compatibility';
 import type { Pizzeria } from '@/lib/types';
-import { Button } from '@/components/ui/button';
-import { Map, Globe } from 'lucide-react';
+
+const HERMOSILLO_CENTER: L.LatLngTuple = [29.085, -110.977];
 
 type PizzaMapProps = {
   pizzerias: Pizzeria[];
@@ -12,104 +15,66 @@ type PizzaMapProps = {
   selectedPizzeria: Pizzeria | null;
 };
 
-const HERMOSILLO_CENTER = [29.085, -110.977];
-
-const bingMapsKey = process.env.NEXT_PUBLIC_BING_MAPS_API_KEY;
+// This component is used to programmatically change the map view
+function ChangeView({ center, zoom }: { center: L.LatLngTuple, zoom: number }) {
+    const map = useMap();
+    useEffect(() => {
+        map.flyTo(center, zoom, {
+            animate: true,
+            duration: 1.5
+        });
+    }, [center, zoom, map]);
+    return null;
+}
 
 export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
-  const [mapType, setMapType] = useState<'road' | 'aerial'>('road');
-  const [isClient, setIsClient] = useState(false);
-  
-  // The key is used to force a re-render of the map when the center changes.
-  // This is a workaround because the component does not always react to `center` prop changes.
-  const mapKey = selectedPizzeria ? selectedPizzeria.id : 'initial-map';
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    return <div className="h-full w-full bg-muted animate-pulse" />;
-  }
-  
-  if (!bingMapsKey || bingMapsKey === 'YOUR_API_KEY_HERE') {
-    return (
-      <div className="h-full w-full bg-muted flex flex-col items-center justify-center text-center p-4">
-        <h3 className="font-headline text-xl text-foreground mb-2">Configuración del Mapa Requerida</h3>
-        <p className="text-muted-foreground">
-          Para mostrar el mapa de Bing, por favor, añade tu clave de API en el archivo `.env` como `NEXT_PUBLIC_BING_MAPS_API_KEY`.
-        </p>
-      </div>
-    );
-  }
-
-  const pushPins = pizzerias.map(pizzeria => ({
-    location: [pizzeria.lat, pizzeria.lng],
-    option: { 
-      color: selectedPizzeria?.id === pizzeria.id ? 'red' : 'orange'
-    },
-    addHandler: {
-      type: 'click',
-      callback: () => onMarkerClick(pizzeria),
-    },
-  }));
-  
-  let center = HERMOSILLO_CENTER;
-  let zoom = 12;
-  let boundary;
+  let mapCenter = HERMOSILLO_CENTER;
+  let mapZoom = 12;
 
   if (selectedPizzeria) {
-    center = [selectedPizzeria.lat, selectedPizzeria.lng];
-    zoom = 15;
-  } else if (pizzerias.length > 0) {
-     const locations = pizzerias.map(p => ({ latitude: p.lat, longitude: p.lng }));
-     if (locations.length > 0) {
-      boundary = {
-          locations,
-          option: {
-              padding: 100
-          }
-       };
-     }
+    mapCenter = [selectedPizzeria.lat, selectedPizzeria.lng];
+    mapZoom = 16;
   }
 
+  // Define custom icons
+  const defaultIcon = new L.Icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/128/3595/3595458.png',
+    iconSize: [35, 35],
+    iconAnchor: [17, 35],
+    popupAnchor: [0, -35],
+  });
+
+  const selectedIcon = new L.Icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/128/1046/1046751.png',
+    iconSize: [45, 45],
+    iconAnchor: [22, 45],
+    popupAnchor: [0, -45],
+  });
 
   return (
-    <div className="h-full w-full relative">
-      <ReactBingmaps
-        key={mapKey} // Force re-render when the selected pizzeria (and thus the center) changes
-        bingmapKey={bingMapsKey}
-        pushPins={pushPins}
-        center={center}
-        zoom={zoom}
-        mapTypeId={mapType}
-        boundary={boundary}
-        mapOptions={{
-            showLocateMeButton: false,
-            showMapTypeSelector: false,
-            showZoomButtons: true,
-        }}
+    <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
-      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
-        <Button 
-          size="icon" 
-          onClick={() => setMapType('road')} 
-          variant={mapType === 'road' ? 'default' : 'secondary'}
-          className="shadow-lg"
+      
+      {selectedPizzeria && (
+        <ChangeView center={[selectedPizzeria.lat, selectedPizzeria.lng]} zoom={16} />
+      )}
+      
+      {pizzerias.map(pizzeria => (
+        <Marker
+          key={pizzeria.id}
+          position={[pizzeria.lat, pizzeria.lng]}
+          eventHandlers={{
+            click: () => {
+              onMarkerClick(pizzeria);
+            },
+          }}
+          icon={selectedPizzeria?.id === pizzeria.id ? selectedIcon : defaultIcon}
         >
-          <Map className="h-5 w-5" />
-          <span className="sr-only">Vista de Carreteras</span>
-        </Button>
-        <Button 
-          size="icon" 
-          onClick={() => setMapType('aerial')}
-          variant={mapType === 'aerial' ? 'default' : 'secondary'}
-          className="shadow-lg"
-        >
-          <Globe className="h-5 w-5" />
-          <span className="sr-only">Vista Aérea</span>
-        </Button>
-      </div>
-    </div>
+        </Marker>
+      ))}
+    </MapContainer>
   );
 }
