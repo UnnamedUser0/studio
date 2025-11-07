@@ -15,14 +15,14 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password) {
+    if (email && password && auth) {
       initiateEmailSignIn(auth, email, password);
     }
   };
   
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password) {
+    if (email && password && auth) {
       initiateEmailSignUp(auth, email, password);
     }
   };
