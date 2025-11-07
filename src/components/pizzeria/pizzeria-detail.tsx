@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { Star } from 'lucide-react';
+import { Star, Loader2 } from 'lucide-react';
 import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -12,7 +12,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import { collection } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { Loader2 } from 'lucide-react';
 
 const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => (
     <div className="flex items-center">

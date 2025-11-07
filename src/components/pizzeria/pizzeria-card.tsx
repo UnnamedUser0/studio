@@ -24,7 +24,7 @@ export default function PizzeriaCard({ pizzeria, onClick, rankingPlace }: Pizzer
   }
 
   // Fallback for missing reviews
-  const reviewsCount = pizzeria.reviews?.length || 0;
+  const reviewsCount = 0; // Temporarily set to 0 as reviews are now loaded separately
   const rating = pizzeria.rating || 0;
   const imageUrl = pizzeria.imageUrl || 'https://picsum.photos/seed/default/400/400';
   const imageHint = pizzeria.imageHint || 'pizza';
