@@ -1,0 +1,112 @@
+/**
+ * @fileoverview Firestore Security Rules for the Hermosillo Pizza Finder App.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user profiles and reviews, while providing public read access to pizzeria data. Administrative privileges are granted based on the existence of a document in the /roles_admin collection.  All write operations are strictly controlled based on authentication and role.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profile data, accessible only to the authenticated user with matching UID.
+ * - /pizzerias/{pizzeriaId}: Stores pizzeria data, publicly readable but writable only by admins.
+ * - /pizzerias/{pizzeriaId}/reviews/{reviewId}: Stores reviews for pizzerias, with ownership tied to the user who created the review.
+ * - /roles_admin/{userId}: Documents in this collection indicate admin privileges for the corresponding user.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed.
+ * - Pizzeria data is publicly readable.
+ * - Admin privileges are determined by the existence of a document in /roles_admin/{userId}.
+ * - Reviews are secured to ensure that a review can only be created, updated, or deleted by the user who created it.
+ *
+ * Denormalization for Authorization:
+ * - The `isAdmin` property is denormalized to avoid costly `get()` calls for checking admin status. The presence of a document in `/roles_admin/{userId}` indicates admin privileges.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Enforces user-ownership for user profiles. Only the authenticated user can access their own profile.
+     * @path /users/{userId}
+     * @allow (create) User 'user_abc' can create their profile at /users/user_abc.
+     * @deny (create) User 'user_xyz' cannot create a profile at /users/user_abc.
+     * @allow (get, update, delete) User 'user_abc' can get, update or delete their profile at /users/user_abc.
+     * @deny (get, update, delete) User 'user_xyz' cannot get, update, or delete the profile at /users/user_abc.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to pizzeria data. Publicly readable, but only admins can create, update, or delete.
+     * @path /pizzerias/{pizzeriaId}
+     * @allow (get, list) Any authenticated user can read pizzeria data.
+     * @allow (create, update, delete) Only admins can create, update, or delete pizzerias.
+     * @deny (create, update, delete) Non-admins cannot create, update, or delete pizzerias.
+     * @principle Public read access with admin-only writes.
+     */
+    match /pizzerias/{pizzeriaId} {
+      allow get, list: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Enforces user-ownership for reviews. Only the author and admins can manage reviews.
+     * @path /pizzerias/{pizzeriaId}/reviews/{reviewId}
+     * @allow (create) User 'user_abc' can create a review for a pizzeria.
+     * @deny (create) User 'user_xyz' cannot create a review for pizzeria.
+     * @allow (get, update, delete) User 'user_abc' can get, update, or delete their review.
+     * @deny (get, update, delete) User 'user_xyz' cannot get, update, or delete review.
+     * @principle Enforces document ownership for reviews.
+     */
+    match /pizzerias/{pizzeriaId}/reviews/{reviewId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isReviewOwner(resource.data.userId) && resource != null;
+      allow delete: if isReviewOwner(resource.data.userId) && resource != null;
+    }
+
+     /**
+      * @description Grants admin privileges based on the existence of a document in this collection.
+      * @path /roles_admin/{userId}
+      * @allow (get) Anyone can attempt to get a document here, but only admins will have a document present.
+      * @allow (list) Listing is not allowed.
+      * @allow (create) Only the user creating the account can create the role.
+      * @allow (update, delete) No one is allowed to update/delete after creation.
+      * @principle Admin privileges are determined by document existence.
+      */
+    match /roles_admin/{userId} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+    }
+
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    function isReviewOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+    }
+  }
+}

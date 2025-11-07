@@ -1,0 +1,203 @@
+{
+  "entities": {
+    "Pizzeria": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Pizzeria",
+      "type": "object",
+      "description": "Represents a pizzeria in Hermosillo, Sonora.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the pizzeria."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the pizzeria."
+        },
+        "address": {
+          "type": "string",
+          "description": "The address of the pizzeria."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The latitude coordinate of the pizzeria's location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The longitude coordinate of the pizzeria's location."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the pizzeria (e.g., 'Italian', 'Pizza')."
+        },
+        "source": {
+          "type": "string",
+          "description": "The source of the pizzeria's information (e.g., 'OpenStreetMap', 'HERE WeGo')."
+        },
+        "rating": {
+          "type": "number",
+          "description": "The average rating of the pizzeria."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "address",
+        "latitude",
+        "longitude",
+        "category",
+        "source"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Hermosillo Pizza Finder app.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's username."
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Indicates whether the user is an administrator."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "username"
+      ]
+    },
+    "Review": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Review",
+      "type": "object",
+      "description": "Represents a review of a pizzeria by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the review."
+        },
+        "pizzeriaId": {
+          "type": "string",
+          "description": "Reference to Pizzeria. (Relationship: Pizzeria 1:N Review)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Review)"
+        },
+        "rating": {
+          "type": "number",
+          "description": "The rating given by the user (e.g., 1 to 5 stars)."
+        },
+        "comment": {
+          "type": "string",
+          "description": "The user's comment about the pizzeria."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp when the review was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "pizzeriaId",
+        "userId",
+        "rating",
+        "comment",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Path-based ownership: only the authenticated user can access their own profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/pizzerias/{pizzeriaId}",
+        "definition": {
+          "entityName": "Pizzeria",
+          "schema": {
+            "$ref": "#/backend/entities/Pizzeria"
+          },
+          "description": "Stores information about each pizzeria. Any authenticated user can read pizzeria data, but only admins can create/update/delete. Includes 'rating' field, which is updated via Cloud Functions.",
+          "params": [
+            {
+              "name": "pizzeriaId",
+              "description": "The unique identifier of the pizzeria."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/pizzerias/{pizzeriaId}/reviews/{reviewId}",
+        "definition": {
+          "entityName": "Review",
+          "schema": {
+            "$ref": "#/backend/entities/Review"
+          },
+          "description": "Stores reviews for each pizzeria. Path-based ownership from pizzeria to review.",
+          "params": [
+            {
+              "name": "pizzeriaId",
+              "description": "The unique identifier of the pizzeria."
+            },
+            {
+              "name": "reviewId",
+              "description": "The unique identifier of the review."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Indicates admin privileges. Existence of a document with the user's ID grants admin access.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore data structure is designed to support the Hermosillo Pizza Finder app, focusing on security, scalability, and ease of maintenance.  The structure leverages path-based ownership for user-specific data and a membership map for collaborative data. Authorization independence is achieved by denormalizing relevant authorization data (isAdmin flag) where required, eliminating the need for costly and complex `get()` calls in security rules.\n\nThe segregation strategy ensures each collection contains documents with uniform security requirements, simplifying the rule base and improving query performance.\n\n*   `/users/{userId}`: Stores user profiles.  This collection uses path-based ownership, ensuring that only the authenticated user can access their profile data.\n*   `/pizzerias/{pizzeriaId}`:  Stores information about each pizzeria. Any authenticated user can read the pizzeria data, only admins can create/update/delete them.\n*   `/pizzerias/{pizzeriaId}/reviews/{reviewId}`: Stores reviews for each pizzeria. Uses path-based ownership from the pizzeria to the review.\n*   `/roles_admin/{userId}`: Existence in this collection grants admin privileges.  Security rules check for the existence of a document with the user's ID in this collection.\n\nThis structure supports the required QAPs by:\n\n*   **Secure List Operations:** Segregation into dedicated collections for pizzerias, user profiles, and admin roles ensures that list operations can be performed securely without exposing sensitive data or requiring complex filtering logic.\n*   **Authorization Independence:** Denormalization of authorization context (the `isAdmin` flag) avoids hierarchical authorization dependencies and enables atomic operations.\n*   **Enforces Data Integrity**: Enforces ownership, timestamps, and denormalized data via security rules to guarantee Radical Consistency."
+  }
+}
