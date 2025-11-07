@@ -1,5 +1,6 @@
 'use client';
-import { useRef, useEffect } from 'react';
+
+import { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css';
@@ -8,12 +9,6 @@ import 'leaflet-defaulticon-compatibility';
 import type { Pizzeria } from '@/lib/types';
 
 const HERMOSILLO_CENTER: L.LatLngTuple = [29.085, -110.977];
-
-type PizzaMapProps = {
-  pizzerias: Pizzeria[];
-  onMarkerClick: (pizzeria: Pizzeria) => void;
-  selectedPizzeria: Pizzeria | null;
-};
 
 // Define custom icons
 const defaultIcon = new L.Icon({
@@ -30,20 +25,25 @@ const selectedIcon = new L.Icon({
   popupAnchor: [0, -45],
 });
 
+type PizzaMapProps = {
+  pizzerias: Pizzeria[];
+  onMarkerClick: (pizzeria: Pizzeria) => void;
+  selectedPizzeria: Pizzeria | null;
+};
+
 // This component will handle map view changes
 function ChangeView({ center, zoom }: { center: L.LatLngTuple; zoom: number }) {
   const map = useMap();
-  map.flyTo(center, zoom, {
+  useEffect(() => {
+    map.flyTo(center, zoom, {
       animate: true,
-      duration: 1.5
-  });
+      duration: 1.5,
+    });
+  }, [center, zoom, map]);
   return null;
 }
 
-
 export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
-  const mapRef = useRef<L.Map | null>(null);
-
   const center = selectedPizzeria
     ? [selectedPizzeria.lat, selectedPizzeria.lng] as L.LatLngTuple
     : HERMOSILLO_CENTER;
@@ -56,8 +56,8 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
       zoom={zoom}
       style={{ height: '100%', width: '100%' }}
       scrollWheelZoom={true}
-      ref={mapRef}
     >
+      <ChangeView center={center} zoom={zoom} />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -76,9 +76,6 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
         >
         </Marker>
       ))}
-
-      <ChangeView center={center} zoom={zoom} />
-
     </MapContainer>
   );
 }
