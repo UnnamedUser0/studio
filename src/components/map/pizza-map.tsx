@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css';
 import * as L from 'leaflet';
@@ -31,51 +30,74 @@ type PizzaMapProps = {
   selectedPizzeria: Pizzeria | null;
 };
 
-// This component will handle map view changes imperatively
-function ChangeView({ center, zoom }: { center: L.LatLngTuple; zoom: number }) {
-  const map = useMap();
-  useEffect(() => {
-    map.flyTo(center, zoom, {
-      animate: true,
-      duration: 1.5,
-    });
-  }, [center, zoom, map]);
-  return null;
-}
-
 export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
-  const center = selectedPizzeria
-    ? [selectedPizzeria.lat, selectedPizzeria.lng] as L.LatLngTuple
-    : HERMOSILLO_CENTER;
-  
-  const zoom = selectedPizzeria ? 16 : 12;
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
 
-  return (
-    <MapContainer
-      center={center}
-      zoom={zoom}
-      style={{ height: '100%', width: '100%' }}
-      scrollWheelZoom={true}
-    >
-      <ChangeView center={center} zoom={zoom} />
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
+  // Effect for map initialization and cleanup
+  useEffect(() => {
+    if (mapContainerRef.current && !mapInstanceRef.current) {
+      const map = L.map(mapContainerRef.current).setView(HERMOSILLO_CENTER, 12);
+      mapInstanceRef.current = map;
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+    }
+    
+    // Cleanup function to remove the map instance
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []); // Empty dependency array ensures this runs only once on mount and unmount
+
+  // Effect for updating markers
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+
+    // Add new markers
+    pizzerias.forEach(pizzeria => {
+      const isSelected = selectedPizzeria?.id === pizzeria.id;
+      const marker = L.marker([pizzeria.lat, pizzeria.lng], {
+        icon: isSelected ? selectedIcon : defaultIcon,
+      })
+        .addTo(map)
+        .on('click', () => onMarkerClick(pizzeria));
       
-      {pizzerias.map(pizzeria => (
-        <Marker
-          key={pizzeria.id}
-          position={[pizzeria.lat, pizzeria.lng]}
-          eventHandlers={{
-            click: () => {
-              onMarkerClick(pizzeria);
-            },
-          }}
-          icon={selectedPizzeria?.id === pizzeria.id ? selectedIcon : defaultIcon}
-        >
-        </Marker>
-      ))}
-    </MapContainer>
-  );
+      if (isSelected) {
+        marker.setZIndexOffset(1000);
+      }
+
+      markersRef.current.push(marker);
+    });
+  }, [pizzerias, selectedPizzeria, onMarkerClick]);
+
+  // Effect for changing map view
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (selectedPizzeria) {
+      map.flyTo([selectedPizzeria.lat, selectedPizzeria.lng], 16, {
+        animate: true,
+        duration: 1.5,
+      });
+    } else {
+       map.flyTo(HERMOSILLO_CENTER, 12, {
+        animate: true,
+        duration: 1.5
+       });
+    }
+  }, [selectedPizzeria]);
+
+  return <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />;
 }
