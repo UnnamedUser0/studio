@@ -14,12 +14,15 @@ type PizzaMapProps = {
 
 const HERMOSILLO_CENTER = [29.085, -110.977];
 
-// Directly use the environment variable as it's loaded by Next.js
 const bingMapsKey = process.env.NEXT_PUBLIC_BING_MAPS_API_KEY;
 
 export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
   const [mapType, setMapType] = useState<'road' | 'aerial'>('road');
   const [isClient, setIsClient] = useState(false);
+  
+  // The key is used to force a re-render of the map when the center changes.
+  // This is a workaround because the component does not always react to `center` prop changes.
+  const mapKey = selectedPizzeria ? selectedPizzeria.id : 'initial-map';
 
   useEffect(() => {
     setIsClient(true);
@@ -53,18 +56,20 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
   
   let center = HERMOSILLO_CENTER;
   let zoom = 12;
-  let boundary = undefined;
+  let boundary;
 
   if (selectedPizzeria) {
     center = [selectedPizzeria.lat, selectedPizzeria.lng];
     zoom = 15;
   } else if (pizzerias.length > 0) {
      const locations = pizzerias.map(p => ({ latitude: p.lat, longitude: p.lng }));
-     boundary = {
-        location: locations,
-        option: {
-            padding: 100
-        }
+     if (locations.length > 0) {
+      boundary = {
+          locations,
+          option: {
+              padding: 100
+          }
+       };
      }
   }
 
@@ -72,6 +77,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
   return (
     <div className="h-full w-full relative">
       <ReactBingmaps
+        key={mapKey} // Force re-render when the selected pizzeria (and thus the center) changes
         bingmapKey={bingMapsKey}
         pushPins={pushPins}
         center={center}
