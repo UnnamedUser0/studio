@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css'; // Re-uses images from ~leaflet package
@@ -15,26 +15,17 @@ type PizzaMapProps = {
   selectedPizzeria: Pizzeria | null;
 };
 
-// This component is used to programmatically change the map view
-function ChangeView({ center, zoom }: { center: L.LatLngTuple, zoom: number }) {
-    const map = useMap();
-    useEffect(() => {
-        map.flyTo(center, zoom, {
-            animate: true,
-            duration: 1.5
-        });
-    }, [center, zoom, map]);
-    return null;
-}
-
 export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
-  let mapCenter = HERMOSILLO_CENTER;
-  let mapZoom = 12;
+  const mapRef = useRef<L.Map | null>(null);
 
-  if (selectedPizzeria) {
-    mapCenter = [selectedPizzeria.lat, selectedPizzeria.lng];
-    mapZoom = 16;
-  }
+  useEffect(() => {
+    if (mapRef.current && selectedPizzeria) {
+      mapRef.current.flyTo([selectedPizzeria.lat, selectedPizzeria.lng], 16, {
+        animate: true,
+        duration: 1.5,
+      });
+    }
+  }, [selectedPizzeria]);
 
   // Define custom icons
   const defaultIcon = new L.Icon({
@@ -52,15 +43,19 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
   });
 
   return (
-    <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
+    <MapContainer
+      center={HERMOSILLO_CENTER}
+      zoom={12}
+      style={{ height: '100%', width: '100%' }}
+      scrollWheelZoom={true}
+      whenCreated={(mapInstance) => {
+        mapRef.current = mapInstance;
+      }}
+    >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
-      
-      {selectedPizzeria && (
-        <ChangeView center={[selectedPizzeria.lat, selectedPizzeria.lng]} zoom={16} />
-      )}
       
       {pizzerias.map(pizzeria => (
         <Marker
