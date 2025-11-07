@@ -1,8 +1,8 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css'; // Re-uses images from ~leaflet package
+import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css';
 import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 import type { Pizzeria } from '@/lib/types';
@@ -15,42 +15,48 @@ type PizzaMapProps = {
   selectedPizzeria: Pizzeria | null;
 };
 
+// Define custom icons
+const defaultIcon = new L.Icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/128/3595/3595458.png',
+  iconSize: [35, 35],
+  iconAnchor: [17, 35],
+  popupAnchor: [0, -35],
+});
+
+const selectedIcon = new L.Icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/128/1046/1046751.png',
+  iconSize: [45, 45],
+  iconAnchor: [22, 45],
+  popupAnchor: [0, -45],
+});
+
+// This component will handle map view changes
+function ChangeView({ center, zoom }: { center: L.LatLngTuple; zoom: number }) {
+  const map = useMap();
+  map.flyTo(center, zoom, {
+      animate: true,
+      duration: 1.5
+  });
+  return null;
+}
+
+
 export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
   const mapRef = useRef<L.Map | null>(null);
 
-  useEffect(() => {
-    if (mapRef.current && selectedPizzeria) {
-      mapRef.current.flyTo([selectedPizzeria.lat, selectedPizzeria.lng], 16, {
-        animate: true,
-        duration: 1.5,
-      });
-    }
-  }, [selectedPizzeria]);
-
-  // Define custom icons
-  const defaultIcon = new L.Icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/128/3595/3595458.png',
-    iconSize: [35, 35],
-    iconAnchor: [17, 35],
-    popupAnchor: [0, -35],
-  });
-
-  const selectedIcon = new L.Icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/128/1046/1046751.png',
-    iconSize: [45, 45],
-    iconAnchor: [22, 45],
-    popupAnchor: [0, -45],
-  });
+  const center = selectedPizzeria
+    ? [selectedPizzeria.lat, selectedPizzeria.lng] as L.LatLngTuple
+    : HERMOSILLO_CENTER;
+  
+  const zoom = selectedPizzeria ? 16 : 12;
 
   return (
     <MapContainer
-      center={HERMOSILLO_CENTER}
-      zoom={12}
+      center={center}
+      zoom={zoom}
       style={{ height: '100%', width: '100%' }}
       scrollWheelZoom={true}
-      whenCreated={(mapInstance) => {
-        mapRef.current = mapInstance;
-      }}
+      ref={mapRef}
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -70,6 +76,9 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
         >
         </Marker>
       ))}
+
+      <ChangeView center={center} zoom={zoom} />
+
     </MapContainer>
   );
 }
