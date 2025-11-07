@@ -9,7 +9,7 @@ import SmartSearch from '@/components/search/smart-search';
 import PizzeriaList from '@/components/pizzeria/pizzeria-list';
 import PizzeriaDetail from '@/components/pizzeria/pizzeria-detail';
 import { Button } from '@/components/ui/button';
-import { List } from 'lucide-react';
+import { List, Loader2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
 import { Skeleton } from '@/components/ui/skeleton';
