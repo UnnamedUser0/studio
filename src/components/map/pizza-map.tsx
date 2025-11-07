@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ReactBingmaps } from 'react-bingmaps';
-import type { Pizzeria } from '@/lib/pizzeria-data';
+import type { Pizzeria } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Map, Globe } from 'lucide-react';
 

@@ -4,14 +4,14 @@ import { Input } from '@/components/ui/input';
 import { Search, Loader2 } from 'lucide-react';
 import { getSmartSearchSuggestions } from '@/ai/flows/smart-search-suggestions';
 import { Card, CardContent } from '@/components/ui/card';
-import { pizzerias } from '@/lib/pizzeria-data';
-import type { Pizzeria } from '@/lib/pizzeria-data';
+import type { Pizzeria } from '@/lib/types';
 
 type SmartSearchProps = {
   onSearch: (results: Pizzeria[]) => void;
+  allPizzerias: Pizzeria[];
 };
 
-export default function SmartSearch({ onSearch }: SmartSearchProps) {
+export default function SmartSearch({ onSearch, allPizzerias }: SmartSearchProps) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -33,7 +33,7 @@ export default function SmartSearch({ onSearch }: SmartSearchProps) {
       return;
     }
     const lowerCaseQuery = searchQuery.toLowerCase();
-    const results = pizzerias.filter(p => 
+    const results = allPizzerias.filter(p => 
       p.name.toLowerCase().includes(lowerCaseQuery) ||
       p.address.toLowerCase().includes(lowerCaseQuery)
     );
@@ -52,7 +52,6 @@ export default function SmartSearch({ onSearch }: SmartSearchProps) {
       startTransition(async () => {
         try {
           const result = await getSmartSearchSuggestions({ query: currentQuery });
-          // Filter out suggestions that are too similar to the query itself
           const filteredSuggestions = result.suggestions.filter(s => s.toLowerCase() !== currentQuery.toLowerCase());
           setSuggestions(filteredSuggestions);
         } catch (error) {

@@ -1,19 +1,20 @@
 'use client';
-import type { Pizzeria } from '@/lib/pizzeria-data';
+import type { Pizzeria } from '@/lib/types';
 import PizzeriaCard from './pizzeria-card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '../ui/button';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 
 type PizzeriaListProps = {
   pizzerias: Pizzeria[];
   onPizzeriaSelect: (pizzeria: Pizzeria) => void;
   isSearching: boolean;
   onClearSearch: () => void;
+  isLoading: boolean;
 };
 
-export default function PizzeriaList({ pizzerias, onPizzeriaSelect, isSearching, onClearSearch }: PizzeriaListProps) {
+export default function PizzeriaList({ pizzerias, onPizzeriaSelect, isSearching, onClearSearch, isLoading }: PizzeriaListProps) {
   const title = isSearching ? 'Resultados de Búsqueda' : 'Mejores Pizzerías';
   const description = isSearching 
     ? `Se encontraron ${pizzerias.length} pizzerías.` 
@@ -39,7 +40,11 @@ export default function PizzeriaList({ pizzerias, onPizzeriaSelect, isSearching,
       </SheetHeader>
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-4 p-4">
-          {pizzerias.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : pizzerias.length > 0 ? (
             pizzerias.map((pizzeria) => (
               <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} onClick={() => onPizzeriaSelect(pizzeria)} />
             ))

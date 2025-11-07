@@ -1,18 +1,21 @@
 
 'use client';
 
-import { useState } from 'react';
-import type { Pizzeria } from '@/lib/pizzeria-data';
+import { useState, useMemo } from 'react';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+
 import SmartSearch from '@/components/search/smart-search';
 import PizzeriaList from '@/components/pizzeria/pizzeria-list';
 import PizzeriaDetail from '@/components/pizzeria/pizzeria-detail';
 import { Button } from '@/components/ui/button';
 import { List } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { pizzerias as allPizzerias } from '@/lib/pizzeria-data';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
+import type { Pizzeria } from '@/lib/types';
+
 
 const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), { 
   ssr: false,
@@ -34,6 +37,20 @@ export default function Home() {
   const [visiblePizzerias, setVisiblePizzerias] = useState<Pizzeria[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  const firestore = useFirestore();
+
+  // Query for all pizzerias
+  const pizzeriasQuery = useMemoFirebase(() => 
+    firestore ? collection(firestore, 'pizzerias') : null, 
+  [firestore]);
+  const { data: allPizzerias, isLoading: isLoadingPizzerias } = useCollection<Pizzeria>(pizzeriasQuery);
+
+  // Query for top 3 pizzerias
+  const topPizzeriasQuery = useMemoFirebase(() => 
+    firestore ? query(collection(firestore, 'pizzerias'), orderBy('rating', 'desc'), limit(3)) : null,
+  [firestore]);
+  const { data: pizzeriasForRanking, isLoading: isLoadingRanking } = useCollection<Pizzeria>(topPizzeriasQuery);
+
   const handleSelectPizzeria = (pizzeria: Pizzeria) => {
     setSelectedPizzeria(pizzeria);
   };
@@ -41,17 +58,15 @@ export default function Home() {
   const handleSearchResults = (results: Pizzeria[]) => {
     setVisiblePizzerias(results);
     setIsSearching(true);
-    // If search results are empty, close any open detail panel.
     if (results.length === 0) {
       setSelectedPizzeria(null);
     } else {
-      // If there are results, clear the specific selection to allow the map to zoom out to the bounds.
       setSelectedPizzeria(null);
     }
   };
   
   const handleClearSearch = () => {
-    setVisiblePizzerias([]);
+    setVisiblePizzerias(allPizzerias || []);
     setIsSearching(false);
     setSelectedPizzeria(null);
   }
@@ -60,16 +75,14 @@ export default function Home() {
     setSelectedPizzeria(null);
   }
 
-  const pizzeriasForRanking = allPizzerias.sort((a, b) => b.rating - a.rating).slice(0, 3);
-  const pizzeriasToShowInList = isSearching ? visiblePizzerias : pizzeriasForRanking;
-
-  const podiumOrder = [1, 0, 2];
+  const pizzeriasToShowOnMap = isSearching ? visiblePizzerias : (allPizzerias || []);
+  const pizzeriasToShowInList = isSearching ? visiblePizzerias : (pizzeriasForRanking || []);
 
   return (
     <div className="h-full w-full relative overflow-y-auto">
       <div className="h-[60vh] w-full">
         <PizzaMap 
-          pizzerias={visiblePizzerias}
+          pizzerias={pizzeriasToShowOnMap}
           onMarkerClick={handleSelectPizzeria} 
           selectedPizzeria={selectedPizzeria} 
         />
@@ -89,69 +102,67 @@ export default function Home() {
                 onPizzeriaSelect={handleSelectPizzeria} 
                 isSearching={isSearching}
                 onClearSearch={handleClearSearch}
+                isLoading={isSearching ? isLoadingPizzerias : isLoadingRanking}
             />
           </SheetContent>
         </Sheet>
       </div>
       
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm md:max-w-md lg:max-w-lg px-4">
-        <SmartSearch onSearch={handleSearchResults} />
+        <SmartSearch onSearch={handleSearchResults} allPizzerias={allPizzerias || []} />
       </div>
 
       {!isSearching && (
          <div id="ranking" className="container py-12">
             <h2 className="text-3xl font-headline text-center mb-24">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
-            <div className="relative w-full max-w-4xl mx-auto h-[250px]">
-
-                {/* Podium Base Structure */}
-                <div className="absolute bottom-0 w-full flex items-end">
-                    {/* 2nd place */}
-                    <div className="w-1/3 h-24 bg-primary relative flex justify-center">
-                        <span className="absolute bottom-4 font-bold text-5xl text-white/80" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>2</span>
+            {isLoadingRanking ? (
+              <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
+            ) : (
+              pizzeriasForRanking && pizzeriasForRanking.length >= 3 && (
+                <div className="relative w-full max-w-4xl mx-auto h-[250px]">
+                    <div className="absolute bottom-0 w-full flex items-end">
+                        <div className="w-1/3 h-24 bg-primary relative flex justify-center">
+                            <span className="absolute bottom-4 font-bold text-5xl text-white/80" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>2</span>
+                        </div>
+                        <div className="w-1/3 h-36 bg-primary relative flex justify-center">
+                            <span className="absolute bottom-4 font-bold text-6xl text-white" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.5)' }}>1</span>
+                        </div>
+                        <div className="w-1/3 h-20 bg-primary relative flex justify-center">
+                            <span className="absolute bottom-4 font-bold text-4xl text-white/70" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>3</span>
+                        </div>
                     </div>
-                    {/* 1st place */}
-                    <div className="w-1/3 h-36 bg-primary relative flex justify-center">
-                        <span className="absolute bottom-4 font-bold text-6xl text-white" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.5)' }}>1</span>
-                    </div>
-                    {/* 3rd place */}
-                    <div className="w-1/3 h-20 bg-primary relative flex justify-center">
-                        <span className="absolute bottom-4 font-bold text-4xl text-white/70" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>3</span>
-                    </div>
-                </div>
-                
-                {/* Podium Platform Top */}
-                <div className="absolute bottom-[80px] w-[calc(100%+20px)] left-[-10px] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
-                <div className="absolute bottom-[96px] w-[calc(33.33%+20px)] left-[calc(33.33%-10px)] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
-                <div className="absolute bottom-[144px] w-[calc(33.33%+20px)] left-[calc(33.33%-10px)] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
+                    
+                    <div className="absolute bottom-[80px] w-[calc(100%+20px)] left-[-10px] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
+                    <div className="absolute bottom-[96px] w-[calc(33.33%+20px)] left-[calc(33.33%-10px)] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
+                    <div className="absolute bottom-[144px] w-[calc(33.33%+20px)] left-[calc(33.33%-10px)] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
 
-                {/* Separator Shadows */}
-                <div className="absolute bottom-0 top-0 left-1/3 w-px bg-black/20 z-10 h-[144px]"></div>
-                <div className="absolute bottom-0 top-0 left-2/3 w-px bg-black/20 z-10 h-[144px]"></div>
-                
+                    <div className="absolute bottom-0 top-0 left-1/3 w-px bg-black/20 z-10 h-[144px]"></div>
+                    <div className="absolute bottom-0 top-0 left-2/3 w-px bg-black/20 z-10 h-[144px]"></div>
 
-                {/* Pizzeria Cards - positioned absolutely */}
-                <div className="absolute bottom-[96px] left-[calc(0%+16.66%-128px)] w-[256px] z-20">
-                    <PizzeriaCard
-                      pizzeria={pizzeriasForRanking[1]}
-                      onClick={() => handleSelectPizzeria(pizzeriasForRanking[1])}
-                      rankingPlace={2}
-                    />
+                    <div className="absolute bottom-[96px] left-[calc(0%+16.66%-128px)] w-[256px] z-20">
+                        <PizzeriaCard
+                          pizzeria={pizzeriasForRanking[1]}
+                          onClick={() => handleSelectPizzeria(pizzeriasForRanking[1])}
+                          rankingPlace={2}
+                        />
+                    </div>
+                    <div className="absolute bottom-[144px] left-[calc(33.33%+16.66%-128px)] w-[256px] z-20">
+                        <PizzeriaCard
+                          pizzeria={pizzeriasForRanking[0]}
+                          onClick={() => handleSelectPizzeria(pizzeriasForRanking[0])}
+                          rankingPlace={1}
+                        />
+                    </div>
+                    <div className="absolute bottom-[80px] left-[calc(66.66%+16.66%-128px)] w-[256px] z-20">
+                        <PizzeriaCard
+                          pizzeria={pizzeriasForRanking[2]}
+                          onClick={() => handleSelectPizzeria(pizzeriasForRanking[2])}
+                          rankingPlace={3}
+                        />
+                    </div>
                 </div>
-                <div className="absolute bottom-[144px] left-[calc(33.33%+16.66%-128px)] w-[256px] z-20">
-                    <PizzeriaCard
-                      pizzeria={pizzeriasForRanking[0]}
-                      onClick={() => handleSelectPizzeria(pizzeriasForRanking[0])}
-                      rankingPlace={1}
-                    />
-                </div>
-                <div className="absolute bottom-[80px] left-[calc(66.66%+16.66%-128px)] w-[256px] z-20">
-                    <PizzeriaCard
-                      pizzeria={pizzeriasForRanking[2]}
-                      onClick={() => handleSelectPizzeria(pizzeriasForRanking[2])}
-                      rankingPlace={3}
-                    />
-                </div>
-            </div>
+              )
+            )}
        </div>
       )}
       

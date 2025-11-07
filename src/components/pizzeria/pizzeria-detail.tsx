@@ -5,11 +5,14 @@ import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Pizzeria, Review } from '@/lib/pizzeria-data';
-import { useUser } from '@/firebase';
+import type { Pizzeria, Review } from '@/lib/types';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
+import { collection } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Loader2 } from 'lucide-react';
 
 const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => (
     <div className="flex items-center">
@@ -51,10 +54,28 @@ const ReviewCard = ({ review }: {review: Review}) => (
     </Card>
 )
 
-const AddReview = () => {
+const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
     const { user } = useUser();
+    const firestore = useFirestore();
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
+
+    const handlePublish = () => {
+      if (!user || !firestore || rating === 0 || !comment) return;
+
+      const reviewRef = collection(firestore, 'pizzerias', pizzeriaId, 'reviews');
+      const newReview: Omit<Review, 'id'> = {
+        author: user.displayName || user.email || 'Anónimo',
+        userId: user.uid,
+        pizzeriaId: pizzeriaId,
+        rating,
+        comment,
+        createdAt: new Date().toISOString(),
+      };
+      addDocumentNonBlocking(reviewRef, newReview);
+      setComment('');
+      setRating(0);
+    };
 
     if (!user) {
         return (
@@ -79,12 +100,11 @@ const AddReview = () => {
                 />
                 <div className="flex justify-between items-center">
                     <StarRatingInput rating={rating} setRating={setRating} />
-                    <Button>Publicar</Button>
+                    <Button onClick={handlePublish} disabled={rating === 0 || !comment}>Publicar</Button>
                 </div>
             </CardContent>
         </Card>
     )
-
 }
 
 type PizzeriaDetailProps = {
@@ -92,14 +112,23 @@ type PizzeriaDetailProps = {
 };
 
 export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
+  const firestore = useFirestore();
+  const reviewsQuery = useMemoFirebase(() => 
+    firestore ? collection(firestore, 'pizzerias', pizzeria.id, 'reviews') : null,
+  [firestore, pizzeria.id]);
+  const { data: reviews, isLoading } = useCollection<Review>(reviewsQuery);
+  
+  const imageUrl = pizzeria.imageUrl || 'https://picsum.photos/seed/default/400/400';
+  const imageHint = pizzeria.imageHint || 'pizza';
+
   return (
     <>
       <SheetHeader className="p-0 border-b relative">
         <div className="relative h-48 w-full">
             <Image 
-                src={pizzeria.imageUrl} 
+                src={imageUrl} 
                 alt={pizzeria.name}
-                data-ai-hint={pizzeria.imageHint}
+                data-ai-hint={imageHint}
                 fill
                 sizes="(max-width: 640px) 90vw, 440px"
                 className="object-cover"
@@ -116,8 +145,15 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
           <div id="ranking">
             <h3 className="font-headline text-xl mb-4 text-foreground">Opiniones</h3>
             <div className="space-y-4">
-                {pizzeria.reviews.map(review => <ReviewCard key={review.id} review={review} />)}
-                <AddReview />
+                {isLoading ? (
+                  <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin"/></div>
+                ) : (
+                  reviews && reviews.map(review => <ReviewCard key={review.id} review={review} />)
+                )}
+                {reviews?.length === 0 && !isLoading && (
+                  <p className="text-center text-muted-foreground py-4">Sé el primero en dejar una opinión.</p>
+                )}
+                <AddReview pizzeriaId={pizzeria.id}/>
             </div>
           </div>
         </div>
