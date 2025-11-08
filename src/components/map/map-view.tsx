@@ -87,7 +87,7 @@ export default function MapView() {
         />
       </div>
 
-      <div className="absolute top-4 left-4 z-10">
+      <div className="absolute top-4 left-4 z-[1000]">
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="secondary" className="shadow-lg animate-fade-in-down">
@@ -107,7 +107,7 @@ export default function MapView() {
         </Sheet>
       </div>
       
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm md:max-w-md lg:max-w-lg px-4">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-sm md:max-w-md lg:max-w-lg px-4">
         <SmartSearch onSearch={handleSearchResults} allPizzerias={allPizzerias || []} />
       </div>
 
