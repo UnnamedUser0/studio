@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 import { cn } from '@/lib/utils';
 import { fontHeadline, fontBody } from '@/app/fonts';
 import { FirebaseClientProvider } from '@/firebase';
+import Chatbot from '@/components/chatbot/chatbot';
 
 export const metadata: Metadata = {
   title: 'PizzApp - Hermosillo Pizza Finder',
@@ -34,6 +35,7 @@ export default function RootLayout({
                 {children}
               </main>
               <Toaster />
+              <Chatbot />
             </div>
           </FirebaseClientProvider>
         </ThemeProvider>
