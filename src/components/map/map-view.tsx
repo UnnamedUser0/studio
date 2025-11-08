@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
-import { getDistance } from 'geolib';
+import getDistance from 'geolib/es/getDistance';
 
 import SmartSearch from '@/components/search/smart-search';
 import PizzeriaList from '@/components/pizzeria/pizzeria-list';
