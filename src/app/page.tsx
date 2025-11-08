@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
@@ -9,6 +9,8 @@ import MapView from '@/components/map/map-view';
 import { Loader2 } from 'lucide-react';
 import { Pizzeria } from '@/lib/types';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
+import Footer from '@/components/layout/footer';
+
 
 const TestimonialsCarousel = dynamic(() => import('@/components/testimonial/testimonials-carousel'), {
   ssr: false,
@@ -18,10 +20,6 @@ const TestimonialsCarousel = dynamic(() => import('@/components/testimonial/test
 const WhyChoosePizzapp = dynamic(() => import('@/components/layout/why-choose-pizzapp'), {
   ssr: false,
   loading: () => <div className="h-[400px] w-full bg-muted rounded-lg" />,
-});
-
-const Footer = dynamic(() => import('@/components/layout/footer'), {
-  ssr: false
 });
 
 type Geocode = { lat: number, lng: number };
@@ -95,21 +93,19 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="relative">
-        <MapView 
-            pizzerias={pizzeriasToShowOnMap}
-            onSelectPizzeria={handleSelectPizzeria}
-            selectedPizzeria={selectedPizzeria}
-            searchCenter={searchCenter}
-            onSearch={handleSearch}
-            onClearSearch={handleClearSearch}
-            pizzeriasInList={pizzeriasToShowInList}
-            isSearching={isSearching}
-            isLoadingPizzerias={isLoadingPizzerias}
-            onCloseDetail={handleCloseDetail}
-            allPizzerias={allPizzerias || []}
-        />
-      </div>
+      <MapView 
+          pizzerias={pizzeriasToShowOnMap}
+          onSelectPizzeria={handleSelectPizzeria}
+          selectedPizzeria={selectedPizzeria}
+          searchCenter={searchCenter}
+          onSearch={handleSearch}
+          onClearSearch={handleClearSearch}
+          pizzeriasInList={pizzeriasToShowInList}
+          isSearching={isSearching}
+          isLoadingPizzerias={isLoadingPizzerias}
+          onCloseDetail={handleCloseDetail}
+          allPizzerias={allPizzerias || []}
+      />
 
       <div className="flex-grow">
         {!isSearching && (
