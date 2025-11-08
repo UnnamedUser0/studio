@@ -28,9 +28,10 @@ type PizzaMapProps = {
   pizzerias: Pizzeria[];
   onMarkerClick: (pizzeria: Pizzeria) => void;
   selectedPizzeria: Pizzeria | null;
+  searchCenter: { lat: number; lng: number } | null;
 };
 
-export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }: PizzaMapProps) {
+export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, searchCenter }: PizzaMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -107,13 +108,18 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria }:
         animate: true,
         duration: 1.5,
       });
+    } else if (searchCenter) {
+        map.flyTo([searchCenter.lat, searchCenter.lng], 14, {
+          animate: true,
+          duration: 1.5,
+        });
     } else {
        map.flyTo(HERMOSILLO_CENTER, 12, {
         animate: true,
         duration: 1.5
        });
     }
-  }, [selectedPizzeria]);
+  }, [selectedPizzeria, searchCenter]);
 
   return <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />;
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { getDistance } from 'geolib';
 
 import SmartSearch from '@/components/search/smart-search';
 import PizzeriaList from '@/components/pizzeria/pizzeria-list';
@@ -14,7 +15,6 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Pizzeria } from '@/lib/types';
-
 
 const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), { 
   ssr: false,
@@ -31,20 +31,21 @@ const WhyChoosePizzapp = dynamic(() => import('@/components/layout/why-choose-pi
   loading: () => <Skeleton className="h-[400px] w-full" />,
 });
 
+type Geocode = { lat: number, lng: number };
+
 export default function MapView() {
   const [selectedPizzeria, setSelectedPizzeria] = useState<Pizzeria | null>(null);
   const [visiblePizzerias, setVisiblePizzerias] = useState<Pizzeria[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchCenter, setSearchCenter] = useState<Geocode | null>(null);
 
   const firestore = useFirestore();
 
-  // Query for all pizzerias
   const pizzeriasQuery = useMemoFirebase(() => 
     firestore ? collection(firestore, 'pizzerias') : null, 
   [firestore]);
   const { data: allPizzerias, isLoading: isLoadingPizzerias } = useCollection<Pizzeria>(pizzeriasQuery);
 
-  // Query for top 3 pizzerias
   const topPizzeriasQuery = useMemoFirebase(() => 
     firestore ? query(collection(firestore, 'pizzerias'), orderBy('rating', 'desc'), limit(3)) : null,
   [firestore]);
@@ -60,13 +61,31 @@ export default function MapView() {
     setSelectedPizzeria(pizzeria);
   };
 
-  const handleSearchResults = (results: Pizzeria[]) => {
-    setVisiblePizzerias(results);
+  const handleSearch = (results: Pizzeria[], geocode: Geocode | null) => {
     setIsSearching(true);
-    if (results.length === 1) {
-      setSelectedPizzeria(results[0]);
-    } else {
+    setSearchCenter(geocode);
+
+    if (geocode) {
+      // Search by proximity
+      const sortedByDistance = [...(allPizzerias || [])]
+        .map(pizzeria => ({
+          ...pizzeria,
+          distance: getDistance(
+            { latitude: geocode.lat, longitude: geocode.lng },
+            { latitude: pizzeria.lat, longitude: pizzeria.lng }
+          ),
+        }))
+        .sort((a, b) => a.distance - b.distance);
+      setVisiblePizzerias(sortedByDistance);
       setSelectedPizzeria(null);
+    } else {
+      // Standard text search
+      setVisiblePizzerias(results);
+      if (results.length === 1) {
+        setSelectedPizzeria(results[0]);
+      } else {
+        setSelectedPizzeria(null);
+      }
     }
   };
   
@@ -74,6 +93,7 @@ export default function MapView() {
     setVisiblePizzerias(allPizzerias || []);
     setIsSearching(false);
     setSelectedPizzeria(null);
+    setSearchCenter(null);
   }
 
   const handleCloseDetail = () => {
@@ -81,7 +101,7 @@ export default function MapView() {
   }
 
   const pizzeriasToShowOnMap = isSearching ? visiblePizzerias : (allPizzerias || []);
-  const pizzeriasToShowInList = isSearching ? visiblePizzerias : (pizzeriasForRanking || []);
+  const pizzeriasToShowInList = isSearching ? visiblePizzerias.slice(0, 20) : (pizzeriasForRanking || []);
 
   return (
     <>
@@ -89,7 +109,8 @@ export default function MapView() {
         <PizzaMap 
           pizzerias={pizzeriasToShowOnMap}
           onMarkerClick={handleSelectPizzeria} 
-          selectedPizzeria={selectedPizzeria} 
+          selectedPizzeria={selectedPizzeria}
+          searchCenter={searchCenter}
         />
       </div>
 
@@ -107,14 +128,14 @@ export default function MapView() {
                 onPizzeriaSelect={handleSelectPizzeria} 
                 isSearching={isSearching}
                 onClearSearch={handleClearSearch}
-                isLoading={isSearching ? isLoadingPizzerias : isLoadingRanking}
+                isLoading={isLoadingPizzerias}
             />
           </SheetContent>
         </Sheet>
       </div>
       
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-sm md:max-w-md lg:max-w-lg px-4">
-        <SmartSearch onSearch={handleSearchResults} allPizzerias={allPizzerias || []} />
+        <SmartSearch onSearch={handleSearch} allPizzerias={allPizzerias || []} onClear={handleClearSearch} />
       </div>
 
       {!isSearching && (
