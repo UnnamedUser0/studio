@@ -1,9 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
 
 import SmartSearch from '@/components/search/smart-search';
 import PizzeriaList from '@/components/pizzeria/pizzeria-list';
@@ -58,7 +55,6 @@ export default function MapView({
         searchCenter={searchCenter}
       />
 
-      {/* This container ensures UI elements are layered above the map */}
       <div className="absolute top-0 left-0 w-full h-full p-4 pointer-events-none z-[1000]">
          <div className="relative w-full h-full">
             <div className="absolute top-0 left-0 pointer-events-auto">

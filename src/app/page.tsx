@@ -93,23 +93,23 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <MapView 
-          pizzerias={pizzeriasToShowOnMap}
-          onSelectPizzeria={handleSelectPizzeria}
-          selectedPizzeria={selectedPizzeria}
-          searchCenter={searchCenter}
-          onSearch={handleSearch}
-          onClearSearch={handleClearSearch}
-          pizzeriasInList={pizzeriasToShowInList}
-          isSearching={isSearching}
-          isLoadingPizzerias={isLoadingPizzerias}
-          onCloseDetail={handleCloseDetail}
-          allPizzerias={allPizzerias || []}
-      />
+      <div className="flex-grow relative">
+        <MapView 
+            pizzerias={pizzeriasToShowOnMap}
+            onSelectPizzeria={handleSelectPizzeria}
+            selectedPizzeria={selectedPizzeria}
+            searchCenter={searchCenter}
+            onSearch={handleSearch}
+            onClearSearch={handleClearSearch}
+            pizzeriasInList={pizzeriasToShowInList}
+            isSearching={isSearching}
+            isLoadingPizzerias={isLoadingPizzerias}
+            onCloseDetail={handleCloseDetail}
+            allPizzerias={allPizzerias || []}
+        />
 
-      <div className="flex-grow">
         {!isSearching && (
-          <>
+          <div className="bg-background relative">
             <div id="ranking" className="container py-12">
               <h2 className="text-3xl font-headline text-center mb-24">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
               {isLoadingRanking ? (
@@ -175,7 +175,7 @@ export default function Home() {
             </div>
 
             <WhyChoosePizzapp />
-          </>
+          </div>
         )}
       </div>
 
