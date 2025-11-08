@@ -52,23 +52,21 @@ export default function MapView() {
   const { data: pizzeriasForRanking, isLoading: isLoadingRanking } = useCollection<Pizzeria>(topPizzeriasQuery);
   
   useEffect(() => {
-    if (allPizzerias) {
-      // Set initial pizzerias only if not searching
-      if (!isSearching && !searchCenter) {
-        setVisiblePizzerias(allPizzerias);
-      }
+    if (allPizzerias && !isSearching) {
+      setVisiblePizzerias(allPizzerias);
     }
-  }, [allPizzerias, isSearching, searchCenter]);
+  }, [allPizzerias, isSearching]);
 
   const handleSelectPizzeria = (pizzeria: Pizzeria) => {
     setSelectedPizzeria(pizzeria);
   };
 
   const handleSearch = (results: Pizzeria[], geocode: Geocode | null) => {
+    setIsSearching(true);
     setSearchCenter(geocode);
 
     if (geocode) {
-      // Proximity search: sort all pizzerias by distance, don't activate "isSearching" mode
+      // Proximity search: sort all pizzerias by distance
       const sortedByDistance = [...(allPizzerias || [])]
         .map(pizzeria => ({
           ...pizzeria,
@@ -80,12 +78,10 @@ export default function MapView() {
         .sort((a, b) => a.distance - b.distance);
       
       setVisiblePizzerias(sortedByDistance);
-      setIsSearching(false); // Proximity search is for exploration, not filtering
       setSelectedPizzeria(null);
 
     } else {
       // Text search
-      setIsSearching(true);
       setVisiblePizzerias(results);
       if (results.length === 1) {
         setSelectedPizzeria(results[0]);
@@ -108,8 +104,8 @@ export default function MapView() {
 
   // Pizzerias to show on the map should always be the latest visible set
   const pizzeriasToShowOnMap = visiblePizzerias;
-  // Pizzerias in the list are either search results or the top ranking ones
-  const pizzeriasToShowInList = (isSearching || searchCenter) ? visiblePizzerias.slice(0, 20) : (pizzeriasForRanking || []);
+  // Pizzerias in the list are either all visible pizzerias (if searching) or just the top ranked ones.
+  const pizzeriasToShowInList = isSearching ? visiblePizzerias.slice(0, 20) : (pizzeriasForRanking || []);
 
   return (
     <>
@@ -127,14 +123,14 @@ export default function MapView() {
           <SheetTrigger asChild>
             <Button variant="secondary" className="shadow-lg animate-fade-in-down">
               <List className="mr-2 h-5 w-5" />
-              {(isSearching || searchCenter) ? 'Ver Resultados' : 'Explorar Pizzerías'}
+              {isSearching ? 'Ver Resultados' : 'Explorar Pizzerías'}
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[90vw] max-w-[440px] p-0 flex flex-col">
             <PizzeriaList 
                 pizzerias={pizzeriasToShowInList}
                 onPizzeriaSelect={handleSelectPizzeria} 
-                isSearching={isSearching || !!searchCenter}
+                isSearching={isSearching}
                 onClearSearch={handleClearSearch}
                 isLoading={isLoadingPizzerias}
             />
@@ -146,7 +142,7 @@ export default function MapView() {
         <SmartSearch onSearch={handleSearch} allPizzerias={allPizzerias || []} onClear={handleClearSearch} />
       </div>
 
-      {!isSearching && !searchCenter && (
+      {!isSearching && (
          <div id="ranking" className="container py-12">
             <h2 className="text-3xl font-headline text-center mb-24">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
             {isLoadingRanking ? (
@@ -200,7 +196,7 @@ export default function MapView() {
        </div>
       )}
       
-      {!isSearching && !searchCenter && (
+      {!isSearching && (
         <div id="testimonials" className="bg-muted/50 py-16">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center mb-12">
@@ -214,7 +210,7 @@ export default function MapView() {
         </div>
       )}
 
-      {!isSearching && !searchCenter && (
+      {!isSearching && (
         <WhyChoosePizzapp />
       )}
 
