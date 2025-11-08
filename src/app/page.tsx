@@ -93,7 +93,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="flex-grow">
+      <main className="flex-grow">
         <MapView 
             pizzerias={pizzeriasToShowOnMap}
             onSelectPizzeria={handleSelectPizzeria}
@@ -177,7 +177,7 @@ export default function Home() {
             <WhyChoosePizzapp />
           </div>
         )}
-      </div>
+      </main>
 
       <Footer />
     </div>
