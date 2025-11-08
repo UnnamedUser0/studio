@@ -96,17 +96,16 @@ export default function Home() {
       <main className="flex-grow flex flex-col">
         <div className="h-[60vh] w-full">
             <MapView 
-                pizzerias={pizzeriasToShowOnMap}
+                visiblePizzerias={pizzeriasToShowOnMap}
                 onSelectPizzeria={handleSelectPizzeria}
                 selectedPizzeria={selectedPizzeria}
                 searchCenter={searchCenter}
                 onSearch={handleSearch}
                 onClearSearch={handleClearSearch}
-                pizzeriasInList={pizzeriasToShowInList}
+                pizzeriasToShowInList={pizzeriasToShowInList}
                 isSearching={isSearching}
                 isLoadingPizzerias={isLoadingPizzerias}
                 onCloseDetail={handleCloseDetail}
-                allPizzerias={allPizzerias || []}
             />
         </div>
 

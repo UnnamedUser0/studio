@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 
 import SmartSearch from '@/components/search/smart-search';
@@ -10,6 +11,8 @@ import { List } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Pizzeria } from '@/lib/types';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), { 
   ssr: false,
@@ -19,44 +22,49 @@ const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), {
 type Geocode = { lat: number, lng: number };
 
 type MapViewProps = {
-  pizzerias: Pizzeria[];
-  allPizzerias: Pizzeria[];
-  onSelectPizzeria: (pizzeria: Pizzeria) => void;
-  selectedPizzeria: Pizzeria | null;
-  searchCenter: Geocode | null;
+  pizzeriasToShowInList: Pizzeria[];
+  isSearching: boolean;
   onSearch: (results: Pizzeria[], geocode: Geocode | null) => void;
   onClearSearch: () => void;
-  pizzeriasInList: Pizzeria[];
-  isSearching: boolean;
+  onSelectPizzeria: (pizzeria: Pizzeria) => void;
   isLoadingPizzerias: boolean;
+  visiblePizzerias: Pizzeria[];
+  selectedPizzeria: Pizzeria | null;
+  searchCenter: Geocode | null;
   onCloseDetail: () => void;
 };
 
 export default function MapView({
-  pizzerias,
-  allPizzerias,
-  onSelectPizzeria,
-  selectedPizzeria,
-  searchCenter,
+  pizzeriasToShowInList,
+  isSearching,
   onSearch,
   onClearSearch,
-  pizzeriasInList,
-  isSearching,
+  onSelectPizzeria,
   isLoadingPizzerias,
+  visiblePizzerias,
+  selectedPizzeria,
+  searchCenter,
   onCloseDetail
 }: MapViewProps) {
   
+  const firestore = useFirestore();
+
+  const allPizzeriasQuery = useMemoFirebase(() =>
+    firestore ? collection(firestore, 'pizzerias') : null
+  , [firestore]);
+  const { data: allPizzerias } = useCollection<Pizzeria>(allPizzeriasQuery);
+
   return (
-    <div className="relative h-[60vh] w-full">
+    <div className="relative h-full w-full">
       <PizzaMap 
-        pizzerias={pizzerias}
+        pizzerias={visiblePizzerias}
         onMarkerClick={onSelectPizzeria} 
         selectedPizzeria={selectedPizzeria}
         searchCenter={searchCenter}
       />
 
-      <div className="absolute top-4 left-0 w-full px-4 flex justify-between items-start pointer-events-none z-[1000]">
-         <div className="pointer-events-auto">
+      <div className="absolute top-4 left-0 w-full px-4 flex justify-center items-start pointer-events-none z-[1000]">
+         <div className="absolute left-4 top-20 pointer-events-auto">
            <Sheet>
              <SheetTrigger asChild>
                <Button variant="secondary" className="shadow-lg animate-fade-in-down">
@@ -66,7 +74,7 @@ export default function MapView({
              </SheetTrigger>
              <SheetContent side="left" className="w-[90vw] max-w-[440px] p-0 flex flex-col">
                <PizzeriaList 
-                   pizzerias={pizzeriasInList}
+                   pizzerias={pizzeriasToShowInList}
                    onPizzeriaSelect={onSelectPizzeria} 
                    isSearching={isSearching}
                    onClearSearch={onClearSearch}
@@ -77,7 +85,7 @@ export default function MapView({
          </div>
          
          <div className="w-full max-w-sm md:max-w-md lg:max-w-lg pointer-events-auto">
-           <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias} onClear={onClearSearch} />
+           <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias || []} onClear={onClearSearch} />
          </div>
       </div>
 
