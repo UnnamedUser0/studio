@@ -17,7 +17,7 @@ type PizzeriaListProps = {
 export default function PizzeriaList({ pizzerias, onPizzeriaSelect, isSearching, onClearSearch, isLoading }: PizzeriaListProps) {
   const title = isSearching ? 'Resultados de Búsqueda' : 'Mejores Pizzerías';
   const description = isSearching 
-    ? `Se encontraron ${pizzerias.length} pizzerías.` 
+    ? `Mostrando las ${pizzerias.length} pizzerías más cercanas.` 
     : 'Explora las pizzerías mejor calificadas de Hermosillo.';
 
   return (
