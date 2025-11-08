@@ -93,20 +93,22 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <main className="flex-grow">
-        <MapView 
-            pizzerias={pizzeriasToShowOnMap}
-            onSelectPizzeria={handleSelectPizzeria}
-            selectedPizzeria={selectedPizzeria}
-            searchCenter={searchCenter}
-            onSearch={handleSearch}
-            onClearSearch={handleClearSearch}
-            pizzeriasInList={pizzeriasToShowInList}
-            isSearching={isSearching}
-            isLoadingPizzerias={isLoadingPizzerias}
-            onCloseDetail={handleCloseDetail}
-            allPizzerias={allPizzerias || []}
-        />
+      <main className="flex-grow flex flex-col">
+        <div className="h-[60vh] w-full">
+            <MapView 
+                pizzerias={pizzeriasToShowOnMap}
+                onSelectPizzeria={handleSelectPizzeria}
+                selectedPizzeria={selectedPizzeria}
+                searchCenter={searchCenter}
+                onSearch={handleSearch}
+                onClearSearch={handleClearSearch}
+                pizzeriasInList={pizzeriasToShowInList}
+                isSearching={isSearching}
+                isLoadingPizzerias={isLoadingPizzerias}
+                onCloseDetail={handleCloseDetail}
+                allPizzerias={allPizzerias || []}
+            />
+        </div>
 
         {!isSearching && (
           <div className="bg-background relative">
