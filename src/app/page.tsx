@@ -94,7 +94,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-grow flex flex-col">
-        <div className="h-[60vh] w-full">
+        <div className="relative h-[60vh] w-full">
             <MapView 
                 visiblePizzerias={pizzeriasToShowOnMap}
                 onSelectPizzeria={handleSelectPizzeria}
