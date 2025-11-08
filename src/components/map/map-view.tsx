@@ -55,31 +55,29 @@ export default function MapView({
         searchCenter={searchCenter}
       />
 
-      <div className="absolute top-0 left-0 w-full h-full p-4 pointer-events-none z-[1000]">
-         <div className="relative w-full h-full">
-            <div className="absolute top-0 left-0 pointer-events-auto">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="secondary" className="shadow-lg animate-fade-in-down">
-                    <List className="mr-2 h-5 w-5" />
-                    {isSearching ? 'Ver Resultados' : 'Explorar Pizzerías'}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[90vw] max-w-[440px] p-0 flex flex-col">
-                  <PizzeriaList 
-                      pizzerias={pizzeriasInList}
-                      onPizzeriaSelect={onSelectPizzeria} 
-                      isSearching={isSearching}
-                      onClearSearch={onClearSearch}
-                      isLoading={isLoadingPizzerias}
-                  />
-                </SheetContent>
-              </Sheet>
-            </div>
-            
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-sm md:max-w-md lg:max-w-lg px-4 pointer-events-auto">
-              <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias} onClear={onClearSearch} />
-            </div>
+      <div className="absolute top-4 left-0 w-full px-4 flex justify-between items-start pointer-events-none z-[1000]">
+         <div className="pointer-events-auto">
+           <Sheet>
+             <SheetTrigger asChild>
+               <Button variant="secondary" className="shadow-lg animate-fade-in-down">
+                 <List className="mr-2 h-5 w-5" />
+                 {isSearching ? 'Ver Resultados' : 'Explorar Pizzerías'}
+               </Button>
+             </SheetTrigger>
+             <SheetContent side="left" className="w-[90vw] max-w-[440px] p-0 flex flex-col">
+               <PizzeriaList 
+                   pizzerias={pizzeriasInList}
+                   onPizzeriaSelect={onSelectPizzeria} 
+                   isSearching={isSearching}
+                   onClearSearch={onClearSearch}
+                   isLoading={isLoadingPizzerias}
+               />
+             </SheetContent>
+           </Sheet>
+         </div>
+         
+         <div className="w-full max-w-sm md:max-w-md lg:max-w-lg pointer-events-auto">
+           <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias} onClear={onClearSearch} />
          </div>
       </div>
 
