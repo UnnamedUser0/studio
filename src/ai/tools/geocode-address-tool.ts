@@ -36,6 +36,10 @@ export const geocodeAddressTool = ai.defineTool(
         return { lat: 29.098, lng: -110.95 };
     }
     
+    if (lowerAddress.includes('cbtis 206')) {
+        return { lat: 29.053, lng: -111.002 };
+    }
+    
     // Default coordinates if no specific address is matched
     return { lat: 29.07296, lng: -110.95732 };
   }
