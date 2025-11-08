@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
@@ -49,6 +49,12 @@ export default function MapView() {
     firestore ? query(collection(firestore, 'pizzerias'), orderBy('rating', 'desc'), limit(3)) : null,
   [firestore]);
   const { data: pizzeriasForRanking, isLoading: isLoadingRanking } = useCollection<Pizzeria>(topPizzeriasQuery);
+  
+  useEffect(() => {
+    if (allPizzerias && !isSearching) {
+      setVisiblePizzerias(allPizzerias);
+    }
+  }, [allPizzerias, isSearching]);
 
   const handleSelectPizzeria = (pizzeria: Pizzeria) => {
     setSelectedPizzeria(pizzeria);
@@ -57,8 +63,8 @@ export default function MapView() {
   const handleSearchResults = (results: Pizzeria[]) => {
     setVisiblePizzerias(results);
     setIsSearching(true);
-    if (results.length === 0) {
-      setSelectedPizzeria(null);
+    if (results.length === 1) {
+      setSelectedPizzeria(results[0]);
     } else {
       setSelectedPizzeria(null);
     }
