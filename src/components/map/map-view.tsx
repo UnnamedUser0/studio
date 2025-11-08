@@ -23,6 +23,7 @@ type Geocode = { lat: number, lng: number };
 
 type MapViewProps = {
   pizzerias: Pizzeria[];
+  allPizzerias: Pizzeria[];
   onSelectPizzeria: (pizzeria: Pizzeria) => void;
   selectedPizzeria: Pizzeria | null;
   searchCenter: Geocode | null;
@@ -36,6 +37,7 @@ type MapViewProps = {
 
 export default function MapView({
   pizzerias,
+  allPizzerias,
   onSelectPizzeria,
   selectedPizzeria,
   searchCenter,
@@ -47,25 +49,17 @@ export default function MapView({
   onCloseDetail
 }: MapViewProps) {
   
-  const firestore = useFirestore();
-  const pizzeriasQuery = useMemoFirebase(() => 
-    firestore ? collection(firestore, 'pizzerias') : null, 
-  [firestore]);
-  const { data: allPizzerias } = useCollection<Pizzeria>(pizzeriasQuery);
-
   return (
-    <>
-      <div className="h-[60vh] w-full">
-        <PizzaMap 
-          pizzerias={pizzerias}
-          onMarkerClick={onSelectPizzeria} 
-          selectedPizzeria={selectedPizzeria}
-          searchCenter={searchCenter}
-        />
-      </div>
+    <div className="relative h-[60vh] w-full">
+      <PizzaMap 
+        pizzerias={pizzerias}
+        onMarkerClick={onSelectPizzeria} 
+        selectedPizzeria={selectedPizzeria}
+        searchCenter={searchCenter}
+      />
 
       {/* This container ensures UI elements are layered above the map */}
-      <div className="absolute top-0 left-0 w-full h-[60vh] p-4 pointer-events-none z-40">
+      <div className="absolute top-0 left-0 w-full h-full p-4 pointer-events-none z-[1000]">
          <div className="relative w-full h-full">
             <div className="absolute top-0 left-0 pointer-events-auto">
               <Sheet>
@@ -88,17 +82,16 @@ export default function MapView({
             </div>
             
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-sm md:max-w-md lg:max-w-lg px-4 pointer-events-auto">
-              <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias || []} onClear={onClearSearch} />
+              <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias} onClear={onClearSearch} />
             </div>
          </div>
       </div>
-
 
       <Sheet open={!!selectedPizzeria} onOpenChange={(open) => !open && onCloseDetail()}>
         <SheetContent side="right" className="w-[90vw] max-w-[440px] p-0 flex flex-col" aria-describedby={undefined}>
           {selectedPizzeria && <PizzeriaDetail pizzeria={selectedPizzeria} />}
         </SheetContent>
       </Sheet>
-    </>
+    </div>
   );
 }
