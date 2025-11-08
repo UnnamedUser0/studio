@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { useFirestore, useCollection } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 
 import SmartSearch from '@/components/search/smart-search';
@@ -48,7 +48,7 @@ export default function MapView({
 }: MapViewProps) {
   
   const firestore = useFirestore();
-  const pizzeriasQuery = useMemo(() => 
+  const pizzeriasQuery = useMemoFirebase(() => 
     firestore ? collection(firestore, 'pizzerias') : null, 
   [firestore]);
   const { data: allPizzerias } = useCollection<Pizzeria>(pizzeriasQuery);

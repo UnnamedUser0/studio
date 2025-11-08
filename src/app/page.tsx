@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
@@ -58,6 +58,8 @@ export default function Home() {
     setSearchCenter(geocode);
     setIsSearching(true);
 
+    let pizzeriasToDisplay = results;
+
     if (geocode) {
       const sortedByDistance = [...(allPizzerias || [])]
         .map(pizzeria => ({
@@ -68,13 +70,12 @@ export default function Home() {
           ),
         }))
         .sort((a, b) => a.distance - b.distance);
-      setVisiblePizzerias(sortedByDistance);
+        pizzeriasToDisplay = sortedByDistance;
+    }
+    
+    setVisiblePizzerias(pizzeriasToDisplay);
+    if(pizzeriasToDisplay.length > 0) {
       setSelectedPizzeria(null);
-    } else {
-      setVisiblePizzerias(results);
-       if (results.length > 0) {
-        setSelectedPizzeria(null);
-      }
     }
   };
   
