@@ -11,7 +11,7 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
             {/* Crust */}
             <path d="M 45,32 C 55,18 75,10 100,10 C 125,10 145,18 155,32 L 45,32 Z" fill="#F4B459" stroke="#C78835" strokeWidth="4" strokeLinejoin="round" />
 
-            {/* Arm Left (Now Static) */}
+            {/* Arm Left (Static) */}
             <g>
                 <path d="M 60,85 C 40,95 30,115 45,125" fill="none" stroke="black" strokeWidth="6" />
                 <path d="M35,135 C25,145 20,135 23,125 C30,110 45,115 45,125" fill="white" stroke="black" strokeWidth="2">
@@ -21,7 +21,7 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
                 </path>
             </g>
             
-            {/* Arm Right (Now Waving Up) */}
+            {/* Arm Right (Waving) */}
             <g>
                 <animateTransform 
                     attributeName="transform"
