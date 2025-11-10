@@ -13,44 +13,44 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
 
             {/* Arm Left (Static) */}
             <g>
-                <path d="M 60,85 C 40,95 30,115 45,125" fill="none" stroke="black" strokeWidth="6" />
+                <path d="M 60,85 C 40,95 30,115 45,125" fill="none" stroke="black" strokeWidth={6} />
                 <g>
-                    <path d="M35,135 C25,145 20,135 23,125 C30,110 45,115 45,125" fill="white" stroke="black" strokeWidth="2" />
-                    <path d="M 33,125 a 5,3 0 0,1 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M 38,125 a 5,3 0 0,1 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M 43,125 a 5,3 0 0,1 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M35,135 C25,145 20,135 23,125 C30,110 45,115 45,125" fill="white" stroke="black" strokeWidth={2} />
+                    <path d="M 33,125 a 5,3 0 0,1 0,-6" fill="none" stroke="black" strokeWidth={1.5} strokeLinecap="round" />
+                    <path d="M 38,125 a 5,3 0 0,1 0,-6" fill="none" stroke="black" strokeWidth={1.5} strokeLinecap="round" />
+                    <path d="M 43,125 a 5,3 0 0,1 0,-6" fill="none" stroke="black" strokeWidth={1.5} strokeLinecap="round" />
                 </g>
             </g>
             
             {/* Arm Right (Waving) */}
             <g>
-                <animateTransform attributeName="transform" type="rotate" values="0 145 90; 20 145 90; 0 145 90" keyTimes="0; 0.5; 1" dur="1.5s" repeatCount="indefinite" />
+                <animateTransform attributeName="transform" type="rotate" values="0 140 85; -20 140 85; 0 140 85" dur="1.5s" repeatCount="indefinite" />
                 {/* Arm pointing UP */}
-                <path d="M 145,90 C 165,80 175,60 160,50" fill="none" stroke="black" strokeWidth="6" />
+                <path d="M 140,85 C 160,75 170,55 155,45" fill="none" stroke="black" strokeWidth={6} />
                 {/* Hand */}
                 <g>
-                    <path d="M170,40 C180,30 185,40 182,50 C175,65 160,60 160,50" fill="white" stroke="black" strokeWidth="2" />
-                    <path d="M 168,50 a 5,3 0 0,0 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M 173,50 a 5,3 0 0,0 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M 178,50 a 5,3 0 0,0 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M165,35 C175,25 180,35 177,45 C170,60 155,55 155,45" fill="white" stroke="black" strokeWidth={2} />
+                    <path d="M 163,45 a 5,3 0 0,0 0,-6" fill="none" stroke="black" strokeWidth={1.5} strokeLinecap="round" />
+                    <path d="M 168,45 a 5,3 0 0,0 0,-6" fill="none" stroke="black" strokeWidth={1.5} strokeLinecap="round" />
+                    <path d="M 173,45 a 5,3 0 0,0 0,-6" fill="none" stroke="black" strokeWidth={1.5} strokeLinecap="round" />
                 </g>
             </g>
 
             {/* Legs */}
             <g id="pizzabot-legs">
-                <path d="M 85,155 L 75,180" fill="none" stroke="black" strokeWidth="6" />
-                <path d="M 115,155 L 125,180" fill="none" stroke="black" strokeWidth="6" />
-                <ellipse cx="70" cy="180" rx="25" ry="10" fill="brown" stroke="black" strokeWidth="2" />
-                <ellipse cx="130" cy="180" rx="25" ry="10" fill="brown" stroke="black" strokeWidth="2" />
+                <path d="M 85,155 L 75,180" fill="none" stroke="black" strokeWidth={6} />
+                <path d="M 115,155 L 125,180" fill="none" stroke="black" strokeWidth={6} />
+                <ellipse cx="70" cy="180" rx="25" ry="10" fill="brown" stroke="black" strokeWidth={2} />
+                <ellipse cx="130" cy="180" rx="25" ry="10" fill="brown" stroke="black" strokeWidth={2} />
             </g>
 
             {/* Face */}
             <g id="pizzabot-face">
-                <ellipse cx="80" cy="75" rx="10" ry="15" fill="white" stroke="black" strokeWidth="2" />
+                <ellipse cx="80" cy="75" rx="10" ry="15" fill="white" stroke="black" strokeWidth={2} />
                 <circle cx="82" cy="78" r="5" fill="black" />
-                <ellipse cx="120" cy="75" rx="10" ry="15" fill="white" stroke="black" strokeWidth="2" />
+                <ellipse cx="120" cy="75" rx="10" ry="15" fill="white" stroke="black" strokeWidth={2} />
                 <circle cx="118" cy="78" r="5" fill="black" />
-                <path d="M 90,105 C 95,115 105,115 110,105" fill="none" stroke="black" strokeWidth="3" strokeLinecap="round" />
+                <path d="M 90,105 C 95,115 105,115 110,105" fill="none" stroke="black" strokeWidth={3} strokeLinecap="round" />
             </g>
 
             {/* Toppings */}
