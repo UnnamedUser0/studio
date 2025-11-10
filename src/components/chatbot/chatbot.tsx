@@ -68,9 +68,9 @@ export default function Chatbot() {
         onClick={toggleChat}
         aria-label="Abrir chat de ayuda"
       >
-        <div className="absolute top-1/2 -translate-y-1/2 -left-2 -translate-x-full w-auto bg-background border rounded-lg p-2 px-3 text-center shadow-lg animate-fade-in-down transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:-translate-x-4 pointer-events-none">
+        <div className="absolute top-1/2 right-full mr-4 w-auto -translate-y-1/2 bg-background border rounded-lg p-2 px-3 text-center shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:block pointer-events-none">
             <p className="text-sm font-medium whitespace-nowrap">¿En qué puedo ayudarte?</p>
-            <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-background border-t border-r transform rotate-45 -z-10"></div>
+            <div className="absolute right-[-0.5rem] top-1/2 -translate-y-1/2 w-4 h-4 bg-background border-t border-r transform rotate-45 -z-10"></div>
         </div>
 
         <button className="relative h-24 w-24 rounded-full" aria-label={isOpen ? "Cerrar chat" : "Abrir chat"}>
