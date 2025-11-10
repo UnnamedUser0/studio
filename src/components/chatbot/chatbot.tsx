@@ -68,12 +68,12 @@ export default function Chatbot() {
         onClick={toggleChat}
         aria-label="Abrir chat de ayuda"
       >
-        <div className="absolute -bottom-2 right-1/2 translate-x-1/2 w-auto bg-background border rounded-lg p-2 px-3 text-center shadow-lg animate-fade-in-down transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 pointer-events-none">
+        <div className="absolute top-1/2 -translate-y-1/2 -left-2 -translate-x-full w-auto bg-background border rounded-lg p-2 px-3 text-center shadow-lg animate-fade-in-down transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:-translate-x-4 pointer-events-none">
             <p className="text-sm font-medium whitespace-nowrap">¿En qué puedo ayudarte?</p>
-            <div className="absolute -bottom-2 right-1/2 translate-x-1/2 w-4 h-4 bg-background border-r border-b transform rotate-45 -z-10"></div>
+            <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-background border-t border-r transform rotate-45 -z-10"></div>
         </div>
 
-        <button className="relative h-28 w-28 rounded-full" aria-label={isOpen ? "Cerrar chat" : "Abrir chat"}>
+        <button className="relative h-24 w-24 rounded-full" aria-label={isOpen ? "Cerrar chat" : "Abrir chat"}>
             <PizzaBotIcon className={`h-full w-full transform transition-transform duration-300 ${isOpen ? 'rotate-12 scale-90' : 'animate-wave-and-float'}`} />
             {isOpen && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full">

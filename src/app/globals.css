@@ -73,13 +73,13 @@
 
   @keyframes float {
     0% {
-      transform: translateY(0px) rotate(-3deg);
+      transform: translateY(0px) rotate(-1deg);
     }
     50% {
-      transform: translateY(-6px) rotate(3deg);
+      transform: translateY(-4px) rotate(1deg);
     }
     100% {
-      transform: translateY(0px) rotate(-3deg);
+      transform: translateY(0px) rotate(-1deg);
     }
   }
 
