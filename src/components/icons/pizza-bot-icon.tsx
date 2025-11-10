@@ -11,16 +11,8 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
             {/* Crust */}
             <path d="M 45,32 C 55,18 75,10 100,10 C 125,10 145,18 155,32 L 45,32 Z" fill="#F4B459" stroke="#C78835" strokeWidth="4" strokeLinejoin="round" />
 
-            {/* Arm Left (Waving) */}
+            {/* Arm Left (Static) */}
             <g>
-                 <animateTransform 
-                    attributeName="transform"
-                    type="rotate"
-                    values="0 60 85; -25 60 85; 0 60 85"
-                    keyTimes="0; 0.5; 1"
-                    dur="1.5s"
-                    repeatCount="indefinite"
-                />
                 <path d="M 60,85 C 40,95 30,115 45,125" fill="none" stroke="black" strokeWidth="6" />
                 <path d="M35,135 C25,145 20,135 23,125 C30,110 45,115 45,125" fill="white" stroke="black" strokeWidth="2">
                     <path d="M 33,125 a 5,3 0 0,1 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
@@ -29,8 +21,16 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
                 </path>
             </g>
             
-            {/* Arm Right (Static) */}
+            {/* Arm Right (Waving) */}
             <g>
+                <animateTransform 
+                    attributeName="transform"
+                    type="rotate"
+                    values="0 140 85; -40 140 85; 0 140 85"
+                    keyTimes="0; 0.5; 1"
+                    dur="1.5s"
+                    repeatCount="indefinite"
+                />
                 <path d="M 140,85 C 160,95 170,115 155,125" fill="none" stroke="black" strokeWidth="6" />
                 <path d="M165,135 C175,145 180,135 177,125 C170,110 155,115 155,125" fill="white" stroke="black" strokeWidth="2">
                      <path d="M 163,125 a 5,3 0 0,0 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
