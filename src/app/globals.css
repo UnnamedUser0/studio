@@ -83,6 +83,19 @@
     }
   }
 
+  @keyframes wave-arm {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-25deg); }
+  }
+
+  .animate-wave-and-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .animate-wave-and-float #pizzabot-arm {
+    animation: wave-arm 1.5s ease-in-out infinite;
+  }
+
 }
 
 @layer utilities {

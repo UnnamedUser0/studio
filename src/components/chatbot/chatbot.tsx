@@ -74,7 +74,7 @@ export default function Chatbot() {
         </div>
 
         <button className="relative h-28 w-28 rounded-full" aria-label={isOpen ? "Cerrar chat" : "Abrir chat"}>
-            <PizzaBotIcon className={`h-full w-full transform transition-transform duration-300 ${isOpen ? 'rotate-12 scale-90' : 'animate-float'}`} />
+            <PizzaBotIcon className={`h-full w-full transform transition-transform duration-300 ${isOpen ? 'rotate-12 scale-90' : 'animate-wave-and-float'}`} />
             {isOpen && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full">
                     <X className="h-10 w-10 text-white"/>
