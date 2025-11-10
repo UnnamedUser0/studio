@@ -23,8 +23,8 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
             </g>
             
             {/* Arm Right (Waving) */}
-            <g transform="translate(5, 5)">
-                 <animateTransform attributeName="transform" type="rotate" values="-15 140 85; -45 140 85; -15 140 85" dur="1.5s" repeatCount="indefinite" />
+            <g transform="translate(10, 25)">
+                 <animateTransform attributeName="transform" type="rotate" values="0 140 85; -35 140 85; 0 140 85" dur="1.5s" repeatCount="indefinite" />
                 <path d="M 140,85 C 150,75 165,80 170,60" fill="none" stroke="black" strokeWidth={6} />
                 <g transform="translate(-5, -10)">
                     <path d="M180,65 C190,55 195,65 192,75 C185,90 170,85 170,75" fill="white" stroke="black" strokeWidth={2} />
