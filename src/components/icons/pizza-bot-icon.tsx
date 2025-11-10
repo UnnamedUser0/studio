@@ -5,14 +5,6 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
             viewBox="0 0 200 200"
             xmlns="http://www.w3.org/2000/svg"
         >
-            {/* Legs */}
-            <g id="pizzabot-legs">
-                <path d="M 85,155 L 75,180" fill="none" stroke="black" strokeWidth="6" />
-                <path d="M 115,155 L 125,180" fill="none" stroke="black" strokeWidth="6" />
-                <ellipse cx="70" cy="180" rx="25" ry="10" fill="brown" stroke="black" strokeWidth="2" />
-                <ellipse cx="130" cy="180" rx="25" ry="10" fill="brown" stroke="black" strokeWidth="2" />
-            </g>
-
             {/* Main Pizza Slice */}
             <path d="M 50,30 L 150,30 C 145,60 130,110 100,160 C 70,110 55,60 50,30 Z" fill="#FFD700" stroke="#E6A222" strokeWidth="4" strokeLinejoin="round"/>
             
@@ -21,26 +13,38 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
 
             {/* Arm Left (Waving) */}
             <g>
-                <animateTransform 
+                 <animateTransform 
                     attributeName="transform"
                     type="rotate"
-                    values="0 60 85; 25 60 85; 0 60 85"
+                    values="0 60 85; -25 60 85; 0 60 85"
                     keyTimes="0; 0.5; 1"
                     dur="1.5s"
                     repeatCount="indefinite"
                 />
                 <path d="M 60,85 C 40,95 30,115 45,125" fill="none" stroke="black" strokeWidth="6" />
-                <path d="M35,135 C25,145 20,135 23,125 C30,110 45,115 45,125" fill="white" stroke="black" strokeWidth="2"/>
-                <path d="M 28,123 L 35,128" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M 31,118 L 38,123" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M35,135 C25,145 20,135 23,125 C30,110 45,115 45,125" fill="white" stroke="black" strokeWidth="2">
+                    <path d="M 33,125 a 5,3 0 0,1 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M 38,125 a 5,3 0 0,1 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M 43,125 a 5,3 0 0,1 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                </path>
             </g>
             
             {/* Arm Right (Static) */}
-            <g id="pizzabot-arm-right">
-                <path d="M 135,95 C 155,85 170,95 165,115" fill="none" stroke="black" strokeWidth="6" />
-                <path d="M155,125 C150,135 165,140 175,130 C185,120 180,105 170,110" fill="white" stroke="black" strokeWidth="2"/>
-                <path d="M 164,115 L 170,122" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M 168,111 L 174,118" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+            <g>
+                <path d="M 140,85 C 160,95 170,115 155,125" fill="none" stroke="black" strokeWidth="6" />
+                <path d="M165,135 C175,145 180,135 177,125 C170,110 155,115 155,125" fill="white" stroke="black" strokeWidth="2">
+                     <path d="M 163,125 a 5,3 0 0,0 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M 168,125 a 5,3 0 0,0 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M 173,125 a 5,3 0 0,0 0,-6" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                </path>
+            </g>
+
+            {/* Legs */}
+            <g id="pizzabot-legs">
+                <path d="M 85,155 L 75,180" fill="none" stroke="black" strokeWidth="6" />
+                <path d="M 115,155 L 125,180" fill="none" stroke="black" strokeWidth="6" />
+                <ellipse cx="70" cy="180" rx="25" ry="10" fill="brown" stroke="black" strokeWidth="2" />
+                <ellipse cx="130" cy="180" rx="25" ry="10" fill="brown" stroke="black" strokeWidth="2" />
             </g>
 
             {/* Face */}
