@@ -24,19 +24,15 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
                 <animateTransform 
                     attributeName="transform"
                     type="rotate"
-                    from="0 65 95"
-                    to="-25 65 95"
+                    values="0 60 85; -25 60 85; 0 60 85"
+                    keyTimes="0; 0.5; 1"
                     dur="1.5s"
                     repeatCount="indefinite"
-                    additive="sum"
-                    accumulate="sum"
-                    values="0 65 95; -25 65 95; 0 65 95" 
-                    keyTimes="0; 0.5; 1"
                 />
-                <path d="M 65,95 C 45,105 35,125 50,135" fill="none" stroke="black" strokeWidth="6" />
-                <path d="M40,145 C30,155 25,145 28,135 C35,120 50,125 50,135" fill="white" stroke="black" strokeWidth="2"/>
-                <path d="M 33,133 L 40,138" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M 36,128 L 43,133" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M 60,85 C 40,95 30,115 45,125" fill="none" stroke="black" strokeWidth="6" />
+                <path d="M35,135 C25,145 20,135 23,125 C30,110 45,115 45,125" fill="white" stroke="black" strokeWidth="2"/>
+                <path d="M 28,123 L 35,128" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M 31,118 L 38,123" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
             </g>
             
             {/* Arm Right (Static) */}
