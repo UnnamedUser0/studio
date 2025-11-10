@@ -73,28 +73,18 @@
 
   @keyframes float {
     0% {
-      transform: translateY(0px) rotate(-1deg);
+      transform: translateY(0px) rotate(0deg);
     }
     50% {
-      transform: translateY(-4px) rotate(1deg);
+      transform: translateY(-4px) rotate(0deg);
     }
     100% {
-      transform: translateY(0px) rotate(-1deg);
+      transform: translateY(0px) rotate(0deg);
     }
-  }
-
-  @keyframes wave-arm {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(-25deg); }
   }
 
   .animate-wave-and-float {
     animation: float 4s ease-in-out infinite;
-  }
-
-  .animate-wave-and-float .pizzabot-arm {
-    animation: wave-arm 1.5s ease-in-out infinite;
-    transform-origin: 65px 95px; /* Pivot from the shoulder */
   }
 
 }
