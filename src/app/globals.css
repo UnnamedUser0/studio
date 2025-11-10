@@ -70,6 +70,19 @@
     from, to { border-color: transparent }
     50% { border-color: hsl(var(--primary)); }
   }
+
+  @keyframes float {
+    0% {
+      transform: translateY(0px) rotate(-5deg);
+    }
+    50% {
+      transform: translateY(-8px) rotate(5deg);
+    }
+    100% {
+      transform: translateY(0px) rotate(-5deg);
+    }
+  }
+
 }
 
 @layer utilities {
@@ -81,5 +94,8 @@
   }
   .glow-bronze {
     box-shadow: 0 0 8px #F97316, 0 0 12px #F97316;
+  }
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
   }
 }

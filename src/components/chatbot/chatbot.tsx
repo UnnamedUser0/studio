@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useRef, useEffect, useTransition } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageCircle, Bot, User, CornerDownLeft, X, Loader2 } from 'lucide-react';
+import { Bot, User, CornerDownLeft, X, Loader2 } from 'lucide-react';
 import { pizzAppChat, PizzAppChatInput } from '@/ai/flows/pizzapp-chat-flow';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { PizzaSliceIcon } from '../icons/pizza-slice-icon';
+import { PizzaBotIcon } from '../icons/pizza-bot-icon';
 import { cn } from '@/lib/utils';
+import { Button } from '../ui/button';
 
 type Message = {
   role: 'user' | 'model';
@@ -62,17 +63,28 @@ export default function Chatbot() {
 
   return (
     <>
-      <Button
-        className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-[1002]"
-        size="icon"
+      <div 
+        className="fixed bottom-6 right-6 z-[1002] cursor-pointer group"
         onClick={toggleChat}
         aria-label="Abrir chat de ayuda"
       >
-        {isOpen ? <X className="h-8 w-8" /> : <MessageCircle className="h-8 w-8" />}
-      </Button>
+        <div className="absolute bottom-20 right-10 w-auto bg-background border rounded-lg p-3 text-center shadow-lg animate-fade-in-down transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 pointer-events-none">
+            <p className="text-sm font-medium whitespace-nowrap">¿En qué puedo ayudarte hoy?</p>
+            <div className="absolute -bottom-2 right-5 w-4 h-4 bg-background border-r border-b transform rotate-45 -z-10"></div>
+        </div>
+
+        <button className="relative h-24 w-24 rounded-full" aria-label={isOpen ? "Cerrar chat" : "Abrir chat"}>
+            <PizzaBotIcon className={`h-full w-full transform transition-transform duration-300 ${isOpen ? 'rotate-12 scale-90' : 'animate-float'}`} />
+            {isOpen && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full">
+                    <X className="h-10 w-10 text-white"/>
+                </div>
+            )}
+        </button>
+      </div>
 
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-full max-w-sm z-[1001] animate-fade-in-down">
+        <div className="fixed bottom-32 right-6 w-full max-w-sm z-[1001] animate-fade-in-down">
           <Card className="flex flex-col h-[60vh] shadow-2xl">
             <CardHeader className="flex-row items-center gap-3">
               <Bot className="h-8 w-8 text-primary" />
