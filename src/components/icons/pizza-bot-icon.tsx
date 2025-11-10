@@ -7,10 +7,10 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
         >
             {/* Legs */}
             <g id="pizzabot-legs">
-                <path d="M 85,155 L 75,180 L 55,180 L 65,155 Z" fill="#4A2A1A" />
-                <path d="M 115,155 L 125,180 L 145,180 L 135,155 Z" fill="#4A2A1A" />
-                <ellipse cx="65" cy="180" rx="20" ry="8" fill="brown" stroke="black" strokeWidth="2" />
-                <ellipse cx="135" cy="180" rx="20" ry="8" fill="brown" stroke="black" strokeWidth="2" />
+                <path d="M 85,155 L 75,180" fill="none" stroke="black" strokeWidth="6" />
+                <path d="M 115,155 L 125,180" fill="none" stroke="black" strokeWidth="6" />
+                <ellipse cx="70" cy="180" rx="25" ry="10" fill="brown" stroke="black" strokeWidth="2" />
+                <ellipse cx="130" cy="180" rx="25" ry="10" fill="brown" stroke="black" strokeWidth="2" />
             </g>
 
             {/* Main Pizza Slice */}
@@ -19,20 +19,20 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
             {/* Crust */}
             <path d="M 45,32 C 55,18 75,10 100,10 C 125,10 145,18 155,32 L 45,32 Z" fill="#F4B459" stroke="#C78835" strokeWidth="4" strokeLinejoin="round" />
 
-             {/* Arm Left (Static) */}
+            {/* Arm Left (Static) */}
             <g id="pizzabot-arm-left">
-                <path d="M 60,90 C 40,100 30,120 45,130" fill="none" stroke="black" strokeWidth="6" />
-                <circle cx="40" cy="132" r="15" fill="white" stroke="black" strokeWidth="2" />
-                <path d="M 30,125 C 25,120 25,130 30,135" fill="white" stroke="black" strokeWidth="2" />
-                 <path d="M 28,138 C 23,133 23,143 28,148" fill="white" stroke="black" strokeWidth="2" />
+                <path d="M 65,95 C 45,105 35,125 50,135" fill="none" stroke="black" strokeWidth="6" />
+                <path d="M40,145 C30,155 25,145 28,135 C35,120 50,125 50,135" fill="white" stroke="black" strokeWidth="2"/>
+                <path d="M 33,133 L 40,138" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M 36,128 L 43,133" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
             </g>
             
             {/* Arm Right (Waving) */}
-            <g id="pizzabot-arm" style={{ transformOrigin: '75px 85px' }}>
-                <path d="M 140,80 C 160,70 175,80 170,100" fill="none" stroke="black" strokeWidth="6" />
-                <circle cx="175" cy="105" r="15" fill="white" stroke="black" strokeWidth="2" />
-                <path d="M 188,95 C 193,90 193,100 188,105" fill="white" stroke="black" strokeWidth="2" />
-                <path d="M 190,110 C 195,105 195,115 190,120" fill="white" stroke="black" strokeWidth="2" />
+            <g id="pizzabot-arm" style={{ transformOrigin: '135px 95px' }}>
+                <path d="M 135,95 C 155,85 170,95 165,115" fill="none" stroke="black" strokeWidth="6" />
+                <path d="M155,125 C150,135 165,140 175,130 C185,120 180,105 170,110" fill="white" stroke="black" strokeWidth="2"/>
+                <path d="M 164,115 L 170,122" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M 168,111 L 174,118" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
             </g>
 
             {/* Face */}
