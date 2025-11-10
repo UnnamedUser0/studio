@@ -24,7 +24,7 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
                 <animateTransform 
                     attributeName="transform"
                     type="rotate"
-                    values="0 60 85; -25 60 85; 0 60 85"
+                    values="0 60 85; 25 60 85; 0 60 85"
                     keyTimes="0; 0.5; 1"
                     dur="1.5s"
                     repeatCount="indefinite"
