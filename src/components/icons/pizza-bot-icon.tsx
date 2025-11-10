@@ -20,7 +20,7 @@ export function PizzaBotIcon(props: React.SVGProps<SVGSVGElement>) {
             <path d="M 45,32 C 55,18 75,10 100,10 C 125,10 145,18 155,32 L 45,32 Z" fill="#F4B459" stroke="#C78835" strokeWidth="4" strokeLinejoin="round" />
 
             {/* Arm Left (Waving) */}
-            <g id="pizzabot-arm" style={{ transformOrigin: '65px 95px' }}>
+            <g id="pizzabot-arm">
                 <path d="M 65,95 C 45,105 35,125 50,135" fill="none" stroke="black" strokeWidth="6" />
                 <path d="M40,145 C30,155 25,145 28,135 C35,120 50,125 50,135" fill="white" stroke="black" strokeWidth="2"/>
                 <path d="M 33,133 L 40,138" stroke="black" strokeWidth="1.5" strokeLinecap="round" />

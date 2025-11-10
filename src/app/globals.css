@@ -94,6 +94,7 @@
 
   .animate-wave-and-float #pizzabot-arm {
     animation: wave-arm 1.5s ease-in-out infinite;
+    transform-origin: 65px 95px; /* Pivot from the shoulder */
   }
 
 }
