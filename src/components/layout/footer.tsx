@@ -59,7 +59,7 @@ export default function Footer() {
                             asChild
                             variant="outline"
                             size="icon"
-                            className="rounded-full bg-gray-800 text-gray-400 border-gray-700 hover:bg-primary hover:text-white hover:border-primary transition-all duration-150 shadow-md hover:shadow-lg active:translate-y-px"
+                            className="rounded-full bg-gray-800 text-gray-400 border-gray-700 hover:bg-primary hover:text-white hover:border-primary transition-all duration-150 shadow-md hover:shadow-lg active:translate-y-px active:shadow-sm"
                         >
                             <a 
                                 href={link.href} 
