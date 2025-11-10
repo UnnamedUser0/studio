@@ -73,18 +73,18 @@ export default function Chatbot() {
             <div className="absolute right-[-0.5rem] top-1/2 -translate-y-1/2 w-4 h-4 bg-background border-t border-r transform rotate-45 -z-10"></div>
         </div>
 
-        <button className="relative h-24 w-24 rounded-full" aria-label={isOpen ? "Cerrar chat" : "Abrir chat"}>
+        <button className="relative h-16 w-16 rounded-full" aria-label={isOpen ? "Cerrar chat" : "Abrir chat"}>
             <PizzaBotIcon className={`h-full w-full transform transition-transform duration-300 ${isOpen ? 'rotate-12 scale-90' : 'animate-wave-and-float'}`} />
             {isOpen && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full">
-                    <X className="h-10 w-10 text-white"/>
+                    <X className="h-8 w-8 text-white"/>
                 </div>
             )}
         </button>
       </div>
 
       {isOpen && (
-        <div className="fixed bottom-32 right-6 w-full max-w-sm z-[1001] animate-fade-in-down">
+        <div className="fixed bottom-28 right-6 w-full max-w-sm z-[1001] animate-fade-in-down">
           <Card className="flex flex-col h-[60vh] shadow-2xl">
             <CardHeader className="flex-row items-center gap-3">
               <div className="h-10 w-10"><PizzaBotIcon /></div>
