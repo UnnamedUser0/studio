@@ -7,8 +7,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 import { cn } from '@/lib/utils';
 import { fontHeadline, fontBody } from '@/app/fonts';
 import { FirebaseClientProvider } from '@/firebase';
-
-const Chatbot = dynamic(() => import('@/components/chatbot/chatbot'), { ssr: false });
+import Chatbot from '@/components/chatbot/chatbot';
 
 export const metadata: Metadata = {
   title: 'PizzApp - Hermosillo Pizza Finder',
