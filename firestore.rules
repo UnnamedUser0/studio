@@ -2,17 +2,18 @@
  * @fileoverview Firestore Security Rules for the Hermosillo Pizza Finder App.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user profiles and reviews, while providing public read access to pizzeria data. Administrative privileges are granted based on the existence of a document in the /roles_admin collection.  All write operations are strictly controlled based on authentication and role.
+ * This ruleset enforces a strict user-ownership model for user profiles and reviews, while providing public read access to pizzeria and testimonial data. Administrative privileges are granted based on the existence of a document in the /roles_admin collection. All write operations are strictly controlled based on authentication and role.
  *
  * Data Structure:
  * - /users/{userId}: Stores user profile data, accessible only to the authenticated user with matching UID.
  * - /pizzerias/{pizzeriaId}: Stores pizzeria data, publicly readable but writable only by admins.
  * - /pizzerias/{pizzeriaId}/reviews/{reviewId}: Stores reviews for pizzerias, with ownership tied to the user who created the review.
  * - /roles_admin/{userId}: Documents in this collection indicate admin privileges for the corresponding user.
+ * - /testimonials/{testimonialId}: Stores user testimonials, publicly readable and writable by authenticated users.
  *
  * Key Security Decisions:
  * - User listing is disallowed.
- * - Pizzeria data is publicly readable.
+ * - Pizzeria and testimonial data is publicly readable.
  * - Admin privileges are determined by the existence of a document in /roles_admin/{userId}.
  * - Reviews are secured to ensure that a review can only be created, updated, or deleted by the user who created it.
  *
@@ -87,6 +88,20 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow update: if false;
       allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to user testimonials. Publicly readable, but only authenticated users can create them.
+     * @path /testimonials/{testimonialId}
+     * @allow (get, list) Anyone can read testimonials.
+     * @allow (create) Authenticated users can create a testimonial.
+     * @deny (update, delete) No one can update or delete testimonials.
+     * @principle Public read, authenticated write.
+     */
+    match /testimonials/{testimonialId} {
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
     function isSignedIn() {
