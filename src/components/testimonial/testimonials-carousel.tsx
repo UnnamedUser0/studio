@@ -4,10 +4,14 @@ import * as React from 'react';
 import Autoplay from 'embla-carousel-autoplay';
 
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { testimonials } from '@/lib/testimonial-data';
 import TestimonialCard from './testimonial-card';
+import { Testimonial } from '@/lib/types';
 
-export default function TestimonialsCarousel() {
+type TestimonialsCarouselProps = {
+  testimonials: Testimonial[];
+};
+
+export default function TestimonialsCarousel({ testimonials }: TestimonialsCarouselProps) {
   return (
     <Carousel
       plugins={[Autoplay({ delay: 3000, stopOnInteraction: true, stopOnMouseEnter: true })]}
@@ -31,3 +35,5 @@ export default function TestimonialsCarousel() {
     </Carousel>
   );
 }
+
+    

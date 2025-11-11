@@ -22,3 +22,14 @@ export type Pizzeria = {
   imageUrl?: string;
   imageHint?: string;
 };
+
+export type Testimonial = {
+  id: string;
+  author: string;
+  email?: string;
+  role: string;
+  comment: string;
+  createdAt: string;
+};
+
+    

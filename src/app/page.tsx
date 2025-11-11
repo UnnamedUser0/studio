@@ -7,13 +7,15 @@ import getDistance from 'geolib/es/getDistance';
 
 import MapView from '@/components/map/map-view';
 import { Loader2, MessageSquarePlus } from 'lucide-react';
-import { Pizzeria } from '@/lib/types';
+import { Pizzeria, Testimonial } from '@/lib/types';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useToast } from '@/hooks/use-toast';
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
   loading: () => <div />,
@@ -33,15 +35,48 @@ type Geocode = { lat: number, lng: number };
 
 function TestimonialForm() {
     const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
     const [name, setName] = useState(user?.displayName || '');
     const [email, setEmail] = useState(user?.email || '');
     const [comment, setComment] = useState('');
 
+    useEffect(() => {
+        if (user) {
+            setName(user.displayName || '');
+            setEmail(user.email || '');
+        }
+    }, [user]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Lógica para enviar el testimonio a Firebase (se implementaría en un siguiente paso)
-        console.log({ name, email, comment });
-        alert('¡Gracias por tu opinión! (Funcionalidad en desarrollo)');
+        if (!firestore || !comment || !name) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Por favor, completa tu nombre y comentario.',
+            });
+            return;
+        }
+
+        const testimonialRef = collection(firestore, 'testimonials');
+        const newTestimonial = {
+            author: name,
+            email: email,
+            comment: comment,
+            role: 'Usuario de PizzApp',
+            createdAt: new Date().toISOString(),
+        };
+
+        addDocumentNonBlocking(testimonialRef, newTestimonial);
+
+        toast({
+            title: '¡Gracias por tu opinión!',
+            description: 'Tu testimonio ha sido enviado y aparecerá pronto.',
+        });
+
+        // Reset form
+        setComment('');
     };
 
     return (
@@ -111,6 +146,11 @@ export default function Home() {
   [firestore]);
   const { data: pizzeriasForRanking, isLoading: isLoadingRanking } = useCollection<Pizzeria>(topPizzeriasQuery);
   
+  const testimonialsQuery = useMemoFirebase(() =>
+    firestore ? query(collection(firestore, 'testimonials'), orderBy('createdAt', 'desc')) : null,
+  [firestore]);
+  const { data: testimonials, isLoading: isLoadingTestimonials } = useCollection<Testimonial>(testimonialsQuery);
+
   useEffect(() => {
     if (allPizzerias && !isSearching) {
       setVisiblePizzerias(allPizzerias);
@@ -232,38 +272,41 @@ export default function Home() {
               )}
             </div>
             
-            <div id="testimonials" className="bg-muted/50 py-16">
-              <div className="container">
-                <div className="max-w-3xl mx-auto text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-headline font-bold">Lo que nuestra comunidad opina</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">
-                        Descubre por qué a los amantes de la pizza les encanta PizzApp.
-                    </p>
-                </div>
-                <TestimonialsCarousel />
-                 <div className="text-center mt-12">
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button size="lg" variant="outline">
-                                <MessageSquarePlus className="mr-2 h-5 w-5" />
-                                Deja tu propia opinión
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[625px]">
-                            <DialogHeader>
-                                <DialogTitle className="font-headline text-3xl">Deja una respuesta</DialogTitle>
-                                <DialogDescription>
-                                    Usa esta sección para contarnos qué te parece PizzApp. ¡Tu feedback es muy valioso!
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="py-4">
-                                <TestimonialForm />
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+            {testimonials && testimonials.length > 0 && (
+              <div id="testimonials" className="bg-muted/50 py-16">
+                <div className="container">
+                  <div className="max-w-3xl mx-auto text-center mb-12">
+                      <h2 className="text-3xl md:text-4xl font-headline font-bold">Lo que nuestra comunidad opina</h2>
+                      <p className="mt-4 text-lg text-muted-foreground">
+                          Descubre por qué a los amantes de la pizza les encanta PizzApp.
+                      </p>
+                  </div>
+                  <TestimonialsCarousel testimonials={testimonials} />
+                  <div className="text-center mt-12">
+                      <Dialog>
+                          <DialogTrigger asChild>
+                              <Button size="lg" variant="outline">
+                                  <MessageSquarePlus className="mr-2 h-5 w-5" />
+                                  Deja tu propia opinión
+                              </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[625px]">
+                              <DialogHeader>
+                                  <DialogTitle className="font-headline text-3xl">Deja una respuesta</DialogTitle>
+                                  <DialogDescription>
+                                      Usa esta sección para contarnos qué te parece PizzApp. ¡Tu feedback es muy valioso!
+                                  </DialogDescription>
+                              </DialogHeader>
+                              <div className="py-4">
+                                  <TestimonialForm />
+                              </div>
+                          </DialogContent>
+                      </Dialog>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
 
             <WhyChoosePizzapp />
           </div>
@@ -274,3 +317,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
