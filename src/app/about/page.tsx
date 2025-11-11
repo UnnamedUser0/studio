@@ -1,4 +1,9 @@
-import Footer from '@/components/layout/footer';
+import dynamic from 'next/dynamic';
+
+const Footer = dynamic(() => import('@/components/layout/footer'), {
+  loading: () => <div />,
+});
+
 
 export default function AboutPage() {
   return (

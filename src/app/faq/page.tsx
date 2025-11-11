@@ -1,15 +1,18 @@
-
+import dynamic from 'next/dynamic';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import Footer from '@/components/layout/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Smartphone, MapPin, Headset, Plus, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
+
+const Footer = dynamic(() => import('@/components/layout/footer'), {
+  loading: () => <div />,
+});
 
 const faqCategories = [
   {

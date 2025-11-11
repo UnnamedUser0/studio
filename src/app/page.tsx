@@ -9,8 +9,10 @@ import MapView from '@/components/map/map-view';
 import { Loader2 } from 'lucide-react';
 import { Pizzeria } from '@/lib/types';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
-import Footer from '@/components/layout/footer';
 
+const Footer = dynamic(() => import('@/components/layout/footer'), {
+  loading: () => <div />,
+});
 
 const TestimonialsCarousel = dynamic(() => import('@/components/testimonial/testimonials-carousel'), {
   ssr: false,

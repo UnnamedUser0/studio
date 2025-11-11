@@ -6,7 +6,11 @@ import { QuestionMarkIcon } from '@/components/icons/question-mark-icon';
 import { HeadsetIcon } from '@/components/icons/headset-icon';
 import { ShieldIcon } from '@/components/icons/shield-icon';
 import { DocumentIcon } from '@/components/icons/document-icon';
-import Footer from '@/components/layout/footer';
+import dynamic from 'next/dynamic';
+
+const Footer = dynamic(() => import('@/components/layout/footer'), {
+  loading: () => <div />,
+});
 
 const supportCards = [
   {

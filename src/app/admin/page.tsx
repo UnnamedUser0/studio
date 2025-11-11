@@ -6,7 +6,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import Footer from '@/components/layout/footer';
+import dynamic from 'next/dynamic';
+
+const Footer = dynamic(() => import('@/components/layout/footer'), {
+  loading: () => <div />,
+});
 
 const ADMIN_EMAILS = ['admin@pizzapp.com', 'test@example.com'];
 

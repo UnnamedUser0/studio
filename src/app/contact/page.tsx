@@ -1,9 +1,14 @@
-import Footer from '@/components/layout/footer';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+
+const Footer = dynamic(() => import('@/components/layout/footer'), {
+  loading: () => <div />,
+});
+
 
 export default function ContactPage() {
   return (
