@@ -1,3 +1,4 @@
+'use client';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,44 @@ const supportCards = [
     link: '/terms',
   },
 ];
+
+const additionalResources = [
+    {
+        href: "https://wiki.openstreetmap.org/wiki/Overpass_API",
+        text: "Documentación de la API Overpass",
+        subtext: "(Datos de Pizzerías)"
+    },
+    {
+        href: "https://operations.osmfoundation.org/policies/nominatim/",
+        text: "Políticas de Uso de Nominatim",
+        subtext: "(Geocodificación)"
+    },
+    {
+        href: "https://leafletjs.com/reference.html",
+        text: "Documentación de Leaflet",
+        subtext: "(Biblioteca del Mapa)"
+    }
+];
+
+function LinkIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72" />
+    </svg>
+  );
+}
 
 export default function HelpPage() {
   return (
@@ -81,6 +120,36 @@ export default function HelpPage() {
                 </CardContent>
              </Card>
            </div>
+        </div>
+
+        <div className="mt-16">
+            <Card className="shadow-lg rounded-xl">
+                <CardContent className="p-8 md:p-12">
+                    <div className="max-w-2xl mx-auto text-center">
+                        <h2 className="font-headline text-3xl font-bold relative inline-block">
+                            Recursos Adicionales
+                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-20 h-1 bg-primary rounded-full" />
+                        </h2>
+                        <p className="mt-6 text-muted-foreground">
+                            Para obtener más información sobre cómo funciona Pizzapp y los datos que utilizamos, visita los siguientes recursos:
+                        </p>
+                    </div>
+                    <div className="mt-8 max-w-lg mx-auto">
+                        <ul className="space-y-4">
+                            {additionalResources.map((resource, index) => (
+                                <li key={index} className="border-b border-dashed pb-4">
+                                    <Link href={resource.href} target="_blank" rel="noopener noreferrer" className="flex items-center group">
+                                        <LinkIcon className="h-5 w-5 text-primary/70 mr-4 flex-shrink-0" />
+                                        <span className="text-foreground group-hover:text-primary underline-offset-4 group-hover:underline">
+                                            {resource.text} <span className="text-muted-foreground group-hover:text-primary/80">{resource.subtext}</span>
+                                        </span>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
       </div>
       <Footer />
