@@ -133,6 +133,11 @@ export default function Home() {
   const [visiblePizzerias, setVisiblePizzerias] = useState<Pizzeria[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchCenter, setSearchCenter] = useState<Geocode | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const firestore = useFirestore();
 
@@ -272,7 +277,7 @@ export default function Home() {
               )}
             </div>
             
-            {testimonials && testimonials.length > 0 && (
+            {hasMounted && testimonials && testimonials.length > 0 && (
               <div id="testimonials" className="bg-muted/50 py-16">
                 <div className="container">
                   <div className="max-w-3xl mx-auto text-center mb-12">
@@ -308,7 +313,7 @@ export default function Home() {
             )}
 
 
-            <WhyChoosePizzapp />
+            {hasMounted && <WhyChoosePizzapp />}
           </div>
         )}
       </main>
@@ -317,5 +322,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
