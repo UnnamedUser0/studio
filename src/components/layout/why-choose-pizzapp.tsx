@@ -36,7 +36,7 @@ export default function WhyChoosePizzapp() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     {features.map((feature, index) => (
-                        <Card key={index} className="text-center shadow-lg rounded-xl flex flex-col bg-muted/30 hover:border-primary/50 transition-colors">
+                        <Card key={index} className="text-center shadow-lg rounded-xl flex flex-col bg-muted/30 hover:border-primary/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
                             <CardHeader className="items-center">
                                 <div className="bg-primary/10 rounded-full p-4">
                                     {feature.icon}
