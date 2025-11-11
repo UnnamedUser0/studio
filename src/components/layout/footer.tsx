@@ -83,8 +83,11 @@ export default function Footer() {
                     <ul className="space-y-2">
                         {section.links.map((link, linkIndex) => (
                             <li key={linkIndex}>
-                                <Link href={link.href} className="text-sm hover:text-primary hover:underline transition-colors">
-                                    {link.text}
+                               <Link href={link.href} className="group flex items-center text-sm transition-colors duration-300">
+                                    <span className="w-0 opacity-0 group-hover:w-5 group-hover:opacity-100 transition-all duration-300 ease-in-out text-primary">→</span>
+                                    <span className="transition-transform duration-300 ease-in-out group-hover:translate-x-1 group-hover:text-primary group-hover:underline">
+                                        {link.text}
+                                    </span>
                                 </Link>
                             </li>
                         ))}
