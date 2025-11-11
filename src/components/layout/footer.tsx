@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { Pizza, Facebook, Instagram, X } from 'lucide-react';
+import { Pizza, Facebook, Instagram } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { XIcon } from '../icons/x-icon';
 
 const footerSections = [
     {
@@ -31,7 +32,7 @@ const footerSections = [
 const socialLinks = [
     { icon: <Facebook className="h-5 w-5" />, href: '#', 'aria-label': 'Facebook' },
     { icon: <Instagram className="h-5 w-5" />, href: '#', 'aria-label': 'Instagram' },
-    { icon: <X className="h-5 w-5" />, href: '#', 'aria-label': 'X (antes Twitter)' },
+    { icon: <XIcon className="h-5 w-5 fill-current" />, href: '#', 'aria-label': 'X (antes Twitter)' },
 ];
 
 export default function Footer() {
