@@ -67,7 +67,10 @@ export default function MapView({
          <div className="absolute left-4 top-20 pointer-events-auto">
            <Sheet>
              <SheetTrigger asChild>
-               <Button variant="secondary" className="shadow-lg animate-fade-in-down">
+               <Button 
+                variant="secondary" 
+                className="shadow-lg animate-fade-in-down hover:shadow-xl hover:-translate-y-1 active:translate-y-px transition-all duration-300"
+               >
                  <List className="mr-2 h-5 w-5" />
                  {isSearching ? 'Ver Resultados' : 'Explorar Pizzerías'}
                </Button>
