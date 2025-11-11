@@ -277,7 +277,7 @@ export default function Home() {
               )}
             </div>
             
-            {hasMounted && testimonials && testimonials.length > 0 && (
+            {hasMounted && (
               <div id="testimonials" className="bg-muted/50 py-16">
                 <div className="container">
                   <div className="max-w-3xl mx-auto text-center mb-12">
@@ -286,7 +286,11 @@ export default function Home() {
                           Descubre por qué a los amantes de la pizza les encanta PizzApp.
                       </p>
                   </div>
-                  <TestimonialsCarousel testimonials={testimonials} />
+                  
+                  {testimonials && testimonials.length > 0 && (
+                    <TestimonialsCarousel testimonials={testimonials} />
+                  )}
+
                   <div className="text-center mt-12">
                       <Dialog>
                           <DialogTrigger asChild>
@@ -311,7 +315,6 @@ export default function Home() {
                 </div>
               </div>
             )}
-
 
             {hasMounted && <WhyChoosePizzapp />}
           </div>
