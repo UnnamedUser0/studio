@@ -6,8 +6,10 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import Footer from '@/components/layout/footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Smartphone, MapPin, Headset, Plus } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Smartphone, MapPin, Headset, Plus, MessageCircle } from 'lucide-react';
+import Link from 'next/link';
 
 const faqCategories = [
   {
@@ -117,6 +119,28 @@ export default function FAQPage() {
                     </Card>
                 ))}
             </div>
+
+            <div className="mt-16">
+                <Card className="shadow-xl rounded-xl bg-gradient-to-br from-card to-muted/40">
+                    <CardContent className="p-8 md:p-12 text-center">
+                        <div className="flex justify-center mb-4">
+                            <div className="h-14 w-14 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <MessageCircle className="h-8 w-8" />
+                            </div>
+                        </div>
+                        <h2 className="font-headline text-3xl font-bold">¿No encontraste la respuesta que buscabas?</h2>
+                        <p className="mt-3 max-w-xl mx-auto text-muted-foreground">
+                            Estamos aquí para ayudarte. Ponte en contacto con nuestro equipo de soporte.
+                        </p>
+                        <div className="mt-8">
+                            <Button asChild size="lg">
+                                <Link href="/contact">Contacta con nosotros</Link>
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
         </div>
         <Footer />
     </div>
