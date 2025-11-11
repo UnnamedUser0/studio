@@ -1,14 +1,19 @@
 'use client';
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import getDistance from 'geolib/es/getDistance';
 
 import MapView from '@/components/map/map-view';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MessageSquarePlus } from 'lucide-react';
 import { Pizzeria } from '@/lib/types';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
   loading: () => <div />,
@@ -25,6 +30,68 @@ const WhyChoosePizzapp = dynamic(() => import('@/components/layout/why-choose-pi
 });
 
 type Geocode = { lat: number, lng: number };
+
+function TestimonialForm() {
+    const { user } = useUser();
+    const [name, setName] = useState(user?.displayName || '');
+    const [email, setEmail] = useState(user?.email || '');
+    const [comment, setComment] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Lógica para enviar el testimonio a Firebase (se implementaría en un siguiente paso)
+        console.log({ name, email, comment });
+        alert('¡Gracias por tu opinión! (Funcionalidad en desarrollo)');
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+                <Label htmlFor="comment" className="font-semibold">Comentario *</Label>
+                <Textarea
+                    id="comment"
+                    placeholder="Escribe tu opinión sobre PizzApp aquí..."
+                    rows={4}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    required
+                    className="mt-2"
+                />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <Label htmlFor="name" className="font-semibold">Nombre *</Label>
+                    <Input
+                        id="name"
+                        placeholder="Tu nombre"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        className="mt-2"
+                    />
+                </div>
+                <div>
+                    <Label htmlFor="email" className="font-semibold">Correo electrónico</Label>
+                    <Input
+                        id="email"
+                        type="email"
+                        placeholder="tu@correo.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="mt-2"
+                    />
+                </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+                Tu dirección de correo electrónico no será publicada. Los campos obligatorios están marcados con *.
+            </p>
+            <div className="text-right">
+                <Button type="submit">Publicar el comentario</Button>
+            </div>
+        </form>
+    );
+}
+
 
 export default function Home() {
   const [selectedPizzeria, setSelectedPizzeria] = useState<Pizzeria | null>(null);
@@ -174,6 +241,27 @@ export default function Home() {
                     </p>
                 </div>
                 <TestimonialsCarousel />
+                 <div className="text-center mt-12">
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button size="lg" variant="outline">
+                                <MessageSquarePlus className="mr-2 h-5 w-5" />
+                                Deja tu propia opinión
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[625px]">
+                            <DialogHeader>
+                                <DialogTitle className="font-headline text-3xl">Deja una respuesta</DialogTitle>
+                                <DialogDescription>
+                                    Usa esta sección para contarnos qué te parece PizzApp. ¡Tu feedback es muy valioso!
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4">
+                                <TestimonialForm />
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
               </div>
             </div>
 
