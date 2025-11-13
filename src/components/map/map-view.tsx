@@ -63,33 +63,33 @@ export default function MapView({
         searchCenter={searchCenter}
       />
 
-      <div className="absolute top-4 left-0 w-full px-4 flex justify-center items-start pointer-events-none">
-         <div className="absolute left-4 top-20 pointer-events-auto z-[1000]">
-           <Sheet>
-             <SheetTrigger asChild>
-               <Button 
-                variant="secondary" 
-                className="shadow-lg animate-fade-in-down hover:shadow-xl hover:-translate-y-1 active:translate-y-px transition-all duration-300"
-               >
-                 <List className="mr-2 h-5 w-5" />
-                 {isSearching ? 'Ver Resultados' : 'Explorar Pizzerías'}
-               </Button>
-             </SheetTrigger>
-             <SheetContent side="left" className="w-[90vw] max-w-[440px] p-0 flex flex-col">
-               <PizzeriaList 
-                   pizzerias={pizzeriasToShowInList}
-                   onPizzeriaSelect={onSelectPizzeria} 
-                   isSearching={isSearching}
-                   onClearSearch={onClearSearch}
-                   isLoading={isLoadingPizzerias}
-               />
-             </SheetContent>
-           </Sheet>
-         </div>
-         
-         <div className="w-full max-w-sm md:max-w-md lg:max-w-lg pointer-events-auto z-[1000]">
-           <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias || []} onClear={onClearSearch} />
-         </div>
+      {/* Sheet Trigger Button */}
+      <div className="absolute top-20 left-4 z-[1001] pointer-events-auto">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button 
+            variant="secondary" 
+            className="shadow-lg hover:shadow-xl hover:-translate-y-1 active:translate-y-px transition-all duration-300"
+            >
+              <List className="mr-2 h-5 w-5" />
+              {isSearching ? 'Ver Resultados' : 'Explorar Pizzerías'}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[90vw] max-w-[440px] p-0 flex flex-col">
+            <PizzeriaList 
+                pizzerias={pizzeriasToShowInList}
+                onPizzeriaSelect={onSelectPizzeria} 
+                isSearching={isSearching}
+                onClearSearch={onClearSearch}
+                isLoading={isLoadingPizzerias}
+            />
+          </SheetContent>
+        </Sheet>
+      </div>
+      
+      {/* Smart Search Bar */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-sm md:max-w-md lg:max-w-lg z-[1002] pointer-events-auto">
+        <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias || []} onClear={onClearSearch} />
       </div>
 
       <Sheet open={!!selectedPizzeria} onOpenChange={(open) => !open && onCloseDetail()}>

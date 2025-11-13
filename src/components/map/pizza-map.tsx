@@ -155,7 +155,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
   return (
     <div className="relative h-full w-full z-0">
       <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />
-      <div className="absolute top-24 right-4 z-[1000]">
+      <div className="absolute top-24 right-4 z-[1001]">
         <Button 
           variant="secondary" 
           size="icon" 
