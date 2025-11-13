@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 
 import SmartSearch from '@/components/search/smart-search';
@@ -25,6 +24,7 @@ type MapViewProps = {
   selectedPizzeria: Pizzeria | null;
   searchCenter: Geocode | null;
   onCloseDetail: () => void;
+  onLocateUser: (coords: Geocode) => void;
 };
 
 export default function MapView({
@@ -35,20 +35,22 @@ export default function MapView({
   visiblePizzerias,
   selectedPizzeria,
   searchCenter,
-  onCloseDetail
+  onCloseDetail,
+  onLocateUser,
 }: MapViewProps) {
   
   return (
-    <>
+    <div className="relative h-full w-full">
       <PizzaMap 
         pizzerias={visiblePizzerias}
         onMarkerClick={onSelectPizzeria} 
         selectedPizzeria={selectedPizzeria}
         searchCenter={searchCenter}
+        onLocateUser={onLocateUser}
       />
       
       {/* Smart Search Bar */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-sm md:max-w-md lg:max-w-lg z-[1002]">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-sm md:max-w-md lg:max-w-lg z-[1001]">
         <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias || []} onClear={onClearSearch} />
       </div>
 
@@ -58,6 +60,6 @@ export default function MapView({
           {selectedPizzeria && <PizzeriaDetail pizzeria={selectedPizzeria} />}
         </SheetContent>
       </Sheet>
-    </>
+    </div>
   );
 }

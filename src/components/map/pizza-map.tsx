@@ -37,9 +37,10 @@ type PizzaMapProps = {
   onMarkerClick: (pizzeria: Pizzeria) => void;
   selectedPizzeria: Pizzeria | null;
   searchCenter: { lat: number; lng: number } | null;
+  onLocateUser: (coords: { lat: number, lng: number }) => void;
 };
 
-export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, searchCenter }: PizzaMapProps) {
+export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, searchCenter, onLocateUser }: PizzaMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -59,6 +60,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
             myLocationMarkerRef.current = L.marker(e.latlng, { icon: myLocationIcon }).addTo(map);
         }
         map.flyTo(e.latlng, 15);
+        onLocateUser({ lat: e.latlng.lat, lng: e.latlng.lng });
     });
 
     map.once('locationerror', (e: L.ErrorEvent) => {
