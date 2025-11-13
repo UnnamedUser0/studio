@@ -30,7 +30,7 @@ export const pizzeriasData: Omit<Pizzeria, 'rating' | 'imageUrl' | 'imageHint' |
     "category": "Pizza",
     "source": "OpenStreetMap"
   },
--  {
+  {
     "id": "osm-4467008886",
     "name": "Pizzas en leña media luna",
     "address": "Retorno 10, Bugambilias, 83140 Hermosillo, Son., Mexico",
