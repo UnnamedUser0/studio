@@ -17,7 +17,7 @@ type Geocode = { lat: number, lng: number };
 
 type MapViewProps = {
   allPizzerias: Pizzeria[];
-  onSearch: (results: Pizzeria[], geocode: Geocode | null) => void;
+  onSearch: (results: Pizzeria[]) => void;
   onClearSearch: () => void;
   onSelectPizzeria: (pizzeria: Pizzeria) => void;
   visiblePizzerias: Pizzeria[];

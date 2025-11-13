@@ -1,41 +1,20 @@
 'use client';
-import { useState, useTransition, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search, Loader2, X } from 'lucide-react';
-import { getSmartSearchSuggestions } from '@/ai/flows/smart-search-suggestions';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Pizzeria } from '@/lib/types';
 import { Button } from '../ui/button';
 
-type Geocode = { lat: number, lng: number };
-
 type SmartSearchProps = {
-  onSearch: (results: Pizzeria[], geocode: Geocode | null) => void;
+  onSearch: (results: Pizzeria[]) => void;
   allPizzerias: Pizzeria[];
   onClear: () => void;
 };
 
-type Suggestion = {
-  text: string;
-  geocode: Geocode | null;
-};
-
-
 export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSearchProps) {
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [isPending, startTransition] = useTransition();
-  const [debouncedQuery, setDebouncedQuery] = useState(query);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedQuery(query);
-    }, 300);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [query]);
+  const [suggestions, setSuggestions] = useState<Pizzeria[]>([]);
 
   const handleClear = () => {
     setQuery('');
@@ -43,9 +22,9 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
     onClear();
   };
   
-  const performSearch = (searchQuery: string, geocode: Geocode | null) => {
+  const performSearch = (searchQuery: string) => {
     if (!searchQuery) {
-      onSearch([], null);
+      onSearch([]);
       return;
     }
     const lowerCaseQuery = searchQuery.toLowerCase();
@@ -53,45 +32,41 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
       p.name.toLowerCase().includes(lowerCaseQuery) ||
       p.address.toLowerCase().includes(lowerCaseQuery)
     );
-    onSearch(results, geocode);
+    onSearch(results);
     setSuggestions([]);
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      performSearch(query, null);
+      performSearch(query);
     }
   };
 
   const fetchSuggestions = useCallback((currentQuery: string) => {
-    if (currentQuery.length > 2) {
-      startTransition(async () => {
-        try {
-          const result = await getSmartSearchSuggestions({ query: currentQuery });
-          const suggestionTexts = result.suggestions.filter(s => s.toLowerCase() !== currentQuery.toLowerCase());
-          
-          const newSuggestions: Suggestion[] = suggestionTexts.map(text => ({
-            text,
-            geocode: result.geocode || null,
-          }));
-
-          setSuggestions(newSuggestions);
-        } catch (error) {
-          console.error("Error fetching suggestions:", error);
-          setSuggestions([]);
-        }
-      });
+    if (currentQuery.length > 1) {
+      const lowerCaseQuery = currentQuery.toLowerCase();
+      const filtered = allPizzerias.filter(p => 
+        p.name.toLowerCase().includes(lowerCaseQuery) ||
+        p.address.toLowerCase().includes(lowerCaseQuery)
+      ).slice(0, 5); // Limit to 5 suggestions
+      setSuggestions(filtered);
     } else {
       setSuggestions([]);
     }
-  }, []);
+  }, [allPizzerias]);
 
   useEffect(() => {
-    fetchSuggestions(debouncedQuery);
-  }, [debouncedQuery, fetchSuggestions]);
+    const handler = setTimeout(() => {
+      fetchSuggestions(query);
+    }, 200); // Debounce time
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [query, fetchSuggestions]);
 
   return (
-    <div className="relative animate-fade-in-down">
+    <div className="relative">
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
         <Input
@@ -99,12 +74,11 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
           className="pl-11 h-12 text-base shadow-lg rounded-full pr-20"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => fetchSuggestions(debouncedQuery)}
+          onFocus={() => fetchSuggestions(query)}
           onKeyDown={handleKeyDown}
         />
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          {isPending && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
-          {query && !isPending && (
+          {query && (
              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={handleClear}>
               <X className="h-5 w-5 text-muted-foreground" />
              </Button>
@@ -115,14 +89,16 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
         <Card className="absolute top-full mt-2 w-full z-20 shadow-xl animate-fade-in-down rounded-2xl">
           <CardContent className="p-2">
             <ul className="space-y-1">
-              {suggestions.map((s, i) => (
-                <li key={i} className="p-3 text-sm rounded-lg hover:bg-accent/50 cursor-pointer"
+              {suggestions.map((pizzeria) => (
+                <li key={pizzeria.id} className="p-3 text-sm rounded-lg hover:bg-accent/50 cursor-pointer"
                   onClick={() => {
-                    setQuery(s.text);
-                    performSearch(s.text, s.geocode);
+                    setQuery(pizzeria.name);
+                    onSearch([pizzeria]);
+                    setSuggestions([]);
                   }}
                 >
-                  {s.text}
+                  <p className="font-medium">{pizzeria.name}</p>
+                  <p className="text-xs text-muted-foreground">{pizzeria.address}</p>
                 </li>
               ))}
             </ul>
