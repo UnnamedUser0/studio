@@ -63,8 +63,8 @@ export default function MapView({
         searchCenter={searchCenter}
       />
 
-      <div className="absolute top-4 left-0 w-full px-4 flex justify-center items-start pointer-events-none z-[1000]">
-         <div className="absolute left-4 top-20 pointer-events-auto">
+      <div className="absolute top-4 left-0 w-full px-4 flex justify-center items-start pointer-events-none">
+         <div className="absolute left-4 top-20 pointer-events-auto z-[1000]">
            <Sheet>
              <SheetTrigger asChild>
                <Button 
@@ -87,7 +87,7 @@ export default function MapView({
            </Sheet>
          </div>
          
-         <div className="w-full max-w-sm md:max-w-md lg:max-w-lg pointer-events-auto">
+         <div className="w-full max-w-sm md:max-w-md lg:max-w-lg pointer-events-auto z-[1000]">
            <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias || []} onClear={onClearSearch} />
          </div>
       </div>
