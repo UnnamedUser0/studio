@@ -48,7 +48,7 @@ export default function MapView({
       />
       
       {/* Smart Search Bar */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-sm md:max-w-md lg:max-w-lg z-[1002] pointer-events-auto">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-sm md:max-w-md lg:max-w-lg z-[1002]">
         <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias || []} onClear={onClearSearch} />
       </div>
 

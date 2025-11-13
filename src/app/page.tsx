@@ -205,8 +205,30 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <main className="flex-grow flex flex-col">
-        <div className="relative h-[60vh] w-full">
+      <main className="flex-grow flex flex-col relative">
+        
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button 
+            variant="secondary" 
+            className="absolute top-20 left-4 z-[1001] shadow-lg hover:shadow-xl hover:-translate-y-1 active:translate-y-px transition-all duration-300 pointer-events-auto"
+            >
+              <List className="mr-2 h-5 w-5" />
+              {isSearching ? 'Ver Resultados' : 'Explorar Pizzerías'}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[90vw] max-w-[440px] p-0 flex flex-col">
+            <PizzeriaList 
+                pizzerias={pizzeriasToShowInList}
+                onPizzeriaSelect={handleSelectPizzeria} 
+                isSearching={isSearching}
+                onClearSearch={handleClearSearch}
+                isLoading={isLoadingPizzerias}
+            />
+          </SheetContent>
+        </Sheet>
+        
+        <div className="h-[60vh] w-full">
             <MapView 
                 allPizzerias={allPizzerias || []}
                 visiblePizzerias={pizzeriasToShowOnMap}
@@ -217,30 +239,6 @@ export default function Home() {
                 onClearSearch={handleClearSearch}
                 onCloseDetail={handleCloseDetail}
             />
-            
-            {/* Sheet Trigger Button - MOVED HERE from MapView */}
-            <div className="absolute top-20 left-4 z-[1001] pointer-events-auto">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button 
-                  variant="secondary" 
-                  className="shadow-lg hover:shadow-xl hover:-translate-y-1 active:translate-y-px transition-all duration-300"
-                  >
-                    <List className="mr-2 h-5 w-5" />
-                    {isSearching ? 'Ver Resultados' : 'Explorar Pizzerías'}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[90vw] max-w-[440px] p-0 flex flex-col">
-                  <PizzeriaList 
-                      pizzerias={pizzeriasToShowInList}
-                      onPizzeriaSelect={handleSelectPizzeria} 
-                      isSearching={isSearching}
-                      onClearSearch={handleClearSearch}
-                      isLoading={isLoadingPizzerias}
-                  />
-                </SheetContent>
-              </Sheet>
-            </div>
         </div>
 
         {!isSearching && (
@@ -310,27 +308,29 @@ export default function Home() {
                   <TestimonialsCarousel testimonials={testimonials} />
                 )}
 
-                <div className="text-center mt-12">
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button size="lg" variant="outline">
-                                <MessageSquarePlus className="mr-2 h-5 w-5" />
-                                Deja tu propia opinión
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[625px]">
-                            <DialogHeader>
-                                <DialogTitle className="font-headline text-3xl">Deja una respuesta</DialogTitle>
-                                <DialogDescription>
-                                    Usa esta sección para contarnos qué te parece PizzApp. ¡Tu feedback es muy valioso!
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="py-4">
-                                <TestimonialForm />
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                </div>
+                {hasMounted && (
+                  <div className="text-center mt-12">
+                      <Dialog>
+                          <DialogTrigger asChild>
+                              <Button size="lg" variant="outline">
+                                  <MessageSquarePlus className="mr-2 h-5 w-5" />
+                                  Deja tu propia opinión
+                              </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[625px]">
+                              <DialogHeader>
+                                  <DialogTitle className="font-headline text-3xl">Deja una respuesta</DialogTitle>
+                                  <DialogDescription>
+                                      Usa esta sección para contarnos qué te parece PizzApp. ¡Tu feedback es muy valioso!
+                                  </DialogDescription>
+                              </DialogHeader>
+                              <div className="py-4">
+                                  <TestimonialForm />
+                              </div>
+                          </DialogContent>
+                      </Dialog>
+                  </div>
+                )}
               </div>
             </div>
 
