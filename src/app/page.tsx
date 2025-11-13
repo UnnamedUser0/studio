@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import getDistance from 'geolib/es/getDistance';
 
 import MapView from '@/components/map/map-view';
@@ -144,11 +144,13 @@ export default function Home() {
   const allPizzerias = useMemo(() => {
     return pizzeriasData.map((pizzeria, index) => {
       const image = PlaceHolderImages[index % PlaceHolderImages.length];
+      // Generate a stable rating based on the index
+      const stableRating = 3.5 + ((index * 7) % 15) / 10;
       return {
         ...pizzeria,
         imageUrl: image.imageUrl,
         imageHint: image.imageHint,
-        rating: 3.5 + Math.random() * 1.5 // Assign a random rating for now
+        rating: Math.min(5, stableRating) // Ensure rating doesn't exceed 5
       };
     });
   }, []);
@@ -235,7 +237,7 @@ export default function Home() {
           </SheetContent>
         </Sheet>
         
-        <main className="flex-grow flex flex-col relative">
+        <main className="flex-grow flex flex-col">
             <div className="h-[60vh] w-full">
                 <MapView 
                     allPizzerias={allPizzerias || []}
