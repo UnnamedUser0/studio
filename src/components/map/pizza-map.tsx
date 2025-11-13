@@ -114,7 +114,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
 
-    // Add new markers
+    // Add new markers from the visible pizzerias
     pizzerias.forEach(pizzeria => {
       if (typeof pizzeria.lat !== 'number' || typeof pizzeria.lng !== 'number') {
         console.warn('Skipping pizzeria with invalid coordinates:', pizzeria);
