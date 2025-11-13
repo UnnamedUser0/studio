@@ -31,5 +31,3 @@ export type Testimonial = {
   comment: string;
   createdAt: string;
 };
-
-    

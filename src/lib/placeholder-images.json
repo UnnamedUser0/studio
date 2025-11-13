@@ -35,6 +35,30 @@
       "description": "A variety of pizzas on a table.",
       "imageUrl": "https://images.unsplash.com/photo-1731703698022-2bcf47d3d09b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwaXp6YXMlMjB0YWJsZXxlbnwwfHx8fDE3NjIzODQ4OTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizzas table"
+    },
+    {
+      "id": "pizzeria-7",
+      "description": "Margherita pizza with basil leaves.",
+      "imageUrl": "https://images.unsplash.com/photo-1598021680137-2b767b40ad4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtYXJnaGVyaXRhJTIwcGl6emF8ZW58MHx8fHwxNzYzNTk4MzA3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "margherita pizza"
+    },
+    {
+      "id": "pizzeria-8",
+      "description": "A cheesy pizza slice being pulled from the whole.",
+      "imageUrl": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjaGVlc3klMjBwaXp6YSUyMHNsaWNlfGVufDB8fHx8MTc2MzU5ODMyN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cheesy slice"
+    },
+    {
+      "id": "pizzeria-9",
+      "description": "Friends sharing pizza at a restaurant.",
+      "imageUrl": "https://images.unsplash.com/photo-1563223073-3c20b22a7045?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzaGFyaW5nJTIwcGl6emF8ZW58MHx8fHwxNzYzNTk4MzQwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sharing pizza"
+    },
+    {
+      "id": "pizzeria-10",
+      "description": "A close-up of a pizza with various toppings.",
+      "imageUrl": "https://images.unsplash.com/photo-1594007654729-407eedc4be65?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxiaWJpbmpnaSUyMHBpenphfGVufDB8fHx8MTc2MzU5ODQwMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "pizza toppings"
     }
   ]
 }
