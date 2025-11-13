@@ -4,15 +4,10 @@ import { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 
 import SmartSearch from '@/components/search/smart-search';
-import PizzeriaList from '@/components/pizzeria/pizzeria-list';
 import PizzeriaDetail from '@/components/pizzeria/pizzeria-detail';
-import { Button } from '@/components/ui/button';
-import { List } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Pizzeria } from '@/lib/types';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
 
 const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), { 
   ssr: false,
@@ -22,12 +17,10 @@ const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), {
 type Geocode = { lat: number, lng: number };
 
 type MapViewProps = {
-  pizzeriasToShowInList: Pizzeria[];
-  isSearching: boolean;
+  allPizzerias: Pizzeria[];
   onSearch: (results: Pizzeria[], geocode: Geocode | null) => void;
   onClearSearch: () => void;
   onSelectPizzeria: (pizzeria: Pizzeria) => void;
-  isLoadingPizzerias: boolean;
   visiblePizzerias: Pizzeria[];
   selectedPizzeria: Pizzeria | null;
   searchCenter: Geocode | null;
@@ -35,68 +28,36 @@ type MapViewProps = {
 };
 
 export default function MapView({
-  pizzeriasToShowInList,
-  isSearching,
+  allPizzerias,
   onSearch,
   onClearSearch,
   onSelectPizzeria,
-  isLoadingPizzerias,
   visiblePizzerias,
   selectedPizzeria,
   searchCenter,
   onCloseDetail
 }: MapViewProps) {
   
-  const firestore = useFirestore();
-
-  const allPizzeriasQuery = useMemoFirebase(() =>
-    firestore ? collection(firestore, 'pizzerias') : null
-  , [firestore]);
-  const { data: allPizzerias } = useCollection<Pizzeria>(allPizzeriasQuery);
-
   return (
-    <div className="relative h-full w-full">
+    <>
       <PizzaMap 
         pizzerias={visiblePizzerias}
         onMarkerClick={onSelectPizzeria} 
         selectedPizzeria={selectedPizzeria}
         searchCenter={searchCenter}
       />
-
-      {/* Sheet Trigger Button */}
-      <div className="absolute top-20 left-4 z-[1001] pointer-events-auto">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button 
-            variant="secondary" 
-            className="shadow-lg hover:shadow-xl hover:-translate-y-1 active:translate-y-px transition-all duration-300"
-            >
-              <List className="mr-2 h-5 w-5" />
-              {isSearching ? 'Ver Resultados' : 'Explorar Pizzerías'}
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[90vw] max-w-[440px] p-0 flex flex-col">
-            <PizzeriaList 
-                pizzerias={pizzeriasToShowInList}
-                onPizzeriaSelect={onSelectPizzeria} 
-                isSearching={isSearching}
-                onClearSearch={onClearSearch}
-                isLoading={isLoadingPizzerias}
-            />
-          </SheetContent>
-        </Sheet>
-      </div>
       
       {/* Smart Search Bar */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-sm md:max-w-md lg:max-w-lg z-[1002] pointer-events-auto">
         <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias || []} onClear={onClearSearch} />
       </div>
 
+      {/* Pizzeria Detail Sheet */}
       <Sheet open={!!selectedPizzeria} onOpenChange={(open) => !open && onCloseDetail()}>
         <SheetContent side="right" className="w-[90vw] max-w-[440px] p-0 flex flex-col" aria-describedby={undefined}>
           {selectedPizzeria && <PizzeriaDetail pizzeria={selectedPizzeria} />}
         </SheetContent>
       </Sheet>
-    </div>
+    </>
   );
 }

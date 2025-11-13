@@ -6,7 +6,7 @@ import { collection, query, orderBy, limit } from 'firebase/firestore';
 import getDistance from 'geolib/es/getDistance';
 
 import MapView from '@/components/map/map-view';
-import { Loader2, MessageSquarePlus } from 'lucide-react';
+import { Loader2, MessageSquarePlus, List } from 'lucide-react';
 import { Pizzeria, Testimonial } from '@/lib/types';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,8 @@ import { Label } from '@/components/ui/label';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import TestimonialsCarousel from '@/components/testimonial/testimonials-carousel';
+import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
+import PizzeriaList from '@/components/pizzeria/pizzeria-list';
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
   loading: () => <div />,
@@ -206,17 +208,39 @@ export default function Home() {
       <main className="flex-grow flex flex-col">
         <div className="relative h-[60vh] w-full">
             <MapView 
+                allPizzerias={allPizzerias || []}
                 visiblePizzerias={pizzeriasToShowOnMap}
                 onSelectPizzeria={handleSelectPizzeria}
                 selectedPizzeria={selectedPizzeria}
                 searchCenter={searchCenter}
                 onSearch={handleSearch}
                 onClearSearch={handleClearSearch}
-                pizzeriasToShowInList={pizzeriasToShowInList}
-                isSearching={isSearching}
-                isLoadingPizzerias={isLoadingPizzerias}
                 onCloseDetail={handleCloseDetail}
             />
+            
+            {/* Sheet Trigger Button - MOVED HERE from MapView */}
+            <div className="absolute top-20 left-4 z-[1001] pointer-events-auto">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button 
+                  variant="secondary" 
+                  className="shadow-lg hover:shadow-xl hover:-translate-y-1 active:translate-y-px transition-all duration-300"
+                  >
+                    <List className="mr-2 h-5 w-5" />
+                    {isSearching ? 'Ver Resultados' : 'Explorar Pizzerías'}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[90vw] max-w-[440px] p-0 flex flex-col">
+                  <PizzeriaList 
+                      pizzerias={pizzeriasToShowInList}
+                      onPizzeriaSelect={handleSelectPizzeria} 
+                      isSearching={isSearching}
+                      onClearSearch={handleClearSearch}
+                      isLoading={isLoadingPizzerias}
+                  />
+                </SheetContent>
+              </Sheet>
+            </div>
         </div>
 
         {!isSearching && (
