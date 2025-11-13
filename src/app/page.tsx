@@ -16,7 +16,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-import TestimonialsCarousel from '@/components/testimonial/testimonials-carousel';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 import PizzeriaList from '@/components/pizzeria/pizzeria-list';
 import { pizzeriasData } from '@/lib/pizzerias-data';
@@ -30,6 +29,12 @@ const WhyChoosePizzapp = dynamic(() => import('@/components/layout/why-choose-pi
   ssr: false,
   loading: () => <div className="h-[400px] w-full bg-muted rounded-lg" />,
 });
+
+const TestimonialsCarousel = dynamic(() => import('@/components/testimonial/testimonials-carousel'), {
+  ssr: false,
+  loading: () => <div className="h-[200px] w-full bg-muted rounded-lg" />,
+});
+
 
 type Geocode = { lat: number, lng: number };
 
@@ -130,30 +135,30 @@ function TestimonialForm() {
 
 export default function Home() {
   const [selectedPizzeria, setSelectedPizzeria] = useState<Pizzeria | null>(null);
-  const [visiblePizzerias, setVisiblePizzerias] = useState<Pizzeria[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchCenter, setSearchCenter] = useState<Geocode | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
-
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  const firestore = useFirestore();
-
+  
   const allPizzerias = useMemo(() => {
     return pizzeriasData.map((pizzeria, index) => {
       const image = PlaceHolderImages[index % PlaceHolderImages.length];
-      // Generate a stable rating based on the index
       const stableRating = 3.5 + ((index * 7) % 15) / 10;
       return {
         ...pizzeria,
         imageUrl: image.imageUrl,
         imageHint: image.imageHint,
-        rating: Math.min(5, stableRating) // Ensure rating doesn't exceed 5
+        rating: Math.min(5, stableRating)
       };
     });
   }, []);
+
+  const [visiblePizzerias, setVisiblePizzerias] = useState<Pizzeria[]>(allPizzerias);
+  
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  const firestore = useFirestore();
 
   const { data: pizzeriasForRanking, isLoading: isLoadingPizzerias } = useMemo(() => {
     const sorted = [...allPizzerias].sort((a, b) => b.rating - a.rating);
@@ -216,7 +221,7 @@ export default function Home() {
 
   return (
     <div className="relative flex flex-col min-h-screen">
-      <Sheet>
+       <Sheet>
           <SheetTrigger asChild>
             <Button 
             variant="secondary" 
@@ -236,7 +241,7 @@ export default function Home() {
             />
           </SheetContent>
         </Sheet>
-        
+      
         <main className="flex-grow flex flex-col">
             <div className="h-[60vh] w-full">
                 <MapView 

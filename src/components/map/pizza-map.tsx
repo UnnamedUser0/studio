@@ -106,7 +106,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
   // Effect for updating markers
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map || !pizzerias) return;
 
     // Clear existing markers
     markersRef.current.forEach(marker => marker.remove());
@@ -114,6 +114,10 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
 
     // Add new markers
     pizzerias.forEach(pizzeria => {
+      if (typeof pizzeria.lat !== 'number' || typeof pizzeria.lng !== 'number') {
+        console.warn('Skipping pizzeria with invalid coordinates:', pizzeria);
+        return;
+      }
       const isSelected = selectedPizzeria?.id === pizzeria.id;
       const marker = L.marker([pizzeria.lat, pizzeria.lng], {
         icon: isSelected ? selectedIcon : defaultIcon,
