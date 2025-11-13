@@ -16,14 +16,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
+import TestimonialsCarousel from '@/components/testimonial/testimonials-carousel';
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
   loading: () => <div />,
-});
-
-const TestimonialsCarousel = dynamic(() => import('@/components/testimonial/testimonials-carousel'), {
-  ssr: false,
-  loading: () => <div className="h-[250px] w-full bg-muted rounded-lg" />,
 });
 
 const WhyChoosePizzapp = dynamic(() => import('@/components/layout/why-choose-pizzapp'), {
@@ -277,44 +273,42 @@ export default function Home() {
               )}
             </div>
             
-            {hasMounted && (
-              <div id="testimonials" className="bg-muted/50 py-16">
-                <div className="container">
-                  <div className="max-w-3xl mx-auto text-center mb-12">
-                      <h2 className="text-3xl md:text-4xl font-headline font-bold">Lo que nuestra comunidad opina</h2>
-                      <p className="mt-4 text-lg text-muted-foreground">
-                          Descubre por qué a los amantes de la pizza les encanta PizzApp.
-                      </p>
-                  </div>
-                  
-                  {testimonials && testimonials.length > 0 && (
-                    <TestimonialsCarousel testimonials={testimonials} />
-                  )}
+            <div id="testimonials" className="bg-muted/50 py-16">
+              <div className="container">
+                <div className="max-w-3xl mx-auto text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-headline font-bold">Lo que nuestra comunidad opina</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">
+                        Descubre por qué a los amantes de la pizza les encanta PizzApp.
+                    </p>
+                </div>
+                
+                {hasMounted && testimonials && testimonials.length > 0 && (
+                  <TestimonialsCarousel testimonials={testimonials} />
+                )}
 
-                  <div className="text-center mt-12">
-                      <Dialog>
-                          <DialogTrigger asChild>
-                              <Button size="lg" variant="outline">
-                                  <MessageSquarePlus className="mr-2 h-5 w-5" />
-                                  Deja tu propia opinión
-                              </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[625px]">
-                              <DialogHeader>
-                                  <DialogTitle className="font-headline text-3xl">Deja una respuesta</DialogTitle>
-                                  <DialogDescription>
-                                      Usa esta sección para contarnos qué te parece PizzApp. ¡Tu feedback es muy valioso!
-                                  </DialogDescription>
-                              </DialogHeader>
-                              <div className="py-4">
-                                  <TestimonialForm />
-                              </div>
-                          </DialogContent>
-                      </Dialog>
-                  </div>
+                <div className="text-center mt-12">
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button size="lg" variant="outline">
+                                <MessageSquarePlus className="mr-2 h-5 w-5" />
+                                Deja tu propia opinión
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[625px]">
+                            <DialogHeader>
+                                <DialogTitle className="font-headline text-3xl">Deja una respuesta</DialogTitle>
+                                <DialogDescription>
+                                    Usa esta sección para contarnos qué te parece PizzApp. ¡Tu feedback es muy valioso!
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4">
+                                <TestimonialForm />
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
               </div>
-            )}
+            </div>
 
             {hasMounted && <WhyChoosePizzapp />}
           </div>
