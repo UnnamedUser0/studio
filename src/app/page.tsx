@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
-import dynamic from 'next/dynamic';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import getDistance from 'geolib/es/getDistance';
@@ -20,20 +19,9 @@ import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 import PizzeriaList from '@/components/pizzeria/pizzeria-list';
 import { pizzeriasData } from '@/lib/pizzerias-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-
-const Footer = dynamic(() => import('@/components/layout/footer'), {
-  loading: () => <div />,
-});
-
-const WhyChoosePizzapp = dynamic(() => import('@/components/layout/why-choose-pizzapp'), {
-  ssr: false,
-  loading: () => <div className="h-[400px] w-full bg-muted rounded-lg" />,
-});
-
-const TestimonialsCarousel = dynamic(() => import('@/components/testimonial/testimonials-carousel'), {
-  ssr: false,
-  loading: () => <div className="h-[200px] w-full bg-muted rounded-lg" />,
-});
+import Footer from '@/components/layout/footer';
+import WhyChoosePizzapp from '@/components/layout/why-choose-pizzapp';
+import TestimonialsCarousel from '@/components/testimonial/testimonials-carousel';
 
 
 type Geocode = { lat: number, lng: number };
