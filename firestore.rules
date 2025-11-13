@@ -66,8 +66,7 @@ service cloud.firestore {
      * @principle Enforces document ownership for reviews.
      */
     match /pizzerias/{pizzeriaId}/reviews/{reviewId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update: if isReviewOwner(resource.data.userId) && resource != null;
       allow delete: if isReviewOwner(resource.data.userId) && resource != null;
