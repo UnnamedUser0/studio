@@ -128,6 +128,7 @@ export default function Home() {
   const [hasMounted, setHasMounted] = useState(false);
   
   const allPizzerias = useMemo(() => {
+    if (!pizzeriasData) return [];
     return pizzeriasData.map((pizzeria, index) => {
       const image = PlaceHolderImages[index % PlaceHolderImages.length];
       const stableRating = 3.5 + ((pizzeria.id.charCodeAt(0) * 7) % 15) / 10;
@@ -148,9 +149,10 @@ export default function Home() {
 
   const firestore = useFirestore();
 
-  const { data: pizzeriasForRanking, isLoading: isLoadingPizzerias } = useMemo(() => {
+  const pizzeriasForRanking = useMemo(() => {
+    if (!allPizzerias) return [];
     const sorted = [...allPizzerias].sort((a, b) => b.rating - a.rating);
-    return { data: sorted.slice(0, 3), isLoading: false };
+    return sorted.slice(0, 3);
   }, [allPizzerias]);
   
   const testimonialsQuery = useMemoFirebase(() =>
@@ -162,11 +164,14 @@ export default function Home() {
     setSelectedPizzeria(pizzeria);
   };
 
-  const handleSearch = (results: Pizzeria[]) => {
+  const handleSearch = (results: Pizzeria[], geocode?: Geocode) => {
     setIsSearching(true);
     setVisiblePizzerias(results);
     
-    if (results.length > 0) {
+    if (geocode) {
+      setSearchCenter(geocode);
+      setSelectedPizzeria(null);
+    } else if (results.length > 0) {
       // center on the first result
       setSearchCenter({ lat: results[0].lat, lng: results[0].lng });
     }
@@ -223,15 +228,16 @@ export default function Home() {
               onPizzeriaSelect={handleSelectPizzeria}
               isSearching={isSearching}
               onClearSearch={handleClearSearch}
-              isLoading={isLoadingPizzerias}
+              isLoading={!allPizzerias}
             />
           </SheetContent>
         </Sheet>
         
         <main className="flex-grow flex flex-col">
             <div className="h-[60vh] w-full">
+              {allPizzerias.length > 0 ? (
                 <MapView 
-                    allPizzerias={allPizzerias || []}
+                    allPizzerias={allPizzerias}
                     visiblePizzerias={visiblePizzerias}
                     onSelectPizzeria={handleSelectPizzeria}
                     selectedPizzeria={selectedPizzeria}
@@ -241,13 +247,18 @@ export default function Home() {
                     onCloseDetail={handleCloseDetail}
                     onLocateUser={handleLocateUser}
                 />
+              ) : (
+                <div className="h-full w-full bg-muted flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              )}
             </div>
 
             {!isSearching && (
             <div className="bg-background relative">
                 <div id="ranking" className="container py-12">
                 <h2 className="text-3xl font-headline text-center mb-24">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
-                {isLoadingPizzerias ? (
+                {!allPizzerias ? (
                     <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
                 ) : (
                     pizzeriasForRanking && pizzeriasForRanking.length >= 3 && (
