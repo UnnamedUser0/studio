@@ -172,7 +172,6 @@ export default function Home() {
       setSearchCenter(geocode);
       setSelectedPizzeria(null);
     } else if (results.length > 0) {
-      // center on the first result
       setSearchCenter({ lat: results[0].lat, lng: results[0].lng });
     }
   };
@@ -209,6 +208,14 @@ export default function Home() {
 
   const pizzeriasToShowInList = isSearching ? visiblePizzerias : (pizzeriasForRanking || []);
 
+  if (!hasMounted) {
+    return (
+      <div className="flex-grow flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex flex-col min-h-screen">
       <div className="relative w-full h-full">
@@ -235,7 +242,6 @@ export default function Home() {
         
         <main className="flex-grow flex flex-col">
             <div className="h-[60vh] w-full">
-              {allPizzerias.length > 0 ? (
                 <MapView 
                     allPizzerias={allPizzerias}
                     visiblePizzerias={visiblePizzerias}
@@ -247,11 +253,6 @@ export default function Home() {
                     onCloseDetail={handleCloseDetail}
                     onLocateUser={handleLocateUser}
                 />
-              ) : (
-                <div className="h-full w-full bg-muted flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              )}
             </div>
 
             {!isSearching && (
