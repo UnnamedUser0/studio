@@ -53,8 +53,8 @@ export default function Header() {
   const navLinkClasses = "relative text-sm font-medium transition-colors hover:text-primary after:content-[''] after:absolute after:left-1/2 after:-bottom-1.5 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-primary after:transition-all after:duration-300 hover:after:w-full";
 
   return (
-    <header className="sticky top-0 z-[1001] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-16">
-      <div className="container flex h-full items-center">
+    <header className="sticky top-0 z-[1001] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-auto">
+      <div className="container flex h-16 items-center">
         <div className="flex items-center space-x-2 mr-8">
           <Link href="/" className="flex items-center space-x-2">
             <Pizza className="h-7 w-7 text-primary" />
@@ -134,6 +134,15 @@ export default function Header() {
             </Button>
           )}
         </div>
+      </div>
+      {/* Temporary Debug Panel */}
+      <div className="bg-yellow-200 text-black p-2 text-xs font-mono">
+        <p>--- DEBUG PANEL ---</p>
+        <p>isUserLoading: {JSON.stringify(isUserLoading)}</p>
+        <p>user exists: {JSON.stringify(!!user)}</p>
+        <p>isProfileLoading: {JSON.stringify(isProfileLoading)}</p>
+        <p>userProfile exists: {JSON.stringify(!!userProfile)}</p>
+        <p>isAdmin: {JSON.stringify(isAdmin)}</p>
       </div>
     </header>
   );
