@@ -7,24 +7,27 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const auth = useAuth();
+  const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email && password && auth) {
-      initiateEmailSignIn(auth, email, password);
+      await initiateEmailSignIn(auth, email, password);
+      router.push('/');
     }
   };
   
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email && password && auth) {
-      // No need to await here if we don't need to act on completion in the UI
-      initiateEmailSignUp(auth, email, password);
+      await initiateEmailSignUp(auth, email, password);
+      router.push('/');
     }
   };
 
