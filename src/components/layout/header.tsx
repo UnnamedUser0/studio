@@ -81,7 +81,7 @@ export default function Header() {
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <ThemeSwitcher />
-          {isUserLoading || (user && isProfileLoading) ? (
+          {isUserLoading ? (
              <Skeleton className="h-9 w-24" />
           ) : user ? (
             <div className="flex items-center gap-4">
@@ -118,7 +118,9 @@ export default function Header() {
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {userProfile && (
+              {isProfileLoading ? (
+                <Skeleton className="h-6 w-20" />
+              ) : userProfile && (
                 <Badge variant={isAdmin ? "default" : "secondary"}>
                   {isAdmin ? "Administrador" : "Usuario"}
                 </Badge>
