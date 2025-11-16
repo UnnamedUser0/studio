@@ -85,6 +85,13 @@ export default function Header() {
              <Skeleton className="h-9 w-24" />
           ) : user ? (
             <div className="flex items-center gap-4">
+              {isProfileLoading ? (
+                 <Skeleton className="h-6 w-20 rounded-full" />
+              ) : userProfile && (
+                <Badge variant={isAdmin ? "default" : "secondary"}>
+                    {isAdmin ? "Administrador" : "Usuario"}
+                </Badge>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-primary/20">
