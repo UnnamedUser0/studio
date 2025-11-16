@@ -17,6 +17,7 @@ import { Pizza, LogOut, Shield, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Pizzeria, User } from '@/lib/types';
+import { Badge } from '../ui/badge';
 
 
 function ThemeSwitcher() {
@@ -94,7 +95,14 @@ export default function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.displayName || user.email}</p>
+                    <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium leading-none">{user.displayName || user.email}</p>
+                        {userProfile && (
+                            <Badge variant={isAdmin ? "default" : "secondary"}>
+                                {isAdmin ? "Administrador" : "Usuario"}
+                            </Badge>
+                        )}
+                    </div>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>
