@@ -101,7 +101,7 @@ export default function Header() {
                         {userProfile && (
                             <Badge variant={isAdmin ? "default" : "secondary"}>
                                 {isAdmin ? "Administrador" : "Usuario"}
-                            </badge>
+                            </Badge>
                         )}
                     </div>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
