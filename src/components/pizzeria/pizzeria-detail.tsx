@@ -45,7 +45,7 @@ const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string
 
     return (
         <Card>
-            <CardHeader className="flex-row gap-4 items-center p-4">
+            <CardHeader className="flex-row gap-4 items-start p-4">
                 <Avatar className="h-10 w-10">
                     <AvatarImage src={`https://api.dicebear.com/8.x/micah/svg?seed=${review.author}`} alt={review.author} />
                     <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
@@ -63,8 +63,8 @@ const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string
                       </div>
                     </div>
                 </div>
-                 {isAdmin && (
-                    <Button variant="ghost" size="icon" onClick={handleDelete} aria-label="Delete review">
+                 {(isAdmin || user?.uid === review.userId) && (
+                    <Button variant="ghost" size="icon" onClick={handleDelete} aria-label="Delete review" className="h-8 w-8">
                         <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                 )}

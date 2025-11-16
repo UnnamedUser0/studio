@@ -97,14 +97,14 @@ export default function Header() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium leading-none">{userProfile?.username || user.email}</p>
+                        <p className="text-sm font-medium leading-none truncate">{userProfile?.username || user.email}</p>
                         {userProfile && (
-                            <Badge variant={isAdmin ? "default" : "secondary"}>
+                            <Badge variant={isAdmin ? "default" : "secondary"} className="text-xs">
                                 {isAdmin ? "Administrador" : "Usuario"}
                             </Badge>
                         )}
                     </div>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
