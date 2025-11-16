@@ -135,15 +135,6 @@ export default function Header() {
           )}
         </div>
       </div>
-      {/* Temporary Debug Panel */}
-      <div className="bg-yellow-200 text-black p-2 text-xs font-mono">
-        <p>--- DEBUG PANEL ---</p>
-        <p>isUserLoading: {JSON.stringify(isUserLoading)}</p>
-        <p>user exists: {JSON.stringify(!!user)}</p>
-        <p>isProfileLoading: {JSON.stringify(isProfileLoading)}</p>
-        <p>userProfile exists: {JSON.stringify(!!userProfile)}</p>
-        <p>isAdmin: {JSON.stringify(isAdmin)}</p>
-      </div>
     </header>
   );
 }

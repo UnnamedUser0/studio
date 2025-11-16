@@ -7,14 +7,13 @@ import {
 } from 'firebase/auth';
 import { getFirestore, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from './non-blocking-updates';
-import { initializeFirebase } from '.';
 
 /**
  * Creates or updates the user profile in Firestore.
  * This is a centralized function to ensure the profile is handled consistently.
  */
 function manageUserProfile(user: { uid: string; email: string | null }): void {
-  const { firestore } = initializeFirebase();
+  const firestore = getFirestore();
   const userDocRef = doc(firestore, 'users', user.uid);
 
   const userProfile = {
