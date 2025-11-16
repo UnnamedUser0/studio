@@ -80,6 +80,16 @@ export default function Header() {
           </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
+          {user && (
+              <div className="fixed top-20 right-4 bg-yellow-200 text-black p-4 rounded-lg shadow-lg z-[9999] text-xs">
+                  <h3 className="font-bold">Panel de Diagnóstico</h3>
+                  <p>isUserLoading: {isUserLoading.toString()}</p>
+                  <p>user exists: {!!user.toString()}</p>
+                  <p>isProfileLoading: {isProfileLoading.toString()}</p>
+                  <p>userProfile exists: {!!userProfile.toString()}</p>
+                  <p>isAdmin: {isAdmin.toString()}</p>
+              </div>
+          )}
           <ThemeSwitcher />
           {isUserLoading ? (
              <Skeleton className="h-9 w-24" />
