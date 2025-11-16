@@ -241,10 +241,9 @@ export default function Home() {
         </Sheet>
         
         <main className="flex-grow flex flex-col">
-            <div className="h-[80vh] w-full">
+            <div className="h-[70vh] w-full">
                 <MapView 
-                    allPizzerias={allPizzerias}
-                    visiblePizzerias={visiblePizzerias}
+                    pizzerias={visiblePizzerias}
                     onSelectPizzeria={handleSelectPizzeria}
                     selectedPizzeria={selectedPizzeria}
                     searchCenter={searchCenter}
@@ -252,6 +251,7 @@ export default function Home() {
                     onClearSearch={handleClearSearch}
                     onCloseDetail={handleCloseDetail}
                     onLocateUser={handleLocateUser}
+                    allPizzerias={allPizzerias}
                 />
             </div>
 
