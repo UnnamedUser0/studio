@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { Star, Loader2 } from 'lucide-react';
+import { Star, Loader2, CheckCircle } from 'lucide-react';
 import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -9,9 +9,10 @@ import type { Pizzeria, Review } from '@/lib/types';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { collection } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useToast } from '@/hooks/use-toast';
 
 const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => (
     <div className="flex items-center">
@@ -56,8 +57,10 @@ const ReviewCard = ({ review }: {review: Review}) => (
 const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
     const { user } = useUser();
     const firestore = useFirestore();
+    const { toast } = useToast();
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
+    const [submitted, setSubmitted] = useState(false);
 
     const handlePublish = () => {
       if (!user || !firestore || rating === 0 || !comment) return;
@@ -72,8 +75,16 @@ const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
         createdAt: new Date().toISOString(),
       };
       addDocumentNonBlocking(reviewRef, newReview);
+      
+      toast({
+          title: "¡Opinión enviada!",
+          description: "Gracias por compartir tu experiencia."
+      });
+
       setComment('');
       setRating(0);
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 3000); // Reset after 3 seconds
     };
 
     if (!user) {
@@ -84,6 +95,18 @@ const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
                 </CardContent>
             </Card>
         )
+    }
+
+    if (submitted) {
+        return (
+            <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+                <CardContent className="p-6 text-center text-green-700 dark:text-green-300">
+                    <CheckCircle className="h-8 w-8 mx-auto mb-2" />
+                    <p className="font-semibold">¡Gracias por tu opinión!</p>
+                    <p className="text-sm">Tu comentario ha sido publicado.</p>
+                </CardContent>
+            </Card>
+        );
     }
 
     return (

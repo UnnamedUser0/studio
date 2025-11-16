@@ -26,7 +26,7 @@ import TestimonialsCarousel from '@/components/testimonial/testimonials-carousel
 
 type Geocode = { lat: number, lng: number };
 
-function TestimonialForm() {
+function TestimonialForm({ onSuccess }: { onSuccess: () => void }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -68,8 +68,9 @@ function TestimonialForm() {
             description: 'Tu testimonio ha sido enviado y aparecerá pronto.',
         });
 
-        // Reset form
+        // Reset form and close dialog
         setComment('');
+        onSuccess();
     };
 
     return (
@@ -126,6 +127,7 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchCenter, setSearchCenter] = useState<Geocode | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
+  const [isTestimonialDialogOpen, setIsTestimonialDialogOpen] = useState(false);
   
   const allPizzerias = useMemo(() => {
     if (!pizzeriasData) return [];
@@ -324,7 +326,7 @@ export default function Home() {
 
                     {hasMounted && (
                     <div className="text-center mt-12">
-                        <Dialog>
+                        <Dialog open={isTestimonialDialogOpen} onOpenChange={setIsTestimonialDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button size="lg" variant="outline">
                                     <MessageSquarePlus className="mr-2 h-5 w-5" />
@@ -339,7 +341,7 @@ export default function Home() {
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="py-4">
-                                    <TestimonialForm />
+                                    <TestimonialForm onSuccess={() => setIsTestimonialDialogOpen(false)} />
                                 </div>
                             </DialogContent>
                         </Dialog>
