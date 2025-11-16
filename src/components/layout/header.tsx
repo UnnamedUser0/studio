@@ -84,46 +84,46 @@ export default function Header() {
           {isUserLoading || (user && isProfileLoading) ? (
              <Skeleton className="h-9 w-24" />
           ) : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-primary/20">
-                  <Avatar className="h-9 w-9 border-2 border-primary/50">
-                    <AvatarImage src={`https://api.dicebear.com/8.x/micah/svg?seed=${user.email}`} alt={user.displayName || user.email || ''} />
-                    <AvatarFallback>{user.email ? user.email.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium leading-none truncate">{userProfile?.username || user.email}</p>
-                        {userProfile && (
-                            <Badge variant={isAdmin ? "default" : "secondary"} className="text-xs">
-                                {isAdmin ? "Administrador" : "Usuario"}
-                            </Badge>
-                        )}
+            <div className="flex items-center gap-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-primary/20">
+                    <Avatar className="h-9 w-9 border-2 border-primary/50">
+                      <AvatarImage src={`https://api.dicebear.com/8.x/micah/svg?seed=${user.email}`} alt={user.displayName || user.email || ''} />
+                      <AvatarFallback>{user.email ? user.email.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none truncate">{userProfile?.username || user.email}</p>
+                      <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                     </div>
-                    <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin">
-                        <Shield className="mr-2 h-4 w-4" />
-                        <span>Panel de Admin</span>
-                      </Link>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin">
+                          <Shield className="mr-2 h-4 w-4" />
+                          <span>Panel de Admin</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={() => auth?.signOut()}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Cerrar Sesión</span>
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={() => auth?.signOut()}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Cerrar Sesión</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {userProfile && (
+                <Badge variant={isAdmin ? "default" : "secondary"}>
+                  {isAdmin ? "Administrador" : "Usuario"}
+                </Badge>
+              )}
+            </div>
           ) : (
             <Button asChild>
               <Link href="/login">Iniciar Sesión</Link>
