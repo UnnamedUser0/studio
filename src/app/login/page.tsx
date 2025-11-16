@@ -23,6 +23,7 @@ export default function LoginPage() {
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
     if (email && password && auth) {
+      // No need to await here if we don't need to act on completion in the UI
       initiateEmailSignUp(auth, email, password);
     }
   };
