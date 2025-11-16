@@ -241,7 +241,7 @@ export default function Home() {
         </Sheet>
         
         <main className="flex-grow flex flex-col">
-            <div className="h-[60vh] w-full">
+            <div className="h-[80vh] w-full">
                 <MapView 
                     allPizzerias={allPizzerias}
                     visiblePizzerias={visiblePizzerias}
