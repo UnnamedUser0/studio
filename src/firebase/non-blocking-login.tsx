@@ -4,6 +4,7 @@ import {
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  User as FirebaseUser,
 } from 'firebase/auth';
 import { getFirestore, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from './non-blocking-updates';
@@ -12,7 +13,7 @@ import { setDocumentNonBlocking } from './non-blocking-updates';
  * Creates or updates the user profile in Firestore.
  * This is a centralized function to ensure the profile is handled consistently.
  */
-function manageUserProfile(user: { uid: string; email: string | null }): void {
+function manageUserProfile(user: FirebaseUser): void {
   const firestore = getFirestore();
   const userDocRef = doc(firestore, 'users', user.uid);
 
