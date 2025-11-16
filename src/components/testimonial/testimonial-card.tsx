@@ -2,9 +2,9 @@
 import { useState } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Testimonial } from '@/lib/types';
+import type { Testimonial, User } from '@/lib/types';
 import { Quote, Trash2, MessageSquareReply, CornerDownLeft } from 'lucide-react';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Button } from '../ui/button';
 import { doc } from 'firebase/firestore';
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -12,8 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
-
-const ADMIN_EMAIL = 'va21070541@bachilleresdesonora.edu.mx';
 
 type TestimonialCardProps = {
   testimonial: Testimonial;
@@ -26,7 +24,13 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
   const [replyText, setReplyText] = useState(testimonial.reply?.text || '');
   
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const userProfileRef = useMemoFirebase(() => 
+    user ? doc(firestore, 'users', user.uid) : null,
+    [user, firestore]
+  );
+  const { data: userProfile } = useDoc<User>(userProfileRef);
+  const isAdmin = userProfile?.isAdmin === true;
+  
   const avatarSeed = testimonial.email || testimonial.author;
 
   const handleDelete = () => {

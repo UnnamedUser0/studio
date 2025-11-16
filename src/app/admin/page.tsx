@@ -1,18 +1,19 @@
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
+import { useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, getFirestore } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { User } from '@/lib/types';
+
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
   loading: () => <div />,
 });
-
-const ADMIN_EMAILS = ['va21070541@bachilleresdesonora.edu.mx'];
 
 function AdminDashboard() {
   const { user } = useUser();
@@ -50,7 +51,14 @@ function AdminDashboard() {
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
+
+  const firestore = getFirestore();
+  const userProfileRef = useMemoFirebase(() => 
+      user ? doc(firestore, 'users', user.uid) : null,
+      [user, firestore]
+  );
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userProfileRef);
+  const isAdmin = userProfile?.isAdmin === true;
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -58,7 +66,7 @@ export default function AdminPage() {
     }
   }, [isUserLoading, user, router]);
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || isProfileLoading || !user) {
     return <div className="container py-12"><Skeleton className="w-full h-64" /></div>;
   }
 

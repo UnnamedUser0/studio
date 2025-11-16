@@ -5,16 +5,14 @@ import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Pizzeria, Review } from '@/lib/types';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import type { Pizzeria, Review, User } from '@/lib/types';
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect } from 'react';
 import { collection, doc } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-
-const ADMIN_EMAILS = ['va21070541@bachilleresdesonora.edu.mx'];
 
 const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => (
     <div className="flex items-center">
@@ -28,11 +26,16 @@ const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (ra
     </div>
 );
 
-
 const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string }) => {
     const { user } = useUser();
     const firestore = useFirestore();
-    const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
+
+    const userProfileRef = useMemoFirebase(() => 
+        user ? doc(firestore, 'users', user.uid) : null,
+        [user, firestore]
+    );
+    const { data: userProfile } = useDoc<User>(userProfileRef);
+    const isAdmin = userProfile?.isAdmin === true;
 
     const handleDelete = () => {
         if (!firestore) return;

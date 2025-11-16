@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, getFirestore } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -15,6 +16,8 @@ import {
 import { Pizza, LogOut, Shield, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Pizzeria, User } from '@/lib/types';
+
 
 function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
@@ -36,7 +39,14 @@ function ThemeSwitcher() {
 export default function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
-  const isAdmin = user?.email && ['va21070541@bachilleresdesonora.edu.mx'].includes(user.email);
+  
+  const firestore = getFirestore();
+  const userProfileRef = useMemoFirebase(() => 
+      user ? doc(firestore, 'users', user.uid) : null,
+      [user, firestore]
+  );
+  const { data: userProfile } = useDoc<User>(userProfileRef);
+  const isAdmin = userProfile?.isAdmin === true;
 
   const navLinkClasses = "relative text-sm font-medium transition-colors hover:text-primary after:content-[''] after:absolute after:left-1/2 after:-bottom-1.5 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-primary after:transition-all after:duration-300 hover:after:w-full";
 
