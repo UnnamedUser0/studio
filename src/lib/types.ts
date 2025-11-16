@@ -30,4 +30,8 @@ export type Testimonial = {
   role: string;
   comment: string;
   createdAt: string;
+  reply?: {
+    text: string;
+    repliedAt: string;
+  };
 };

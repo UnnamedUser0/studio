@@ -94,14 +94,14 @@ service cloud.firestore {
      * @path /testimonials/{testimonialId}
      * @allow (get, list) Anyone can read testimonials.
      * @allow (create) Authenticated users can create a testimonial.
-     * @allow (delete) Only admins can delete testimonials.
-     * @deny (update) No one can update testimonials.
-     * @principle Public read, authenticated write, admin delete.
+     * @allow (update, delete) Only admins can update or delete testimonials.
+     * @deny (update, delete) Non-admins cannot update or delete testimonials.
+     * @principle Public read, authenticated write, admin delete/update.
      */
     match /testimonials/{testimonialId} {
       allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if false;
+      allow update: if isAdmin() && resource != null;
       allow delete: if isAdmin() && resource != null;
     }
 

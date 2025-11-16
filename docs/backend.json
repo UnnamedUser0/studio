@@ -151,6 +151,21 @@
           "type": "string",
           "description": "The timestamp when the testimonial was created.",
           "format": "date-time"
+        },
+        "reply": {
+            "type": "object",
+            "description": "An administrator's reply to the testimonial.",
+            "properties": {
+              "text": {
+                "type": "string",
+                "description": "The content of the reply."
+              },
+              "repliedAt": {
+                "type": "string",
+                "description": "The timestamp when the reply was created.",
+                "format": "date-time"
+              }
+            }
         }
       },
       "required": [
