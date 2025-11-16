@@ -36,7 +36,7 @@ function ThemeSwitcher() {
 export default function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
-  const isAdmin = user?.email && ['admin@pizzapp.com', 'test@example.com'].includes(user.email);
+  const isAdmin = user?.email && ['va21070541@bachilleresdesonora.edu.mx'].includes(user.email);
 
   const navLinkClasses = "relative text-sm font-medium transition-colors hover:text-primary after:content-[''] after:absolute after:left-1/2 after:-bottom-1.5 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-primary after:transition-all after:duration-300 hover:after:w-full";
 

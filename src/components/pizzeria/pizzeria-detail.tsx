@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { Star, Loader2, CheckCircle } from 'lucide-react';
+import { Star, Loader2, CheckCircle, Trash2 } from 'lucide-react';
 import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -10,9 +10,11 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect } from 'react';
-import { collection } from 'firebase/firestore';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, doc } from 'firebase/firestore';
+import { addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
+
+const ADMIN_EMAILS = ['va21070541@bachilleresdesonora.edu.mx'];
 
 const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => (
     <div className="flex items-center">
@@ -27,32 +29,49 @@ const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (ra
 );
 
 
-const ReviewCard = ({ review }: {review: Review}) => (
-    <Card>
-        <CardHeader className="flex-row gap-4 items-center p-4">
-            <Avatar className="h-10 w-10">
-                <AvatarImage src={`https://api.dicebear.com/8.x/micah/svg?seed=${review.author}`} alt={review.author} />
-                <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-                <div className="flex items-center justify-between">
-                    <p className="font-semibold">{review.author}</p>
-                    <div className="flex items-center">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                              key={star}
-                              className={`w-4 h-4 ${review.rating >= star ? 'text-accent fill-accent' : 'text-muted-foreground/50'}`}
-                          />
-                      ))}
-                  </div>
+const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string }) => {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
+
+    const handleDelete = () => {
+        if (!firestore) return;
+        const reviewRef = doc(firestore, 'pizzerias', pizzeriaId, 'reviews', review.id);
+        deleteDocumentNonBlocking(reviewRef);
+    }
+
+    return (
+        <Card>
+            <CardHeader className="flex-row gap-4 items-center p-4">
+                <Avatar className="h-10 w-10">
+                    <AvatarImage src={`https://api.dicebear.com/8.x/micah/svg?seed=${review.author}`} alt={review.author} />
+                    <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                        <p className="font-semibold">{review.author}</p>
+                        <div className="flex items-center">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                  key={star}
+                                  className={`w-4 h-4 ${review.rating >= star ? 'text-accent fill-accent' : 'text-muted-foreground/50'}`}
+                              />
+                          ))}
+                      </div>
+                    </div>
                 </div>
-            </div>
-        </CardHeader>
-        <CardContent className="p-4 pt-0">
-            <p className="text-sm text-muted-foreground">{review.comment}</p>
-        </CardContent>
-    </Card>
-)
+                 {isAdmin && (
+                    <Button variant="ghost" size="icon" onClick={handleDelete} aria-label="Delete review">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                )}
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+                <p className="text-sm text-muted-foreground">{review.comment}</p>
+            </CardContent>
+        </Card>
+    );
+}
 
 const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
     const { user } = useUser();
@@ -170,7 +189,7 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
                 {isLoading ? (
                   <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin"/></div>
                 ) : (
-                  reviews && reviews.map(review => <ReviewCard key={review.id} review={review} />)
+                  reviews && reviews.map(review => <ReviewCard key={review.id} review={review} pizzeriaId={pizzeria.id} />)
                 )}
                 {reviews?.length === 0 && !isLoading && (
                   <p className="text-center text-muted-foreground py-4">Sé el primero en dejar una opinión.</p>

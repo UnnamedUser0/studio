@@ -12,7 +12,7 @@ const Footer = dynamic(() => import('@/components/layout/footer'), {
   loading: () => <div />,
 });
 
-const ADMIN_EMAILS = ['admin@pizzapp.com', 'test@example.com'];
+const ADMIN_EMAILS = ['va21070541@bachilleresdesonora.edu.mx'];
 
 function AdminDashboard() {
   const { user } = useUser();

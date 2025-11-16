@@ -15,7 +15,7 @@
  * - User listing is disallowed.
  * - Pizzeria and testimonial data is publicly readable.
  * - Admin privileges are determined by the existence of a document in /roles_admin/{userId}.
- * - Reviews are secured to ensure that a review can only be created, updated, or deleted by the user who created it.
+ * - Reviews are secured to ensure that a review can only be created, updated, or deleted by the user who created it or an admin.
  *
  * Denormalization for Authorization:
  * - The `isAdmin` property is denormalized to avoid costly `get()` calls for checking admin status. The presence of a document in `/roles_admin/{userId}` indicates admin privileges.
@@ -69,7 +69,7 @@ service cloud.firestore {
       allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update: if isReviewOwner(resource.data.userId) && resource != null;
-      allow delete: if isReviewOwner(resource.data.userId) && resource != null;
+      allow delete: if (isReviewOwner(resource.data.userId) || isAdmin()) && resource != null;
     }
 
      /**
