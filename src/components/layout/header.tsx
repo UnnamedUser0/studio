@@ -53,8 +53,8 @@ export default function Header() {
   const navLinkClasses = "relative text-sm font-medium transition-colors hover:text-primary after:content-[''] after:absolute after:left-1/2 after:-bottom-1.5 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-primary after:transition-all after:duration-300 hover:after:w-full";
 
   return (
-    <header className="sticky top-0 z-[1001] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-auto">
-      <div className="container flex h-16 items-center">
+    <header className="sticky top-0 z-[1001] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-16">
+      <div className="container flex h-full items-center">
         <div className="flex items-center space-x-2 mr-8">
           <Link href="/" className="flex items-center space-x-2">
             <Pizza className="h-7 w-7 text-primary" />
@@ -80,16 +80,6 @@ export default function Header() {
           </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
-          {user && (
-              <div className="fixed top-20 right-4 bg-yellow-200 text-black p-4 rounded-lg shadow-lg z-[9999] text-xs">
-                  <h3 className="font-bold">Panel de Diagnóstico</h3>
-                  <p>isUserLoading: {isUserLoading.toString()}</p>
-                  <p>user exists: {!!user.toString()}</p>
-                  <p>isProfileLoading: {isProfileLoading.toString()}</p>
-                  <p>userProfile exists: {!!userProfile.toString()}</p>
-                  <p>isAdmin: {isAdmin.toString()}</p>
-              </div>
-          )}
           <ThemeSwitcher />
           {isUserLoading ? (
              <Skeleton className="h-9 w-24" />
