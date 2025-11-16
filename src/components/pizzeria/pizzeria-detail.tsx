@@ -9,7 +9,7 @@ import type { Pizzeria, Review, User } from '@/lib/types';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { collection, doc } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
@@ -88,15 +88,18 @@ const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
       if (!user || !firestore || rating === 0 || !comment) return;
 
       const reviewRef = collection(firestore, 'pizzerias', pizzeriaId, 'reviews');
-      const newReview: Omit<Review, 'id'> = {
-        author: user.displayName || user.email || 'Anónimo',
+      const newReview: Omit<Review, 'id' | 'author'> = {
         userId: user.uid,
         pizzeriaId: pizzeriaId,
         rating,
         comment,
         createdAt: new Date().toISOString(),
       };
-      addDocumentNonBlocking(reviewRef, newReview);
+      
+      addDocumentNonBlocking(reviewRef, {
+        ...newReview,
+        author: user.displayName || user.email || 'Anónimo',
+      });
       
       toast({
           title: "¡Opinión enviada!",

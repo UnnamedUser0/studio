@@ -52,7 +52,7 @@ export default function AdminPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
-  const firestore = getFirestore();
+  const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => 
       user ? doc(firestore, 'users', user.uid) : null,
       [user, firestore]
@@ -61,24 +61,39 @@ export default function AdminPage() {
   const isAdmin = userProfile?.isAdmin === true;
 
   useEffect(() => {
+    // Wait until user loading is finished before checking for user
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [isUserLoading, user, router]);
 
-  if (isUserLoading || isProfileLoading || !user) {
-    return <div className="container py-12"><Skeleton className="w-full h-64" /></div>;
+  // If either user or profile is loading, or if we're not logged in yet, show a loading skeleton
+  if (isUserLoading || isProfileLoading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-grow container py-12">
+          <Skeleton className="w-1/3 h-12 mb-8" />
+          <Skeleton className="w-full h-64" />
+        </div>
+        <Footer />
+      </div>
+    );
   }
-
+  
+  // After loading, if the user is not an admin, deny access
   if (!isAdmin) {
     return (
-      <div className="container py-20 text-center">
-        <h1 className="font-headline text-3xl">Acceso Denegado</h1>
-        <p className="text-muted-foreground mt-2">No tienes permisos para ver esta página.</p>
-        <Button onClick={() => router.push('/')} className="mt-6">Volver al Inicio</Button>
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-grow container py-20 text-center flex flex-col justify-center items-center">
+            <h1 className="font-headline text-3xl">Acceso Denegado</h1>
+            <p className="text-muted-foreground mt-2">No tienes permisos para ver esta página.</p>
+            <Button onClick={() => router.push('/')} className="mt-6">Volver al Inicio</Button>
+        </div>
+        <Footer />
       </div>
     );
   }
 
+  // If the user is an admin, show the dashboard
   return <AdminDashboard />;
 }
