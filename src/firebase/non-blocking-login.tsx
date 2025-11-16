@@ -9,6 +9,28 @@ import { getFirestore, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from './non-blocking-updates';
 import { initializeFirebase } from '.';
 
+/**
+ * Creates or updates the user profile in Firestore.
+ * This is a centralized function to ensure the profile is handled consistently.
+ */
+function manageUserProfile(user: { uid: string; email: string | null }): void {
+  const { firestore } = initializeFirebase();
+  const userDocRef = doc(firestore, 'users', user.uid);
+
+  const userProfile = {
+    id: user.uid,
+    email: user.email,
+    username: user.email?.split('@')[0] || 'Usuario',
+    // This is the single source of truth for assigning the admin role.
+    isAdmin: user.email === 'va21070541@bachilleresdesonora.edu.mx',
+  };
+
+  // Use a non-blocking write with merge:true.
+  // This will create the doc if it doesn't exist, or update it if it does,
+  // without overwriting other fields. This is safe and idempotent.
+  setDocumentNonBlocking(userDocRef, userProfile, { merge: true });
+}
+
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth): void {
   signInAnonymously(authInstance);
@@ -18,24 +40,11 @@ export function initiateAnonymousSignIn(authInstance: Auth): void {
 export async function initiateEmailSignUp(authInstance: Auth, email: string, password: string): Promise<void> {
   try {
     const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
-    const user = userCredential.user;
-
-    const { firestore } = initializeFirebase();
-    const userDocRef = doc(firestore, 'users', user.uid);
-
-    const userProfile = {
-      id: user.uid,
-      email: user.email,
-      username: user.email?.split('@')[0] || 'Usuario',
-      isAdmin: user.email === 'va21070541@bachilleresdesonora.edu.mx',
-    };
-
-    // Use a non-blocking write to create the user profile
-    setDocumentNonBlocking(userDocRef, userProfile, { merge: false });
-
+    // After user is created in Auth, create their profile in Firestore.
+    manageUserProfile(userCredential.user);
   } catch (error) {
     console.error("Error during sign up:", error);
-    // In a real app, you'd want to show this error to the user
+    // In a real app, you'd want to show this error to the user via toast or form error.
   }
 }
 
@@ -43,26 +52,11 @@ export async function initiateEmailSignUp(authInstance: Auth, email: string, pas
 export async function initiateEmailSignIn(authInstance: Auth, email: string, password: string): Promise<void> {
   try {
     const userCredential = await signInWithEmailAndPassword(authInstance, email, password);
-    const user = userCredential.user;
-
-    // After sign-in, ensure the user profile exists, creating it if it doesn't.
-    // This handles cases where the user was created before the profile creation logic was in place.
-    const { firestore } = initializeFirebase();
-    const userDocRef = doc(firestore, 'users', user.uid);
-
-     const userProfile = {
-      id: user.uid,
-      email: user.email,
-      username: user.email?.split('@')[0] || 'Usuario',
-      isAdmin: user.email === 'va21070541@bachilleresdesonora.edu.mx',
-    };
-
-    // Use merge:true to create the doc if it doesn't exist, or update it without overwriting.
-    // This is safe and idempotent.
-    setDocumentNonBlocking(userDocRef, userProfile, { merge: true });
-
+    // After user signs in, ensure their profile exists in Firestore.
+    // This handles cases where the user was created before the profile logic was in place.
+    manageUserProfile(userCredential.user);
   } catch(error) {
      console.error("Error during sign in:", error);
-     // In a real app, you'd want to show this error to the user
+     // In a real app, you'd want to show this error to the user via toast or form error.
   }
 }

@@ -16,7 +16,7 @@ import {
 import { Pizza, LogOut, Shield, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Pizzeria, User } from '@/lib/types';
+import { User } from '@/lib/types';
 import { Badge } from '../ui/badge';
 
 
@@ -40,13 +40,14 @@ function ThemeSwitcher() {
 export default function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   
-  const firestore = getFirestore();
   const userProfileRef = useMemoFirebase(() => 
       user ? doc(firestore, 'users', user.uid) : null,
-      [user, firestore]
+      [firestore, user]
   );
-  const { data: userProfile } = useDoc<User>(userProfileRef);
+
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userProfileRef);
   const isAdmin = userProfile?.isAdmin === true;
 
   const navLinkClasses = "relative text-sm font-medium transition-colors hover:text-primary after:content-[''] after:absolute after:left-1/2 after:-bottom-1.5 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-primary after:transition-all after:duration-300 hover:after:w-full";
@@ -80,7 +81,7 @@ export default function Header() {
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <ThemeSwitcher />
-          {isUserLoading ? (
+          {isUserLoading || (user && isProfileLoading) ? (
              <Skeleton className="h-9 w-24" />
           ) : user ? (
             <DropdownMenu>
@@ -96,7 +97,7 @@ export default function Header() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium leading-none">{user.displayName || user.email}</p>
+                        <p className="text-sm font-medium leading-none">{userProfile?.username || user.email}</p>
                         {userProfile && (
                             <Badge variant={isAdmin ? "default" : "secondary"}>
                                 {isAdmin ? "Administrador" : "Usuario"}
@@ -116,7 +117,7 @@ export default function Header() {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => auth.signOut()}>
+                  <DropdownMenuItem onClick={() => auth?.signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Cerrar Sesión</span>
                   </DropdownMenuItem>

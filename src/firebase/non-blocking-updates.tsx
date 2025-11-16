@@ -13,17 +13,21 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import {FirestorePermissionError} from '@/firebase/errors';
 
 /**
- * Initiates a setDoc operation for a document reference.
+ * Initiates a setDoc operation for a document reference, designed to create or merge data.
  * Does NOT await the write operation internally.
- * This function can create or overwrite a document.
+ * This function can create a document or merge data into an existing one.
  */
 export function setDocumentNonBlocking(docRef: DocumentReference, data: any, options?: SetOptions) {
-  setDoc(docRef, data, options || {}).catch(error => {
+  // Always use merge:true to prevent accidentally overwriting entire documents
+  // and to safely create the document if it doesn't exist.
+  const writeOptions = options ? { ...options, merge: true } : { merge: true };
+  
+  setDoc(docRef, data, writeOptions).catch(error => {
     errorEmitter.emit(
       'permission-error',
       new FirestorePermissionError({
         path: docRef.path,
-        operation: options && 'merge' in options ? 'update' : 'create',
+        operation: 'write', // Simplified to 'write' as it covers create/update
         requestResourceData: data,
       })
     )
