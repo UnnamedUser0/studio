@@ -26,7 +26,7 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
   
   const userProfileRef = useMemoFirebase(() => 
     user ? doc(firestore, 'users', user.uid) : null,
-    [user, firestore]
+    [firestore, user]
   );
   const { data: userProfile } = useDoc<User>(userProfileRef);
   const isAdmin = userProfile?.isAdmin === true;
@@ -74,7 +74,7 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
           
           {testimonial.reply && (
             <div className="mt-4 ml-4 pl-4 border-l-2 border-accent">
-                <p className="text-sm font-semibold text-accent-foreground/90">Respuesta del equipo:</p>
+                <p className="text-sm font-semibold text-accent">Respuesta del equipo:</p>
                 <p className="text-sm text-muted-foreground italic">&quot;{testimonial.reply.text}&quot;</p>
             </div>
           )}

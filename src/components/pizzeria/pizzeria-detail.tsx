@@ -32,7 +32,7 @@ const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string
 
     const userProfileRef = useMemoFirebase(() => 
         user ? doc(firestore, 'users', user.uid) : null,
-        [user, firestore]
+        [firestore, user]
     );
     const { data: userProfile } = useDoc<User>(userProfileRef);
     const isAdmin = userProfile?.isAdmin === true;
@@ -47,7 +47,7 @@ const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string
         <Card>
             <CardHeader className="flex-row gap-4 items-start p-4">
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src={`https://api.dicebear.com/8.x/micah/svg?seed=${review.author}`} alt={review.author} />
+                    <AvatarImage src={`https://api.dicebear.com/8.x/micah/svg?seed=${review.userId}`} alt={review.author} />
                     <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
@@ -88,18 +88,16 @@ const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
       if (!user || !firestore || rating === 0 || !comment) return;
 
       const reviewRef = collection(firestore, 'pizzerias', pizzeriaId, 'reviews');
-      const newReview: Omit<Review, 'id' | 'author'> = {
+      const newReview: Omit<Review, 'id'> = {
         userId: user.uid,
         pizzeriaId: pizzeriaId,
         rating,
         comment,
         createdAt: new Date().toISOString(),
+        author: user.displayName || user.email || 'Anónimo',
       };
       
-      addDocumentNonBlocking(reviewRef, {
-        ...newReview,
-        author: user.displayName || user.email || 'Anónimo',
-      });
+      addDocumentNonBlocking(reviewRef, newReview);
       
       toast({
           title: "¡Opinión enviada!",

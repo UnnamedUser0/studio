@@ -2,13 +2,14 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, getFirestore } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { User } from '@/lib/types';
+import { useFirestore } from '@/firebase';
 
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
@@ -55,11 +56,10 @@ export default function AdminPage() {
   const firestore = useFirestore();
   const userProfileRef = useMemoFirebase(() => 
       user ? doc(firestore, 'users', user.uid) : null,
-      [user, firestore]
+      [firestore, user]
   );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userProfileRef);
-  const isAdmin = userProfile?.isAdmin === true;
-
+  
   useEffect(() => {
     // Wait until user loading is finished before checking for user
     if (!isUserLoading && !user) {
@@ -68,7 +68,7 @@ export default function AdminPage() {
   }, [isUserLoading, user, router]);
 
   // If either user or profile is loading, or if we're not logged in yet, show a loading skeleton
-  if (isUserLoading || isProfileLoading) {
+  if (isUserLoading || (user && isProfileLoading)) {
     return (
       <div className="flex flex-col min-h-screen">
         <div className="flex-grow container py-12">
@@ -80,6 +80,8 @@ export default function AdminPage() {
     );
   }
   
+  const isAdmin = userProfile?.isAdmin === true;
+
   // After loading, if the user is not an admin, deny access
   if (!isAdmin) {
     return (

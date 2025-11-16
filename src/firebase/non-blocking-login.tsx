@@ -31,15 +31,14 @@ function manageUserProfile(authInstance: Auth, user: FirebaseUser): void {
   // Use setDoc with merge:true to create or update the profile without overwriting other fields.
   // The operation is non-blocking; we handle potential errors in the catch block.
   setDoc(userDocRef, userProfile, { merge: true }).catch(error => {
-    errorEmitter.emit(
-      'permission-error',
-      new FirestorePermissionError({
+    const permissionError = new FirestorePermissionError({
         path: userDocRef.path,
         operation: 'write',
         requestResourceData: userProfile,
-      })
-    );
-    console.error("Error managing user profile:", error); // Also log for debugging
+      });
+    errorEmitter.emit('permission-error', permissionError);
+    // Also log for debugging, but the primary error surfacing is via the emitter
+    console.error("Error managing user profile:", error); 
   });
 }
 

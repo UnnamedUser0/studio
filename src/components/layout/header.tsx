@@ -118,13 +118,6 @@ export default function Header() {
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {isProfileLoading ? (
-                <Skeleton className="h-6 w-20" />
-              ) : userProfile ? (
-                 <Badge variant={isAdmin ? "default" : "secondary"}>
-                  {isAdmin ? "Administrador" : "Usuario"}
-                 </Badge>
-              ) : null}
             </div>
           ) : (
             <Button asChild>
