@@ -18,11 +18,7 @@ import {FirestorePermissionError} from '@/firebase/errors';
  * This function can create a document or merge data into an existing one.
  */
 export function setDocumentNonBlocking(docRef: DocumentReference, data: any, options?: SetOptions) {
-  // Always use merge:true to prevent accidentally overwriting entire documents
-  // and to safely create the document if it doesn't exist.
-  const writeOptions = options ? { ...options, merge: true } : { merge: true };
-  
-  setDoc(docRef, data, writeOptions).catch(error => {
+  setDoc(docRef, data, options).catch(error => {
     errorEmitter.emit(
       'permission-error',
       new FirestorePermissionError({
