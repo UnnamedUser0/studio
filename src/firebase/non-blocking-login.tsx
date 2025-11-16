@@ -22,7 +22,7 @@ function manageUserProfile(user: { uid: string; email: string | null }): void {
     email: user.email,
     username: user.email?.split('@')[0] || 'Usuario',
     // This is the single source of truth for assigning the admin role.
-    isAdmin: user.email === 'va21070541@bachilleresdesonora.edu.mx',
+    isAdmin: user.email === 'va21070541@bachilleresdesonora.edu.mx' ? true : false,
   };
 
   // Use a non-blocking write with merge:true.
