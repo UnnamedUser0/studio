@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, addDoc } from 'firebase/firestore';
 import getDistance from 'geolib/es/getDistance';
 
 import MapView from '@/components/map/map-view';
@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 import PizzeriaList from '@/components/pizzeria/pizzeria-list';
@@ -61,7 +60,7 @@ function TestimonialForm({ onSuccess }: { onSuccess: () => void }) {
             createdAt: new Date().toISOString(),
         };
 
-        addDocumentNonBlocking(testimonialRef, newTestimonial);
+        addDoc(testimonialRef, newTestimonial);
 
         toast({
             title: '¡Gracias por tu opinión!',

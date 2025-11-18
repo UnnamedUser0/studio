@@ -6,8 +6,7 @@ import type { Testimonial, User } from '@/lib/types';
 import { Quote, Trash2, MessageSquareReply, CornerDownLeft } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Button } from '../ui/button';
-import { doc } from 'firebase/firestore';
-import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '../ui/textarea';
@@ -37,7 +36,7 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
     if (!firestore || !isAdmin) return;
 
     const testimonialRef = doc(firestore, 'testimonials', testimonial.id);
-    deleteDocumentNonBlocking(testimonialRef);
+    deleteDoc(testimonialRef);
 
     toast({
       title: 'Testimonio eliminado',
@@ -56,7 +55,7 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
       },
     };
 
-    updateDocumentNonBlocking(testimonialRef, replyData);
+    updateDoc(testimonialRef, replyData);
 
     toast({
       title: 'Respuesta publicada',

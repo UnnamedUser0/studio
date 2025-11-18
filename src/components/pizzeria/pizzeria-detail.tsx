@@ -10,8 +10,7 @@ import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
-import { collection, doc } from 'firebase/firestore';
-import { addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, doc, addDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => (
@@ -40,7 +39,7 @@ const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string
     const handleDelete = () => {
         if (!firestore) return;
         const reviewRef = doc(firestore, 'pizzerias', pizzeriaId, 'reviews', review.id);
-        deleteDocumentNonBlocking(reviewRef);
+        deleteDoc(reviewRef);
     }
 
     return (
@@ -97,7 +96,7 @@ const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
         author: user.displayName || user.email || 'Anónimo',
       };
       
-      addDocumentNonBlocking(reviewRef, newReview);
+      addDoc(reviewRef, newReview);
       
       toast({
           title: "¡Opinión enviada!",
