@@ -16,7 +16,7 @@ const PizzAppChatInputSchema = z.object({
     role: z.enum(['user', 'model']),
     content: z.array(z.object({ text: z.string() })),
   })).describe('The conversation history.'),
-  question: z.string().describe('The user\'s question.'),
+  message: z.string().describe("The user's new message."),
 });
 export type PizzAppChatInput = z.infer<typeof PizzAppChatInputSchema>;
 
@@ -49,7 +49,7 @@ const pizzAppChatFlow = ai.defineFlow(
     inputSchema: PizzAppChatInputSchema,
     outputSchema: PizzAppChatOutputSchema,
   },
-  async ({ history, question }) => {
+  async ({ history, message }) => {
     
     const systemInstruction = `Eres "Pizzi", el asistente virtual de PizzApp. Tu única función es responder preguntas y aclarar dudas sobre la aplicación PizzApp. Eres amable, servicial y directo.
 
@@ -63,11 +63,12 @@ const pizzAppChatFlow = ai.defineFlow(
     4.  Responde en el mismo idioma de la pregunta del usuario.`;
 
     const fullHistory = [
-        ...history,
-        { role: 'user', content: [{ text: question }] },
+      ...history,
+      { role: 'user', content: [{ text: message }] },
     ] as Part[];
 
     const result = await ai.generate({
+      model: 'googleai/gemini-pro',
       prompt: fullHistory,
       system: systemInstruction,
     });

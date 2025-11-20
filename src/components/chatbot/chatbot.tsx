@@ -7,7 +7,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, User, CornerDownLeft, X, Loader2 } from 'lucide-react';
 import { pizzAppChat, PizzAppChatInput } from '@/ai/flows/pizzapp-chat-flow';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { PizzaSliceIcon } from '../icons/pizza-slice-icon';
 import { PizzaBotIcon } from '../icons/pizza-bot-icon';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
@@ -36,7 +35,7 @@ export default function Chatbot() {
     
     const chatInput: PizzAppChatInput = {
       history: messages as Part[],
-      question: input,
+      message: input,
     };
 
     setInput('');
