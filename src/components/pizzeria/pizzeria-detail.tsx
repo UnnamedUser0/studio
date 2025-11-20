@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import { collection, doc, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => (
     <div className="flex items-center">
@@ -40,10 +42,18 @@ const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string
     const handleDelete = () => {
         if (!firestore) return;
         const reviewRef = doc(firestore, 'pizzerias', pizzeriaId, 'reviews', review.id);
-        deleteDoc(reviewRef);
-        toast({
-            title: 'Opinión eliminada',
-            description: 'La opinión ha sido borrada.',
+        
+        deleteDoc(reviewRef).then(() => {
+            toast({
+                title: 'Opinión eliminada',
+                description: 'La opinión ha sido borrada.',
+            });
+        }).catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: reviewRef.path,
+                operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
         });
     }
 
@@ -101,17 +111,24 @@ const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
         author: user.displayName || user.email || 'Anónimo',
       };
       
-      addDoc(reviewRef, newReview);
-      
-      toast({
-          title: "¡Opinión enviada!",
-          description: "Gracias por compartir tu experiencia."
-      });
+      addDoc(reviewRef, newReview).then(() => {
+        toast({
+            title: "¡Opinión enviada!",
+            description: "Gracias por compartir tu experiencia."
+        });
 
-      setComment('');
-      setRating(0);
-      setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 3000); // Reset after 3 seconds
+        setComment('');
+        setRating(0);
+        setSubmitted(true);
+        setTimeout(() => setSubmitted(false), 3000); // Reset after 3 seconds
+      }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: reviewRef.path,
+            operation: 'create',
+            requestResourceData: newReview,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
     };
 
     if (!user) {
