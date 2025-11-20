@@ -64,7 +64,7 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
       },
     };
 
-    updateDoc(testimonialRef, replyData, { merge: true }).then(() => {
+    updateDoc(testimonialRef, replyData).then(() => {
         toast({
         title: 'Respuesta publicada',
         description: 'Tu respuesta ha sido añadida al testimonio.',
