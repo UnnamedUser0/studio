@@ -81,7 +81,7 @@ export default function Header() {
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <ThemeSwitcher />
-          {isUserLoading ? (
+          {isUserLoading || (user && isProfileLoading) ? (
              <Skeleton className="h-9 w-24" />
           ) : user ? (
             <div className="flex items-center gap-4">

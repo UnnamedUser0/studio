@@ -32,7 +32,7 @@ async function manageUserProfile(user: FirebaseUser): Promise<void> {
     if (docSnap.exists()) {
       // Document exists, update it if necessary (e.g. isAdmin status could change if rules are manual)
       // For now, we only care about setting it on creation. We can just merge.
-      await setDoc(userDocRef, { email: user.email }, { merge: true });
+      await setDoc(userDocRef, { email: user.email, isAdmin: user.email === ADMIN_EMAIL }, { merge: true });
     } else {
       // Document doesn't exist, create it with all info
       await setDoc(userDocRef, userProfile);
