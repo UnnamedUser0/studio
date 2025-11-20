@@ -57,7 +57,7 @@ const pizzAppChatPrompt = ai.definePrompt(
 
     Historial de la Conversación:
     {{#each history}}
-      **{{role}}**: {{#each content}}{{this.text}}{{/each}}
+      **{{role}}**: {{content.[0].text}}
     {{/each}}
 
     Pregunta del Usuario:
