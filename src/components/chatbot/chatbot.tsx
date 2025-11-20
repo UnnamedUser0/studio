@@ -11,6 +11,8 @@ import { PizzaSliceIcon } from '../icons/pizza-slice-icon';
 import { PizzaBotIcon } from '../icons/pizza-bot-icon';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
+import {Part} from '@genkit-ai/google-genai';
+
 
 type Message = {
   role: 'user' | 'model';
@@ -33,7 +35,7 @@ export default function Chatbot() {
     setMessages(prev => [...prev, userMessage]);
     
     const chatInput: PizzAppChatInput = {
-      history: messages.map(m => ({ role: m.role, text: m.content[0].text })),
+      history: messages as Part[],
       question: input,
     };
 

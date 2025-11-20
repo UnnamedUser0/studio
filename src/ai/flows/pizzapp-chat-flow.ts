@@ -9,11 +9,12 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import {Part} from '@genkit-ai/google-genai';
 
 const PizzAppChatInputSchema = z.object({
   history: z.array(z.object({
     role: z.enum(['user', 'model']),
-    text: z.string(),
+    content: z.array(z.object({ text: z.string() })),
   })).describe('The conversation history.'),
   question: z.string().describe('The user\'s question.'),
 });
@@ -42,12 +43,15 @@ const APP_CONTEXT = `
 - **Términos de Uso:** El contenido generado por el usuario (opiniones) debe ser respetuoso. El contenido de PizzApp (logos, diseño) está protegido por derechos de autor.
 `;
 
-const pizzAppChatPrompt = ai.definePrompt(
+const pizzAppChatFlow = ai.defineFlow(
   {
-    name: 'pizzAppChatPrompt',
-    input: { schema: PizzAppChatInputSchema },
-    output: { schema: PizzAppChatOutputSchema },
-    prompt: `Eres "Pizzi", el asistente virtual de PizzApp. Tu única función es responder preguntas y aclarar dudas sobre la aplicación PizzApp. Eres amable, servicial y directo.
+    name: 'pizzAppChatFlow',
+    inputSchema: PizzAppChatInputSchema,
+    outputSchema: PizzAppChatOutputSchema,
+  },
+  async ({ history, question }) => {
+    
+    const systemInstruction = `Eres "Pizzi", el asistente virtual de PizzApp. Tu única función es responder preguntas y aclarar dudas sobre la aplicación PizzApp. Eres amable, servicial y directo.
 
     **Contexto sobre la aplicación PizzApp:**
     ${APP_CONTEXT}
@@ -56,28 +60,18 @@ const pizzAppChatPrompt = ai.definePrompt(
     1.  NUNCA salgas de tu rol de asistente de PizzApp.
     2.  Si te preguntan algo que no tiene que ver con PizzApp, responde amablemente que solo puedes ayudar con temas relacionados con la aplicación.
     3.  Usa el historial de la conversación para entender el contexto.
-    4.  Responde en el mismo idioma de la pregunta del usuario.
+    4.  Responde en el mismo idioma de la pregunta del usuario.`;
 
-    Historial de la Conversación:
-    {{#each history}}
-      **{{role}}**: {{text}}
-    {{/each}}
+    const fullHistory = [
+        ...history,
+        { role: 'user', content: [{ text: question }] },
+    ] as Part[];
 
-    Pregunta del Usuario:
-    "{{{question}}}"
+    const result = await ai.generate({
+      prompt: fullHistory,
+      system: systemInstruction,
+    });
 
-    Tu Respuesta:`,
-  },
-);
-
-const pizzAppChatFlow = ai.defineFlow(
-  {
-    name: 'pizzAppChatFlow',
-    inputSchema: PizzAppChatInputSchema,
-    outputSchema: PizzAppChatOutputSchema,
-  },
-  async (input) => {
-    const { output } = await pizzAppChatPrompt(input);
-    return output!;
+    return { answer: result.text };
   }
 );
