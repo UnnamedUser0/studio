@@ -11,7 +11,10 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const PizzAppChatInputSchema = z.object({
-  history: z.array(z.any()).describe('The conversation history.'),
+  history: z.array(z.object({
+    role: z.enum(['user', 'model']),
+    text: z.string(),
+  })).describe('The conversation history.'),
   question: z.string().describe('The user\'s question.'),
 });
 export type PizzAppChatInput = z.infer<typeof PizzAppChatInputSchema>;
@@ -57,7 +60,7 @@ const pizzAppChatPrompt = ai.definePrompt(
 
     Historial de la Conversación:
     {{#each history}}
-      **{{role}}**: {{content.[0].text}}
+      **{{role}}**: {{text}}
     {{/each}}
 
     Pregunta del Usuario:
