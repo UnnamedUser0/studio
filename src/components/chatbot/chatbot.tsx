@@ -34,7 +34,10 @@ export default function Chatbot() {
     setMessages(prev => [...prev, userMessage]);
     
     const chatInput: PizzAppChatInput = {
-      history: messages as Part[],
+      history: messages.map(m => ({
+        role: m.role,
+        content: m.content,
+      })) as Part[],
       message: input,
     };
 
