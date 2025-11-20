@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type TestimonialCardProps = {
   testimonial: Testimonial;
@@ -36,12 +38,19 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
     if (!firestore || !isAdmin) return;
 
     const testimonialRef = doc(firestore, 'testimonials', testimonial.id);
-    deleteDoc(testimonialRef);
-
-    toast({
-      title: 'Testimonio eliminado',
-      description: 'El testimonio ha sido borrado correctamente.',
+    deleteDoc(testimonialRef).then(() => {
+        toast({
+        title: 'Testimonio eliminado',
+        description: 'El testimonio ha sido borrado correctamente.',
+        });
+    }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: testimonialRef.path,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
+
   };
 
   const handleReply = () => {
@@ -55,13 +64,21 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
       },
     };
 
-    updateDoc(testimonialRef, replyData, { merge: true });
-
-    toast({
-      title: 'Respuesta publicada',
-      description: 'Tu respuesta ha sido añadida al testimonio.',
+    updateDoc(testimonialRef, replyData, { merge: true }).then(() => {
+        toast({
+        title: 'Respuesta publicada',
+        description: 'Tu respuesta ha sido añadida al testimonio.',
+        });
+        setIsReplyDialogOpen(false);
+    }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: testimonialRef.path,
+            operation: 'update',
+            requestResourceData: replyData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
-    setIsReplyDialogOpen(false);
+
   };
 
   return (
