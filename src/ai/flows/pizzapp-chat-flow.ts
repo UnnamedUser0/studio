@@ -9,13 +9,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import {Part} from '@genkit-ai/google-genai';
+import { Part } from '@genkit-ai/google-genai';
 
 const PizzAppChatInputSchema = z.object({
-  history: z.array(z.object({
-    role: z.enum(['user', 'model']),
-    content: z.array(z.object({ text: z.string() })),
-  })).describe('The conversation history.'),
+  history: z.array(z.any()).describe('The conversation history.'),
   message: z.string().describe("The user's new message."),
 });
 export type PizzAppChatInput = z.infer<typeof PizzAppChatInputSchema>;
@@ -69,7 +66,7 @@ const pizzAppChatFlow = ai.defineFlow(
 
     const result = await ai.generate({
       model: 'googleai/gemini-pro',
-      prompt: fullHistory,
+      history: fullHistory,
       system: systemInstruction,
     });
 
