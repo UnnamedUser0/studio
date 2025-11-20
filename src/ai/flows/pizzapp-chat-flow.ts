@@ -4,7 +4,7 @@
  *
  * - pizzAppChat - A function that handles the chatbot conversation.
  * - PizzAppChatInput - The input type for the pizzAppChat function.
- * - PizzAppChatOutput - The return type for the pizzAppChat function.
+ * - PizzAppChatOutput - The return type for the pizzApp-chat function.
  */
 
 import { ai } from '@/ai/genkit';
