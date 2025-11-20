@@ -28,6 +28,7 @@ const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (ra
 const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string }) => {
     const { user } = useUser();
     const firestore = useFirestore();
+    const { toast } = useToast();
 
     const userProfileRef = useMemoFirebase(() => 
         user ? doc(firestore, 'users', user.uid) : null,
@@ -40,6 +41,10 @@ const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string
         if (!firestore) return;
         const reviewRef = doc(firestore, 'pizzerias', pizzeriaId, 'reviews', review.id);
         deleteDoc(reviewRef);
+        toast({
+            title: 'Opinión eliminada',
+            description: 'La opinión ha sido borrada.',
+        });
     }
 
     return (

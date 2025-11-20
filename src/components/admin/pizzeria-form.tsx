@@ -1,0 +1,127 @@
+'use client';
+import { useState, useEffect } from 'react';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { doc, setDoc, addDoc, collection } from 'firebase/firestore';
+import type { Pizzeria } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
+
+const formSchema = z.object({
+  name: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
+  address: z.string().min(10, { message: 'La dirección debe tener al menos 10 caracteres.' }),
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+  category: z.string().default('Pizza'),
+  source: z.string().default('Admin'),
+});
+
+type PizzeriaFormValues = z.infer<typeof formSchema>;
+
+interface PizzeriaFormProps {
+  pizzeria?: Pizzeria | null;
+  onSuccess: () => void;
+}
+
+export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps) {
+  const { toast } = useToast();
+  const firestore = useFirestore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<PizzeriaFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      address: '',
+      lat: 29.073,
+      lng: -110.957,
+      category: 'Pizza',
+      source: 'Admin'
+    }
+  });
+
+  useEffect(() => {
+    if (pizzeria) {
+      reset({
+        name: pizzeria.name,
+        address: pizzeria.address,
+        lat: pizzeria.lat,
+        lng: pizzeria.lng,
+        category: pizzeria.category,
+        source: pizzeria.source,
+      });
+    } else {
+        reset();
+    }
+  }, [pizzeria, reset]);
+
+  const onSubmit: SubmitHandler<PizzeriaFormValues> = async (data) => {
+    if (!firestore) return;
+    setIsSubmitting(true);
+    
+    try {
+      if (pizzeria) {
+        // Update existing document
+        const docRef = doc(firestore, 'pizzerias', pizzeria.id);
+        await setDoc(docRef, data, { merge: true });
+        toast({ title: 'Pizzería actualizada', description: `${data.name} se ha actualizado correctamente.` });
+      } else {
+        // Create new document
+        const collectionRef = collection(firestore, 'pizzerias');
+        await addDoc(collectionRef, data);
+        toast({ title: 'Pizzería agregada', description: `${data.name} se ha añadido correctamente.` });
+      }
+      onSuccess();
+    } catch (error) {
+      console.error("Error saving pizzeria:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error al guardar',
+        description: 'No se pudo guardar la pizzería. Intenta de nuevo.',
+      });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+      <div>
+        <Label htmlFor="name">Nombre de la Pizzería</Label>
+        <Input id="name" {...register('name')} />
+        {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="address">Dirección</Label>
+        <Input id="address" {...register('address')} />
+        {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="lat">Latitud</Label>
+          <Input id="lat" type="number" step="any" {...register('lat')} />
+          {errors.lat && <p className="text-sm text-destructive mt-1">{errors.lat.message}</p>}
+        </div>
+        <div>
+          <Label htmlFor="lng">Longitud</Label>
+          <Input id="lng" type="number" step="any" {...register('lng')} />
+          {errors.lng && <p className="text-sm text-destructive mt-1">{errors.lng.message}</p>}
+        </div>
+      </div>
+      
+      <div className="flex justify-end pt-4">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {pizzeria ? 'Actualizar Pizzería' : 'Guardar Pizzería'}
+        </Button>
+      </div>
+    </form>
+  );
+}
