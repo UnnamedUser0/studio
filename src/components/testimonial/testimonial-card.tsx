@@ -55,7 +55,7 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
       },
     };
 
-    updateDoc(testimonialRef, replyData);
+    updateDoc(testimonialRef, replyData, { merge: true });
 
     toast({
       title: 'Respuesta publicada',

@@ -10,7 +10,7 @@ import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
-import { collection, doc, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => (
@@ -52,11 +52,11 @@ const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string
             <CardHeader className="flex-row gap-4 items-start p-4">
                 <Avatar className="h-10 w-10">
                     <AvatarImage src={`https://api.dicebear.com/8.x/micah/svg?seed=${review.userId}`} alt={review.author} />
-                    <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{review.author ? review.author.charAt(0) : 'A'}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                     <div className="flex items-center justify-between">
-                        <p className="font-semibold">{review.author}</p>
+                        <p className="font-semibold">{review.author || 'Anónimo'}</p>
                         <div className="flex items-center">
                           {[1, 2, 3, 4, 5].map((star) => (
                               <Star
@@ -163,12 +163,17 @@ type PizzeriaDetailProps = {
 export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
   const firestore = useFirestore();
   const reviewsQuery = useMemoFirebase(() => 
-    firestore ? collection(firestore, 'pizzerias', pizzeria.id, 'reviews') : null,
+    firestore ? query(collection(firestore, 'pizzerias', pizzeria.id, 'reviews'), orderBy('createdAt', 'desc')) : null,
   [firestore, pizzeria.id]);
   const { data: reviews, isLoading } = useCollection<Review>(reviewsQuery);
   
   const imageUrl = pizzeria.imageUrl || 'https://picsum.photos/seed/default/400/400';
   const imageHint = pizzeria.imageHint || 'pizza';
+  
+  const averageRating = reviews && reviews.length > 0
+    ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+    : pizzeria.rating;
+
 
   return (
     <>
@@ -191,8 +196,20 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
       </SheetHeader>
       <ScrollArea className="flex-1">
         <div className="p-6 space-y-6">
+            <Card>
+                <CardHeader>
+                    <h3 className="font-headline text-xl text-foreground">Calificación General</h3>
+                </CardHeader>
+                <CardContent className="flex items-center gap-4">
+                     <div className="flex items-center text-2xl font-bold">
+                        <Star className="w-6 h-6 text-accent fill-accent mr-2" />
+                        {averageRating.toFixed(1)}
+                    </div>
+                    <p className="text-muted-foreground">basado en {reviews?.length || 0} opiniones</p>
+                </CardContent>
+            </Card>
           <div id="ranking">
-            <h3 className="font-headline text-xl mb-4 text-foreground">Opiniones</h3>
+            <h3 className="font-headline text-xl mb-4 text-foreground">Opiniones de la Comunidad</h3>
             <div className="space-y-4">
                 {isLoading ? (
                   <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin"/></div>

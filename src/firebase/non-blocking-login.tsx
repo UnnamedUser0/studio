@@ -6,7 +6,7 @@ import {
   signInWithEmailAndPassword,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 
 const ADMIN_EMAIL = 'va21070541@bachilleresdesonora.edu.mx';
 
@@ -27,14 +27,20 @@ async function manageUserProfile(user: FirebaseUser): Promise<void> {
     isAdmin: user.email === ADMIN_EMAIL,
   };
 
-  // Use setDoc with merge:true to create or update the profile without overwriting other fields.
-  // CRITICAL: We await this operation to ensure the profile exists before the app proceeds.
-  await setDoc(userDocRef, userProfile, { merge: true }).catch(error => {
-    // In a real app, you might want a more robust global error handler.
-    // For now, we log it, but this shouldn't fail unless security rules are wrong.
+  try {
+    const docSnap = await getDoc(userDocRef);
+    if (docSnap.exists()) {
+      // Document exists, update it if necessary (e.g. isAdmin status could change if rules are manual)
+      // For now, we only care about setting it on creation. We can just merge.
+      await setDoc(userDocRef, { email: user.email }, { merge: true });
+    } else {
+      // Document doesn't exist, create it with all info
+      await setDoc(userDocRef, userProfile);
+    }
+  } catch (error) {
     console.error("CRITICAL: Error managing user profile:", error);
-    throw error; // Re-throw to indicate a failed login/signup step
-  });
+    throw error;
+  }
 }
 
 /** Initiate email/password sign-up and create user profile (blocking). */

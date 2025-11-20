@@ -24,6 +24,8 @@ import {
 import { useFirestore } from '@/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 interface PizzeriaTableProps {
   pizzerias: Pizzeria[];
@@ -37,11 +39,23 @@ export default function PizzeriaTable({ pizzerias, onEdit }: PizzeriaTableProps)
   const handleDelete = (pizzeriaId: string, pizzeriaName: string) => {
     if (!firestore) return;
     const pizzeriaRef = doc(firestore, 'pizzerias', pizzeriaId);
-    deleteDoc(pizzeriaRef);
-    toast({
-        title: "Pizzería eliminada",
-        description: `La pizzería "${pizzeriaName}" ha sido eliminada.`
-    })
+    
+    deleteDoc(pizzeriaRef).then(() => {
+        toast({
+            title: "Pizzería eliminada",
+            description: `La pizzería "${pizzeriaName}" ha sido eliminada.`
+        })
+    }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: pizzeriaRef.path,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
+  }
+
+  if (pizzerias.length === 0) {
+    return <p className="text-center text-muted-foreground p-4">No hay pizzerías registradas. ¡Agrega la primera!</p>
   }
 
   return (

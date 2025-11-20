@@ -2,7 +2,7 @@
 import { useEffect, useState }from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useDoc, useMemoFirebase, useFirestore, useCollection } from '@/firebase';
-import { doc, collection, query } from 'firebase/firestore';
+import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,12 +33,12 @@ function AdminDashboard() {
   const [editingPizzeria, setEditingPizzeria] = useState<Pizzeria | null>(null);
 
   const pizzeriasQuery = useMemoFirebase(() =>
-      firestore ? query(collection(firestore, 'pizzerias')) : null,
+      firestore ? query(collection(firestore, 'pizzerias'), orderBy('name')) : null,
     [firestore]);
   const { data: pizzerias, isLoading: isLoadingPizzerias } = useCollection<Pizzeria>(pizzeriasQuery);
 
   const testimonialsQuery = useMemoFirebase(() =>
-    firestore ? query(collection(firestore, 'testimonials')) : null,
+    firestore ? query(collection(firestore, 'testimonials'), orderBy('createdAt', 'desc')) : null,
   [firestore]);
   const { data: testimonials, isLoading: isLoadingTestimonials } = useCollection<Testimonial>(testimonialsQuery);
 
@@ -93,7 +93,11 @@ function AdminDashboard() {
             </CardHeader>
             <CardContent>
                 {isLoadingPizzerias ? (
-                    <Skeleton className="w-full h-48" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
                 ) : (
                     <PizzeriaTable pizzerias={pizzerias || []} onEdit={handleEditPizzeria} />
                 )}
@@ -107,7 +111,10 @@ function AdminDashboard() {
             </CardHeader>
             <CardContent>
                 {isLoadingTestimonials ? (
-                    <Skeleton className="w-full h-48" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-32 w-full" />
+                        <Skeleton className="h-32 w-full" />
+                    </div>
                 ) : (
                     <TestimonialTable testimonials={testimonials || []} />
                 )}
@@ -144,7 +151,10 @@ export default function AdminPage() {
       <div className="flex flex-col min-h-screen">
         <div className="flex-grow container py-12">
           <Skeleton className="w-1/3 h-12 mb-8" />
-          <Skeleton className="w-full h-64" />
+          <div className="space-y-8">
+            <Skeleton className="w-full h-64" />
+            <Skeleton className="w-full h-64" />
+          </div>
         </div>
         <Footer />
       </div>
