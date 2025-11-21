@@ -1,3 +1,4 @@
+
 'use client';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -83,7 +84,7 @@ function LinkIcon(props: React.SVGProps<SVGSVGElement>) {
 
 export default function HelpPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-muted/30">
+    <div className="flex flex-col min-h-screen">
       <div className="flex-grow container py-12 md:py-20">
         <div className="max-w-3xl mx-auto text-center mb-16">
           <h1 className="font-headline text-4xl md:text-5xl font-bold">Centro de Soporte</h1>

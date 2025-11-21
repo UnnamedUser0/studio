@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -218,7 +219,7 @@ export default function Home() {
   }
 
   return (
-    <div className="relative flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen">
       <div className="relative w-full h-full flex-grow flex flex-col">
         <Sheet>
           <SheetTrigger asChild>

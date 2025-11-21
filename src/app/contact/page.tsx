@@ -1,3 +1,4 @@
+
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ const Footer = dynamic(() => import('@/components/layout/footer'), {
 
 export default function ContactPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-muted/30">
+    <div className="flex flex-col min-h-screen">
       <div className="flex-grow container py-12 md:py-20 flex items-center justify-center">
         <Card className="w-full max-w-2xl shadow-xl">
           <CardHeader className="text-center">

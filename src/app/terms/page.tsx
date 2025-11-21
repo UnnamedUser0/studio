@@ -1,3 +1,4 @@
+
 import dynamic from 'next/dynamic';
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
