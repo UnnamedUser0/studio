@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { fontHeadline, fontBody } from '@/app/fonts';
 import { FirebaseClientProvider } from '@/firebase';
 import Chatbot from '@/components/chatbot/chatbot';
+import Footer from '@/components/layout/footer';
 
 export const metadata: Metadata = {
   title: 'PizzApp - Hermosillo Pizza Finder',
@@ -35,6 +36,7 @@ export default function RootLayout({
               <main className="flex-grow">
                 {children}
               </main>
+              <Footer />
               <Toaster />
               <Chatbot />
             </div>
