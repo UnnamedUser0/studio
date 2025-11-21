@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, addDoc } from 'firebase/firestore';
 import getDistance from 'geolib/es/getDistance';
+import dynamic from 'next/dynamic';
 
 import MapView from '@/components/map/map-view';
 import { Loader2, MessageSquarePlus, List } from 'lucide-react';
@@ -19,10 +20,12 @@ import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 import PizzeriaList from '@/components/pizzeria/pizzeria-list';
 import { pizzeriasData } from '@/lib/pizzerias-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import Footer from '@/components/layout/footer';
 import WhyChoosePizzapp from '@/components/layout/why-choose-pizzapp';
 import TestimonialsCarousel from '@/components/testimonial/testimonials-carousel';
 
+const Footer = dynamic(() => import('@/components/layout/footer'), {
+  loading: () => <div />,
+});
 
 type Geocode = { lat: number, lng: number };
 
