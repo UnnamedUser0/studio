@@ -32,7 +32,7 @@ interface PizzeriaFormProps {
 }
 
 export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps) {
-  const { toast } = useToast();
+  const { toast } } from useToast();
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -96,8 +96,10 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
     } else {
       // Create new document
       const collectionRef = collection(firestore, 'pizzerias');
-      addDoc(collectionRef, data)
-        .then(() => {
+      const newPizzeriaData = { ...data, id: ''};
+      addDoc(collectionRef, newPizzeriaData)
+        .then((docRef) => {
+            setDoc(docRef, { id: docRef.id }, { merge: true });
             toast({ title: 'Pizzería agregada', description: `${data.name} se ha añadido correctamente.` });
             onSuccess();
         })
@@ -105,7 +107,7 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
             const permissionError = new FirestorePermissionError({
                 path: collectionRef.path,
                 operation: 'create',
-                requestResourceData: data,
+                requestResourceData: newPizzeriaData,
             });
             errorEmitter.emit('permission-error', permissionError);
         })

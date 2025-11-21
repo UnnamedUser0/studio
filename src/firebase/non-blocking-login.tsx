@@ -31,7 +31,7 @@ async function manageUserProfile(user: FirebaseUser): Promise<void> {
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) {
       // Document exists, update it if necessary (e.g. isAdmin status could change if rules are manual)
-      // For now, we only care about setting it on creation. We can just merge.
+      // We merge to ensure we don't overwrite other fields, and to update isAdmin status if it changed.
       await setDoc(userDocRef, { email: user.email, isAdmin: user.email === ADMIN_EMAIL }, { merge: true });
     } else {
       // Document doesn't exist, create it with all info
@@ -39,6 +39,8 @@ async function manageUserProfile(user: FirebaseUser): Promise<void> {
     }
   } catch (error) {
     console.error("CRITICAL: Error managing user profile:", error);
+    // In a real application, this error should be handled more gracefully,
+    // potentially blocking user access if profile creation fails.
     throw error;
   }
 }

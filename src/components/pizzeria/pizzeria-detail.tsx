@@ -76,6 +76,9 @@ const ReviewCard = ({ review, pizzeriaId }: { review: Review, pizzeriaId: string
                           ))}
                       </div>
                     </div>
+                     <p className="text-xs text-muted-foreground pt-1">
+                        {new Date(review.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
                 </div>
                  {(isAdmin || user?.uid === review.userId) && (
                     <Button variant="ghost" size="icon" onClick={handleDelete} aria-label="Delete review" className="h-8 w-8">
@@ -108,7 +111,7 @@ const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
         rating,
         comment,
         createdAt: new Date().toISOString(),
-        author: user.displayName || user.email || 'Anónimo',
+        author: user.displayName || user.email?.split('@')[0] || 'Anónimo',
       };
       
       addDoc(reviewRef, newReview).then(() => {
@@ -189,7 +192,7 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
   
   const averageRating = reviews && reviews.length > 0
     ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
-    : pizzeria.rating;
+    : pizzeria.rating || 0;
 
 
   return (

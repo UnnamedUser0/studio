@@ -86,9 +86,11 @@ export default function Header() {
           ) : user ? (
             <div className="flex items-center gap-4">
               {isAdmin && (
-                <Badge variant="default">
-                    Administrador
-                </Badge>
+                 <Link href="/admin">
+                    <Badge variant="default" className="cursor-pointer hover:bg-primary/80">
+                        Administrador
+                    </Badge>
+                </Link>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
