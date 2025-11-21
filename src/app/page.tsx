@@ -219,7 +219,7 @@ export default function Home() {
 
   return (
     <div className="relative flex flex-col min-h-screen">
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full flex-grow flex flex-col">
         <Sheet>
           <SheetTrigger asChild>
             <Button

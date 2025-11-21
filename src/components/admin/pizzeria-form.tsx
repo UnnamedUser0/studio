@@ -32,7 +32,7 @@ interface PizzeriaFormProps {
 }
 
 export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps) {
-  const { toast } } from useToast();
+  const { toast } = useToast();
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
