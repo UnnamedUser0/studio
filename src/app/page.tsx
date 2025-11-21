@@ -55,7 +55,7 @@ function TestimonialForm({ onSuccess }: { onSuccess: () => void }) {
         const newTestimonial = {
             author: name,
             email: email,
-            comment: comment,
+            comment,
             role: 'Usuario de PizzApp',
             createdAt: new Date().toISOString(),
         };
@@ -277,13 +277,11 @@ export default function Home() {
                             </div>
                         </div>
                         
-                        <div className="absolute bottom-[80px] w-[calc(100%+20px)] left-[-10px] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
-                        <div className="absolute bottom-[96px] w-[calc(33.33%+20px)] left-[calc(33.33%-10px)] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
-                        <div className="absolute bottom-[144px] w-[calc(33.33%+20px)] left-[calc(33.33%-10px)] h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
-
-                        <div className="absolute bottom-0 top-0 left-1/3 w-px bg-black/20 z-10 h-[144px]"></div>
-                        <div className="absolute bottom-0 top-0 left-2/3 w-px bg-black/20 z-10 h-[144px]"></div>
-
+                        <div className="absolute bottom-[80px] w-full flex items-end">
+                            <div className="w-1/3 h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
+                            <div className="w-1/3 h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
+                            <div className="w-1/3 h-4 bg-primary/80 rounded-t-lg shadow-inner z-0"></div>
+                        </div>
                         <div className="absolute bottom-[96px] left-[calc(0%+16.66%-128px)] w-[256px] z-20">
                             <PizzeriaCard
                                 pizzeria={pizzeriasForRanking[1]}
