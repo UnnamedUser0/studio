@@ -215,17 +215,14 @@ export default function Home() {
 
   if (!hasMounted) {
     return (
-      <div className="flex flex-col min-h-screen">
-          <div className="flex-grow flex items-center justify-center">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          </div>
-          <Footer />
+      <div className="flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <>
       <div className="relative w-full h-full flex-grow flex flex-col">
         <Sheet>
           <SheetTrigger asChild>
@@ -359,7 +356,6 @@ export default function Home() {
             )}
         </main>
       </div>
-      <Footer />
-    </div>
+    </>
   );
 }

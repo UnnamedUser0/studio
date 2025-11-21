@@ -13,43 +13,40 @@ const Footer = dynamic(() => import('@/components/layout/footer'), {
 
 export default function ContactPage() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex-grow container py-12 md:py-20 flex items-center justify-center">
-        <Card className="w-full max-w-2xl shadow-xl">
-          <CardHeader className="text-center">
-            <CardTitle className="font-headline text-4xl">Contacta con Nosotros</CardTitle>
-            <CardDescription className="text-lg">
-              ¿Tienes preguntas o sugerencias? Rellena el formulario y te responderemos pronto.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nombre</Label>
-                  <Input id="name" placeholder="Tu nombre" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Correo Electrónico</Label>
-                  <Input id="email" type="email" placeholder="tu@correo.com" />
-                </div>
+    <div className="container py-12 md:py-20 flex items-center justify-center">
+      <Card className="w-full max-w-2xl shadow-xl">
+        <CardHeader className="text-center">
+          <CardTitle className="font-headline text-4xl">Contacta con Nosotros</CardTitle>
+          <CardDescription className="text-lg">
+            ¿Tienes preguntas o sugerencias? Rellena el formulario y te responderemos pronto.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nombre</Label>
+                <Input id="name" placeholder="Tu nombre" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="subject">Asunto</Label>
-                <Input id="subject" placeholder="Ej: Sugerir una pizzería" />
+                <Label htmlFor="email">Correo Electrónico</Label>
+                <Input id="email" type="email" placeholder="tu@correo.com" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="message">Mensaje</Label>
-                <Textarea id="message" placeholder="Escribe tu mensaje aquí..." rows={5} />
-              </div>
-              <div className="text-center">
-                <Button type="submit" size="lg">Enviar Mensaje</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-      <Footer />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="subject">Asunto</Label>
+              <Input id="subject" placeholder="Ej: Sugerir una pizzería" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="message">Mensaje</Label>
+              <Textarea id="message" placeholder="Escribe tu mensaje aquí..." rows={5} />
+            </div>
+            <div className="text-center">
+              <Button type="submit" size="lg">Enviar Mensaje</Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

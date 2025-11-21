@@ -60,70 +60,67 @@ function AdminDashboard() {
 
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex-grow container py-12">
-        <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-              <div>
-                <h1 className="font-headline text-4xl">Panel de Administración</h1>
-                <p className="text-muted-foreground">Bienvenido, {user?.displayName || user?.email}.</p>
-              </div>
-                <DialogTrigger asChild>
-                    <Button onClick={handleAddNewPizzeria}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Agregar Pizzería
-                    </Button>
-                </DialogTrigger>
+    <div className="container py-12">
+      <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+              <h1 className="font-headline text-4xl">Panel de Administración</h1>
+              <p className="text-muted-foreground">Bienvenido, {user?.displayName || user?.email}.</p>
             </div>
-            <DialogContent className="sm:max-w-[625px]">
-                <DialogHeader>
-                    <DialogTitle className="font-headline text-3xl">{editingPizzeria ? 'Editar Pizzería' : 'Agregar Nueva Pizzería'}</DialogTitle>
-                    <DialogDescription>
-                        {editingPizzeria ? 'Modifica los detalles de la pizzería.' : 'Completa el formulario para añadir una pizzería al mapa.'}
-                    </DialogDescription>
-                </DialogHeader>
-                 <PizzeriaForm pizzeria={editingPizzeria} onSuccess={handleFormSuccess} />
-            </DialogContent>
-        </Dialog>
-        
-        <div className="space-y-8">
-            <Card>
-            <CardHeader>
-                <CardTitle>Gestionar Pizzerías</CardTitle>
-                <CardDescription>Edita, agrega o elimina pizzerías de la base de datos.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {isLoadingPizzerias ? (
-                    <div className="space-y-2">
-                        <Skeleton className="h-10 w-full" />
-                        <Skeleton className="h-10 w-full" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                ) : (
-                    <PizzeriaTable pizzerias={pizzerias || []} onEdit={handleEditPizzeria} />
-                )}
-            </CardContent>
-            </Card>
+              <DialogTrigger asChild>
+                  <Button onClick={handleAddNewPizzeria}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Agregar Pizzería
+                  </Button>
+              </DialogTrigger>
+          </div>
+          <DialogContent className="sm:max-w-[625px]">
+              <DialogHeader>
+                  <DialogTitle className="font-headline text-3xl">{editingPizzeria ? 'Editar Pizzería' : 'Agregar Nueva Pizzería'}</DialogTitle>
+                  <DialogDescription>
+                      {editingPizzeria ? 'Modifica los detalles de la pizzería.' : 'Completa el formulario para añadir una pizzería al mapa.'}
+                  </DialogDescription>
+              </DialogHeader>
+               <PizzeriaForm pizzeria={editingPizzeria} onSuccess={handleFormSuccess} />
+          </DialogContent>
+      </Dialog>
+      
+      <div className="space-y-8">
+          <Card>
+          <CardHeader>
+              <CardTitle>Gestionar Pizzerías</CardTitle>
+              <CardDescription>Edita, agrega o elimina pizzerías de la base de datos.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              {isLoadingPizzerias ? (
+                  <div className="space-y-2">
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-full" />
+                  </div>
+              ) : (
+                  <PizzeriaTable pizzerias={pizzerias || []} onEdit={handleEditPizzeria} />
+              )}
+          </CardContent>
+          </Card>
 
-            <Card>
-            <CardHeader>
-                <CardTitle>Gestionar Testimonios</CardTitle>
-                <CardDescription>Responde o elimina los testimonios de los usuarios sobre la aplicación.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {isLoadingTestimonials ? (
-                    <div className="space-y-2">
-                        <Skeleton className="h-32 w-full" />
-                        <Skeleton className="h-32 w-full" />
-                    </div>
-                ) : (
-                    <TestimonialTable testimonials={testimonials || []} />
-                )}
-            </CardContent>
-            </Card>
-        </div>
+          <Card>
+          <CardHeader>
+              <CardTitle>Gestionar Testimonios</CardTitle>
+              <CardDescription>Responde o elimina los testimonios de los usuarios sobre la aplicación.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              {isLoadingTestimonials ? (
+                  <div className="space-y-2">
+                      <Skeleton className="h-32 w-full" />
+                      <Skeleton className="h-32 w-full" />
+                  </div>
+              ) : (
+                  <TestimonialTable testimonials={testimonials || []} />
+              )}
+          </CardContent>
+          </Card>
       </div>
-      <Footer />
     </div>
   );
 }
@@ -149,15 +146,12 @@ export default function AdminPage() {
   // If either user or profile is loading, or if we're not logged in yet, show a loading skeleton
   if (isUserLoading || (user && isProfileLoading)) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <div className="flex-grow container py-12">
-          <Skeleton className="w-1/3 h-12 mb-8" />
-          <div className="space-y-8">
-            <Skeleton className="w-full h-64" />
-            <Skeleton className="w-full h-64" />
-          </div>
+      <div className="container py-12">
+        <Skeleton className="w-1/3 h-12 mb-8" />
+        <div className="space-y-8">
+          <Skeleton className="w-full h-64" />
+          <Skeleton className="w-full h-64" />
         </div>
-        <Footer />
       </div>
     );
   }
@@ -167,13 +161,10 @@ export default function AdminPage() {
   // After loading, if the user is not an admin, deny access
   if (!isAdmin) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <div className="flex-grow container py-20 text-center flex flex-col justify-center items-center">
-            <h1 className="font-headline text-3xl">Acceso Denegado</h1>
-            <p className="text-muted-foreground mt-2">No tienes permisos para ver esta página.</p>
-            <Button onClick={() => router.push('/')} className="mt-6">Volver al Inicio</Button>
-        </div>
-        <Footer />
+      <div className="container py-20 text-center flex flex-col justify-center items-center">
+          <h1 className="font-headline text-3xl">Acceso Denegado</h1>
+          <p className="text-muted-foreground mt-2">No tienes permisos para ver esta página.</p>
+          <Button onClick={() => router.push('/')} className="mt-6">Volver al Inicio</Button>
       </div>
     );
   }
