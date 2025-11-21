@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import { Pizza, Facebook, Instagram } from 'lucide-react';
 import { XIcon } from '../icons/x-icon';
