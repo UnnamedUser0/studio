@@ -8,6 +8,7 @@ import 'leaflet-defaulticon-compatibility';
 import type { Pizzeria } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { LocateFixed } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const HERMOSILLO_CENTER: L.LatLngTuple = [29.085, -110.977];
 
@@ -27,9 +28,9 @@ const selectedIcon = new L.Icon({
 });
 
 const myLocationIcon = new L.Icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/128/3178/3178610.png',
-    iconSize: [25, 25],
-    iconAnchor: [12, 12],
+  iconUrl: 'https://cdn-icons-png.flaticon.com/128/3178/3178610.png',
+  iconSize: [25, 25],
+  iconAnchor: [12, 12],
 });
 
 type PizzaMapProps = {
@@ -45,6 +46,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const myLocationMarkerRef = useRef<L.Marker | null>(null);
+  const { toast } = useToast();
 
 
   const handleLocateMe = () => {
@@ -54,17 +56,21 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
     map.locate({ setView: true, maxZoom: 15, enableHighAccuracy: true });
 
     map.once('locationfound', (e: L.LocationEvent) => {
-        if (myLocationMarkerRef.current) {
-            myLocationMarkerRef.current.setLatLng(e.latlng);
-        } else {
-            myLocationMarkerRef.current = L.marker(e.latlng, { icon: myLocationIcon }).addTo(map);
-        }
-        map.flyTo(e.latlng, 15);
-        onLocateUser({ lat: e.latlng.lat, lng: e.latlng.lng });
+      if (myLocationMarkerRef.current) {
+        myLocationMarkerRef.current.setLatLng(e.latlng);
+      } else {
+        myLocationMarkerRef.current = L.marker(e.latlng, { icon: myLocationIcon }).addTo(map);
+      }
+      map.flyTo(e.latlng, 15);
+      onLocateUser({ lat: e.latlng.lat, lng: e.latlng.lng });
     });
 
     map.once('locationerror', (e: L.ErrorEvent) => {
-        alert(e.message);
+      toast({
+        variant: 'destructive',
+        title: 'Error de ubicación',
+        description: e.message,
+      });
     });
   };
 
@@ -95,7 +101,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
 
       L.control.layers(baseMaps).addTo(map);
     }
-    
+
     // Cleanup function to remove the map instance
     return () => {
       if (mapInstanceRef.current) {
@@ -126,7 +132,7 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
       })
         .addTo(map)
         .on('click', () => onMarkerClick(pizzeria));
-      
+
       if (isSelected) {
         marker.setZIndexOffset(1000);
       }
@@ -146,15 +152,15 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
         duration: 1.5,
       });
     } else if (searchCenter) {
-        map.flyTo([searchCenter.lat, searchCenter.lng], 14, {
-          animate: true,
-          duration: 1.5,
-        });
+      map.flyTo([searchCenter.lat, searchCenter.lng], 14, {
+        animate: true,
+        duration: 1.5,
+      });
     } else {
-       map.flyTo(HERMOSILLO_CENTER, 12, {
+      map.flyTo(HERMOSILLO_CENTER, 12, {
         animate: true,
         duration: 1.5
-       });
+      });
     }
   }, [selectedPizzeria, searchCenter]);
 
@@ -162,10 +168,10 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
     <div className="relative h-full w-full z-0">
       <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />
       <div className="absolute top-24 right-4 z-[1001]">
-        <Button 
-          variant="secondary" 
-          size="icon" 
-          onClick={handleLocateMe} 
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={handleLocateMe}
           className="shadow-lg rounded-full h-10 w-10"
           aria-label="Find my location"
         >

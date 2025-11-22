@@ -9,7 +9,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { Part } from '@genkit-ai/google-genai';
 
 const PizzAppChatInputSchema = z.object({
   history: z.array(z.any()).describe('The conversation history.'),
@@ -47,7 +46,7 @@ const pizzAppChatFlow = ai.defineFlow(
     outputSchema: PizzAppChatOutputSchema,
   },
   async ({ history, message }) => {
-    
+
     const systemInstruction = `Eres "Pizzi", el asistente virtual de PizzApp. Tu única función es responder preguntas y aclarar dudas sobre la aplicación PizzApp. Eres amable, servicial y directo.
 
     **Contexto sobre la aplicación PizzApp:**
@@ -59,17 +58,53 @@ const pizzAppChatFlow = ai.defineFlow(
     3.  Usa el historial de la conversación para entender el contexto.
     4.  Responde en el mismo idioma de la pregunta del usuario.`;
 
-    const fullHistory = [
-      ...history,
-      { role: 'user', content: [{ text: message }] },
-    ] as Part[];
+    // Convert history to the format Genkit expects
+    // Ensure history items have the correct structure: { role: 'user' | 'model', content: [{ text: '...' }] }
+    const formattedHistory = history.map((msg: any) => {
+      // Handle different potential history formats
+      let content = msg.content;
+      if (typeof content === 'string') {
+        content = [{ text: content }];
+      } else if (Array.isArray(content) && content.length > 0 && typeof content[0] === 'string') {
+        content = [{ text: content[0] }];
+      }
 
-    const result = await ai.generate({
-      model: 'googleai/gemini-pro',
-      history: fullHistory,
-      system: systemInstruction,
+      return {
+        role: (msg.role === 'user' ? 'user' : 'model') as 'user' | 'model',
+        content: content
+      };
     });
 
-    return { answer: result.text };
+    // Construct the full conversation history for the model
+    // System instruction is added as the first message with role 'system' if supported,
+    // or prepended to the context. For Gemini, we can use the 'system' parameter or just include it in messages.
+    // Genkit's generate accepts 'messages' which is an array of (MessageData | string).
+
+    const messages = [
+      { role: 'system' as const, content: [{ text: systemInstruction }] },
+      ...formattedHistory,
+      { role: 'user' as const, content: [{ text: message }] }
+    ];
+
+    try {
+      const result = await ai.generate({
+        model: 'googleai/gemini-pro',
+        messages: messages,
+      });
+
+      return { answer: result.text };
+    } catch (error: any) {
+      console.error('Error generating response:', error);
+
+      let errorMessage = 'Lo siento, tengo problemas para conectar con mi cerebro digital en este momento.';
+
+      if (error.message?.includes('403') || error.message?.includes('blocked')) {
+        errorMessage += ' Parece que la API de Google AI no está habilitada o la clave es inválida. Por favor verifica la configuración del proyecto en Google Cloud Console y asegúrate de que la API "Generative Language API" esté habilitada.';
+      } else if (error.message?.includes('429')) {
+        errorMessage += ' He recibido demasiadas solicitudes. Por favor intenta de nuevo en un momento.';
+      }
+
+      return { answer: errorMessage };
+    }
   }
 );
