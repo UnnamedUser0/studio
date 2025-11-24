@@ -73,76 +73,86 @@ const faqCategories = [
 ];
 
 const CustomAccordionTrigger = ({ children }: { children: React.ReactNode }) => (
-    <AccordionTrigger className="text-left hover:no-underline p-0">
-        <div className="flex justify-between items-center w-full">
-            <span className="text-base font-medium pr-4">{children}</span>
-            <div className="h-7 w-7 flex-shrink-0 bg-primary/10 rounded-full flex items-center justify-center text-primary group-data-[state=open]:rotate-45 transition-transform duration-300">
-                <Plus className="h-5 w-5"/>
-            </div>
-        </div>
-    </AccordionTrigger>
+  <AccordionTrigger className="text-left hover:no-underline p-0">
+    <div className="flex justify-between items-center w-full">
+      <span className="text-base font-medium pr-4">{children}</span>
+      <div className="h-7 w-7 flex-shrink-0 bg-primary/10 rounded-full flex items-center justify-center text-primary group-data-[state=open]:rotate-45 transition-transform duration-300">
+        <Plus className="h-5 w-5" />
+      </div>
+    </div>
+  </AccordionTrigger>
 );
 
+
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
+
+// ... imports
 
 export default function FAQPage() {
   return (
     <div className="container py-12 md:py-20">
+      <ScrollReveal>
         <div className="max-w-3xl mx-auto text-center">
-            <h1 className="font-headline text-4xl md:text-5xl font-bold">Preguntas Frecuentes</h1>
-            <p className="mt-4 text-lg text-muted-foreground">
-                Encuentra respuestas a las dudas más comunes sobre PizzApp.
-            </p>
+          <h1 className="font-headline text-4xl md:text-5xl font-bold">Preguntas Frecuentes</h1>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Encuentra respuestas a las dudas más comunes sobre PizzApp.
+          </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
-            {faqCategories.map((category, index) => (
-                <Card key={index} className="shadow-lg rounded-xl border-t-4 border-primary">
-                    <CardHeader>
-                        <div className="flex items-center gap-4">
-                            <div className="flex-shrink-0 bg-primary/10 text-primary rounded-lg h-12 w-12 flex items-center justify-center">
-                                {category.icon}
-                            </div>
-                            <CardTitle className="font-headline text-2xl text-foreground">{category.title}</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                       <Accordion type="single" collapsible className="w-full space-y-4">
-                            {category.questions.map((faq, i) => (
-                                <AccordionItem value={`item-${i}`} key={i} className="border-b-0">
-                                    <div className="p-4 rounded-lg border bg-background hover:border-primary/50 transition-colors group">
-                                        <CustomAccordionTrigger>{faq.question}</CustomAccordionTrigger>
-                                        <AccordionContent className="pt-4 text-base text-muted-foreground">
-                                            {faq.answer}
-                                        </AccordionContent>
-                                    </div>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
+      </ScrollReveal>
 
-        <div className="mt-16">
-            <Card className="shadow-xl rounded-xl bg-gradient-to-br from-card to-muted/40">
-                <CardContent className="p-8 md:p-12 text-center">
-                    <div className="flex justify-center mb-4">
-                        <div className="h-14 w-14 flex items-center justify-center rounded-full bg-primary/10 text-primary">
-                            <MessageCircle className="h-8 w-8" />
-                        </div>
-                    </div>
-                    <h2 className="font-headline text-3xl font-bold">¿No encontraste la respuesta que buscabas?</h2>
-                    <p className="mt-3 max-w-xl mx-auto text-muted-foreground">
-                        Estamos aquí para ayudarte. Ponte en contacto con nuestro equipo de soporte.
-                    </p>
-                    <div className="mt-8">
-                        <Button asChild size="lg">
-                            <Link href="/contact">Contacta con nosotros</Link>
-                        </Button>
-                    </div>
-                </CardContent>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
+        {faqCategories.map((category, index) => (
+          <ScrollReveal key={index} delay={index * 100} className="h-full">
+            <Card className="shadow-lg rounded-xl border-t-4 border-primary h-full">
+              <CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className="flex-shrink-0 bg-primary/10 text-primary rounded-lg h-12 w-12 flex items-center justify-center">
+                    {category.icon}
+                  </div>
+                  <CardTitle className="font-headline text-2xl text-foreground">{category.title}</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Accordion type="single" collapsible className="w-full space-y-4">
+                  {category.questions.map((faq, i) => (
+                    <AccordionItem value={`item-${i}`} key={i} className="border-b-0">
+                      <div className="p-4 rounded-lg border bg-background hover:border-primary/50 transition-colors group">
+                        <CustomAccordionTrigger>{faq.question}</CustomAccordionTrigger>
+                        <AccordionContent className="pt-4 text-base text-muted-foreground">
+                          {faq.answer}
+                        </AccordionContent>
+                      </div>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </CardContent>
             </Card>
-        </div>
+          </ScrollReveal>
+        ))}
+      </div>
+
+      <div className="mt-16">
+        <ScrollReveal delay={300}>
+          <Card className="shadow-xl rounded-xl bg-gradient-to-br from-card to-muted/40">
+            <CardContent className="p-8 md:p-12 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="h-14 w-14 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <MessageCircle className="h-8 w-8" />
+                </div>
+              </div>
+              <h2 className="font-headline text-3xl font-bold">¿No encontraste la respuesta que buscabas?</h2>
+              <p className="mt-3 max-w-xl mx-auto text-muted-foreground">
+                Estamos aquí para ayudarte. Ponte en contacto con nuestro equipo de soporte.
+              </p>
+              <div className="mt-8">
+                <Button asChild size="lg">
+                  <Link href="/contact">Contacta con nosotros</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+      </div>
 
     </div>
   );

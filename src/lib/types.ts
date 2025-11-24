@@ -7,6 +7,10 @@ export type Review = {
   rating: number;
   comment: string;
   createdAt: string;
+  reply?: {
+    text: string;
+    repliedAt: string;
+  };
 };
 
 export type Pizzeria = {

@@ -1,6 +1,22 @@
 import Link from 'next/link';
-import { Pizza, Facebook, Instagram } from 'lucide-react';
+import { Pizza, Facebook, Instagram, ArrowRight } from 'lucide-react';
 import { XIcon } from '../icons/x-icon';
+import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
+
+const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
+  <li>
+    <Link
+      href={href}
+      className="group flex items-center text-sm text-slate-400 hover:text-primary transition-all duration-300"
+    >
+      <ArrowRight className="h-3 w-3 mr-2 opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 text-primary" />
+      <span className="transition-transform duration-300 group-hover:translate-x-1">
+        {children}
+      </span>
+    </Link>
+  </li>
+);
 
 export default function Footer() {
   const socialLinks = [
@@ -14,20 +30,27 @@ export default function Footer() {
       <div className="container py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Column 1: Logo and Description */}
-          <div className="md:col-span-1">
-            <Link href="/" className="flex items-center space-x-2 mb-4">
-              <Pizza className="h-8 w-8 text-primary" />
-              <span className="font-bold font-headline text-2xl text-white">PizzApp</span>
+          <div className="space-y-4">
+            <Link href="/" className="flex items-center space-x-2">
+              <Pizza className="h-7 w-7 text-primary" />
+              <div className="w-[7ch]">
+                <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap border-r-4 border-r-primary typing-animation text-white">
+                  PizzApp
+                </span>
+              </div>
             </Link>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-400 leading-relaxed">
               Encuentra las mejores pizzerías en Hermosillo con un solo clic. Tu guía definitiva para la pizza.
             </p>
-            <div className="flex space-x-3 mt-6">
+            <div className="flex space-x-3 pt-2">
               {socialLinks.map((social) => (
                 <Link
                   key={social.name}
                   href={social.href}
-                  className="text-slate-400 hover:text-primary bg-slate-800 h-10 w-10 rounded-full flex items-center justify-center transition-colors"
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "icon" }),
+                    "bg-slate-800 text-slate-400 hover:bg-primary hover:text-white rounded-full transition-all duration-300 hover:-translate-y-1 hover:glow-primary"
+                  )}
                   aria-label={social.name}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -38,46 +61,46 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Spacer for larger screens */}
-          <div className="hidden md:block md:col-span-1"></div>
+          {/* Column 2: Quick Links */}
+          <div>
+            <h3 className="font-headline text-lg font-semibold text-white relative mb-6">
+              Enlaces Rápidos
+              <span className="absolute -bottom-2 left-0 h-1 w-12 bg-primary rounded-full"></span>
+            </h3>
+            <ul className="space-y-3">
+              <FooterLink href="/">Inicio</FooterLink>
+              <FooterLink href="/search">Buscar Pizzerías</FooterLink>
+              <FooterLink href="/faq">Preguntas Frecuentes</FooterLink>
+              <FooterLink href="/help">Centro de Ayuda</FooterLink>
+            </ul>
+          </div>
 
-          {/* Columns 2 & 3: Links */}
-          <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-8">
-            <div>
-              <h3 className="font-headline text-lg font-semibold text-white relative mb-4">
-                Enlaces Rápidos
-                <span className="absolute -bottom-1 left-0 h-0.5 w-10 bg-primary"></span>
-              </h3>
-              <ul className="space-y-3">
-                <li><Link href="/" className="text-sm text-slate-400 hover:text-white transition-colors">Inicio</Link></li>
-                <li><Link href="/" className="text-sm text-slate-400 hover:text-white transition-colors">Buscar Pizzerías</Link></li>
-                <li><Link href="/faq" className="text-sm text-slate-400 hover:text-white transition-colors">Preguntas Frecuentes</Link></li>
-                <li><Link href="/help" className="text-sm text-slate-400 hover:text-white transition-colors">Centro de Ayuda</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-headline text-lg font-semibold text-white relative mb-4">
-                Legal
-                <span className="absolute -bottom-1 left-0 h-0.5 w-10 bg-primary"></span>
-              </h3>
-              <ul className="space-y-3">
-                <li><Link href="/terms" className="text-sm text-slate-400 hover:text-white transition-colors">Términos de Uso</Link></li>
-                <li><Link href="/privacy" className="text-sm text-slate-400 hover:text-white transition-colors">Política de Privacidad</Link></li>
-              </ul>
-            </div>
-             <div>
-              <h3 className="font-headline text-lg font-semibold text-white relative mb-4">
-                Contacto
-                <span className="absolute -bottom-1 left-0 h-0.5 w-10 bg-primary"></span>
-              </h3>
-              <ul className="space-y-3">
-                <li><Link href="/contact" className="text-sm text-slate-400 hover:text-white transition-colors">Formulario de Contacto</Link></li>
-                <li><a href="mailto:info@pizzapp.com" className="text-sm text-slate-400 hover:text-white transition-colors">info@pizzapp.com</a></li>
-              </ul>
-            </div>
+          {/* Column 3: Legal */}
+          <div>
+            <h3 className="font-headline text-lg font-semibold text-white relative mb-6">
+              Legal
+              <span className="absolute -bottom-2 left-0 h-1 w-12 bg-primary rounded-full"></span>
+            </h3>
+            <ul className="space-y-3">
+              <FooterLink href="/terms">Términos de Uso</FooterLink>
+              <FooterLink href="/privacy">Política de Privacidad</FooterLink>
+            </ul>
+          </div>
+
+          {/* Column 4: Contact */}
+          <div>
+            <h3 className="font-headline text-lg font-semibold text-white relative mb-6">
+              Contacto
+              <span className="absolute -bottom-2 left-0 h-1 w-12 bg-primary rounded-full"></span>
+            </h3>
+            <ul className="space-y-3">
+              <FooterLink href="/contact">Formulario de Contacto</FooterLink>
+              <FooterLink href="mailto:info@pizzapp.com">info@pizzapp.com</FooterLink>
+            </ul>
           </div>
         </div>
-        <div className="border-t border-slate-700 mt-12 pt-6 text-center text-sm text-slate-500">
+
+        <div className="border-t border-slate-800 mt-12 pt-8 text-center text-sm text-slate-500">
           <p>&copy; {new Date().getFullYear()} Pizzapp. Todos los derechos reservados.</p>
         </div>
       </div>

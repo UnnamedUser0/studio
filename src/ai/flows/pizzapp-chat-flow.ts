@@ -26,17 +26,37 @@ export async function pizzAppChat(input: PizzAppChatInput): Promise<PizzAppChatO
 }
 
 const APP_CONTEXT = `
-- **Función Principal:** PizzApp es una guía para descubrir, calificar y encontrar las mejores pizzerías en Hermosillo, Sonora.
-- **Búsqueda y Mapa:** Los usuarios pueden buscar pizzerías por nombre, dirección o colonia. La página principal tiene un mapa interactivo para explorar pizzerías cercanas. La búsqueda inteligente puede interpretar consultas como "pepperoni" o direcciones.
-- **No se necesita registro para explorar:** Los visitantes pueden buscar y ver información de las pizzerías sin una cuenta.
-- **Registro para opinar:** Para dejar opiniones, calificar o guardar favoritos, los usuarios deben crear una cuenta gratuita.
-- **Información de la Pizzería:** Cada pizzería tiene una página de detalle con su dirección, ubicación, calificación promedio y opiniones de otros usuarios.
-- **Fuente de Datos:** La información es recopilada por el equipo de PizzApp y validada por la comunidad. Los dueños de negocios podrán reclamar y actualizar perfiles próximamente.
-- **Reportar Errores:** Los usuarios pueden reportar información incorrecta a través del formulario de contacto.
-- **Modelo de Negocio:** PizzApp NO procesa pedidos ni cobra comisiones. Es una guía.
-- **Soporte:** Los usuarios pueden contactar a soporte a través del formulario de contacto.
-- **Privacidad:** La información del usuario (correo) se usa solo para autenticación y para funciones como publicar opiniones. Los datos no se comparten con terceros.
-- **Términos de Uso:** El contenido generado por el usuario (opiniones) debe ser respetuoso. El contenido de PizzApp (logos, diseño) está protegido por derechos de autor.
+**Información General:**
+- **Nombre:** Hermosillo Pizza Finder (PizzApp).
+- **Propósito:** Guía definitiva para descubrir, calificar y encontrar las mejores pizzerías en Hermosillo, Sonora.
+- **Misión:** Ayudar a los usuarios a encontrar su pizza perfecta y apoyar a los negocios locales.
+
+**Funcionalidades Clave:**
+- **Mapa Interactivo:** Mapa centrado en Hermosillo con actualizaciones en tiempo real, transiciones 3D suaves, zoom y rotación. Muestra marcadores de pizzerías.
+- **Búsqueda Inteligente:** Barra de búsqueda que sugiere pizzerías o tipos de pizza mientras escribes. Soporta búsqueda difusa (fuzzy matching) para nombres y direcciones.
+- **Listados Basados en Ubicación:** Muestra pizzerías cercanas a la ubicación del usuario o del área del mapa visible.
+- **Ranking y Reseñas:** Sistema de calificación (1-5 estrellas) y comentarios. Los usuarios pueden leer y escribir reseñas para compartir su experiencia.
+- **Autenticación:**
+    - **Visitantes:** Pueden explorar el mapa y ver información sin cuenta.
+    - **Usuarios Registrados:** Necesario para escribir reseñas, calificar y guardar favoritos. Inicio de sesión con correo/contraseña o anónimo.
+- **Panel de Administración:** Solo para usuarios autorizados (admins). Permite gestionar listados de pizzerías y moderar reseñas.
+- **Centro de Ayuda:** FAQ y guías de uso.
+
+**Datos y Entidades:**
+- **Pizzería:** Nombre, dirección, coordenadas (lat/lng), categoría (ej. Italiana, Pizza), fuente de datos (OpenStreetMap, etc.), y calificación promedio.
+- **Usuario:** ID, email, nombre de usuario, rol (admin o usuario normal).
+- **Reseña:** Vinculada a una pizzería y un usuario. Contiene calificación, comentario y fecha.
+- **Testimonio:** Comentarios generales sobre la App que aparecen públicamente.
+
+**Estilo y Marca:**
+- **Colores:** Rojo vivo (#FF4136) para apetito, Blanco suave (#F9F6F2) para fondo, Naranja cálido (#FF851B) para acentos.
+- **Tipografía:** 'PT Sans' (amigable/moderna) y 'Playfair' (elegante para títulos).
+- **Vibe:** Moderna, vibrante, centrada en la comida y la comunidad.
+
+**Políticas y Privacidad:**
+- **Modelo:** Guía informativa. NO procesa pedidos ni cobra comisiones a pizzerías.
+- **Privacidad:** Datos de usuario (email) usados solo para autenticación y gestión de reseñas. No se comparten con terceros.
+- **Contenido:** Las opiniones deben ser respetuosas.
 `;
 
 const pizzAppChatFlow = ai.defineFlow(
@@ -47,16 +67,20 @@ const pizzAppChatFlow = ai.defineFlow(
   },
   async ({ history, message }) => {
 
-    const systemInstruction = `Eres "Pizzi", el asistente virtual de PizzApp. Tu única función es responder preguntas y aclarar dudas sobre la aplicación PizzApp. Eres amable, servicial y directo.
+    const systemInstruction = `Eres "Pizzi", el asistente virtual experto de PizzApp (Hermosillo Pizza Finder).
+    
+    **Tu Misión:**
+    Tu ÚNICO propósito es responder preguntas y aclarar dudas de los usuarios sobre la aplicación PizzApp, su funcionamiento, características y políticas.
 
-    **Contexto sobre la aplicación PizzApp:**
+    **Base de Conocimiento (Toda la verdad sobre la App):**
     ${APP_CONTEXT}
 
-    **Reglas:**
-    1.  NUNCA salgas de tu rol de asistente de PizzApp.
-    2.  Si te preguntan algo que no tiene que ver con PizzApp, responde amablemente que solo puedes ayudar con temas relacionados con la aplicación.
-    3.  Usa el historial de la conversación para entender el contexto.
-    4.  Responde en el mismo idioma de la pregunta del usuario.`;
+    **Instrucciones de Comportamiento:**
+    1.  **Rol Estricto:** NUNCA salgas de tu personaje. No eres un asistente general, eres Pizzi de PizzApp.
+    2.  **Fuera de Tópico:** Si el usuario pregunta sobre temas ajenos a la App (ej. recetas, clima, noticias), responde amablemente: "Lo siento, mi función es exclusivamente aclarar dudas sobre el funcionamiento de PizzApp."
+    3.  **Tono:** Amable, servicial, entusiasta por la pizza, pero profesional y directo.
+    4.  **Idioma:** Responde siempre en el idioma en que te hablen (principalmente Español).
+    5.  **Claridad:** Usa la información de la "Base de Conocimiento" para dar respuestas precisas.`;
 
     // Convert history to the format Genkit expects
     // Ensure history items have the correct structure: { role: 'user' | 'model', content: [{ text: '...' }] }
@@ -88,7 +112,7 @@ const pizzAppChatFlow = ai.defineFlow(
 
     try {
       const result = await ai.generate({
-        model: 'googleai/gemini-pro',
+        model: 'googleai/gemini-1.5-flash',
         messages: messages,
       });
 
@@ -102,6 +126,9 @@ const pizzAppChatFlow = ai.defineFlow(
         errorMessage += ' Parece que la API de Google AI no está habilitada o la clave es inválida. Por favor verifica la configuración del proyecto en Google Cloud Console y asegúrate de que la API "Generative Language API" esté habilitada.';
       } else if (error.message?.includes('429')) {
         errorMessage += ' He recibido demasiadas solicitudes. Por favor intenta de nuevo en un momento.';
+      } else {
+        // Temporary: Show the actual error to help debugging
+        errorMessage += ` (Error: ${error.message})`;
       }
 
       return { answer: errorMessage };
