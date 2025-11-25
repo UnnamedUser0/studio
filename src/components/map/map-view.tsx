@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 
 import SmartSearch from '@/components/search/smart-search';
@@ -7,6 +8,7 @@ import PizzeriaDetail from '@/components/pizzeria/pizzeria-detail';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Pizzeria } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), {
   ssr: false,
@@ -38,19 +40,30 @@ export default function MapView({
   onCloseDetail,
   onLocateUser,
 }: MapViewProps) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => setIsFullscreen(!isFullscreen);
 
   return (
-    <div className="relative h-full w-full">
+    <div className={cn(
+      "transition-all duration-300 ease-in-out",
+      isFullscreen ? "fixed inset-0 z-[2000] h-[100dvh] w-screen bg-background" : "relative h-full w-full"
+    )}>
       <PizzaMap
         pizzerias={visiblePizzerias}
         onMarkerClick={onSelectPizzeria}
         selectedPizzeria={selectedPizzeria}
         searchCenter={searchCenter}
         onLocateUser={onLocateUser}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
       />
 
       {/* Smart Search Bar */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-sm md:max-w-md lg:max-w-lg z-[1001]">
+      <div className={cn(
+        "absolute left-1/2 -translate-x-1/2 w-[90%] max-w-[300px] md:w-full md:max-w-md lg:max-w-lg z-[1001] transition-all duration-300",
+        isFullscreen ? "top-4" : "top-4"
+      )}>
         <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias || []} onClear={onClearSearch} />
       </div>
 

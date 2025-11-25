@@ -9,10 +9,11 @@ type PizzeriaCardProps = {
   pizzeria: Pizzeria;
   onClick: () => void;
   rankingPlace?: number;
+  compact?: boolean;
 };
 
-export default function PizzeriaCard({ pizzeria, onClick, rankingPlace }: PizzeriaCardProps) {
-    
+export default function PizzeriaCard({ pizzeria, onClick, rankingPlace, compact }: PizzeriaCardProps) {
+
   const getGlowClass = (place?: number) => {
     if (!place) return '';
     switch (place) {
@@ -31,33 +32,33 @@ export default function PizzeriaCard({ pizzeria, onClick, rankingPlace }: Pizzer
 
   return (
     <div className="relative h-full w-full">
-      <Card 
-          className={cn(
-              "overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 h-full z-10",
-              getGlowClass(rankingPlace)
-          )} 
-          onClick={onClick}
-          tabIndex={0}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
+      <Card
+        className={cn(
+          "overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 h-full z-10",
+          getGlowClass(rankingPlace)
+        )}
+        onClick={onClick}
+        tabIndex={0}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
       >
-        <CardContent className="p-0 flex items-center">
-          <div className="relative w-28 h-28 flex-shrink-0">
-            <Image 
-              src={imageUrl} 
+        <CardContent className={cn("p-0 flex items-center", compact && "flex-col items-start")}>
+          <div className={cn("relative flex-shrink-0", compact ? "w-full h-24" : "w-28 h-28")}>
+            <Image
+              src={imageUrl}
               alt={pizzeria.name}
               data-ai-hint={imageHint}
               fill
-              sizes="112px"
+              sizes={compact ? "100vw" : "112px"}
               className="object-cover"
             />
           </div>
-          <div className="p-4 flex-1 min-w-0">
-            <h3 className="font-headline text-lg font-semibold truncate">{pizzeria.name}</h3>
-            <p className="text-sm text-muted-foreground truncate">{pizzeria.address}</p>
-            <div className="flex items-center mt-2">
-              <Star className="w-4 h-4 text-accent fill-accent" />
-              <span className="ml-1.5 font-bold text-foreground">{rating.toFixed(1)}</span>
-              <span className="ml-2 text-sm text-muted-foreground">({reviewsCount} opiniones)</span>
+          <div className={cn("flex-1 min-w-0", compact ? "p-2 w-full" : "p-4")}>
+            <h3 className={cn("font-headline font-semibold truncate", compact ? "text-sm" : "text-lg")}>{pizzeria.name}</h3>
+            {!compact && <p className="text-sm text-muted-foreground truncate">{pizzeria.address}</p>}
+            <div className="flex items-center mt-1">
+              <Star className="w-3 h-3 md:w-4 md:h-4 text-accent fill-accent" />
+              <span className="ml-1 font-bold text-foreground text-xs md:text-sm">{rating.toFixed(1)}</span>
+              {!compact && <span className="ml-2 text-sm text-muted-foreground">({reviewsCount} opiniones)</span>}
             </div>
           </div>
         </CardContent>

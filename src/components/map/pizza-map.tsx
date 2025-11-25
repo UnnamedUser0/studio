@@ -7,7 +7,7 @@ import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 import type { Pizzeria } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { LocateFixed } from 'lucide-react';
+import { Maximize2, Minimize2, LocateFixed } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const HERMOSILLO_CENTER: L.LatLngTuple = [29.085, -110.977];
@@ -39,9 +39,19 @@ type PizzaMapProps = {
   selectedPizzeria: Pizzeria | null;
   searchCenter: { lat: number; lng: number } | null;
   onLocateUser: (coords: { lat: number, lng: number }) => void;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
 };
 
-export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, searchCenter, onLocateUser }: PizzaMapProps) {
+export default function PizzaMap({
+  pizzerias,
+  onMarkerClick,
+  selectedPizzeria,
+  searchCenter,
+  onLocateUser,
+  isFullscreen,
+  onToggleFullscreen
+}: PizzaMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -167,15 +177,31 @@ export default function PizzaMap({ pizzerias, onMarkerClick, selectedPizzeria, s
   return (
     <div className="relative h-full w-full z-0">
       <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />
-      <div className="absolute top-24 right-4 z-[1001]">
+
+      {/* Map Controls Container */}
+      <div className="absolute top-24 right-4 z-[1001] flex flex-col gap-2">
         <Button
           variant="secondary"
           size="icon"
           onClick={handleLocateMe}
-          className="shadow-lg rounded-full h-10 w-10"
+          className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
           aria-label="Find my location"
         >
-          <LocateFixed className="h-5 w-5" />
+          <LocateFixed className="h-4 w-4 md:h-5 md:w-5" />
+        </Button>
+
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={onToggleFullscreen}
+          className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
+          aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+        >
+          {isFullscreen ? (
+            <Minimize2 className="h-4 w-4 md:h-5 md:w-5" />
+          ) : (
+            <Maximize2 className="h-4 w-4 md:h-5 md:w-5" />
+          )}
         </Button>
       </div>
     </div>

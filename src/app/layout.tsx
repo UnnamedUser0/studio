@@ -9,6 +9,7 @@ import { fontHeadline, fontBody } from '@/app/fonts';
 import { FirebaseClientProvider } from '@/firebase';
 import Chatbot from '@/components/chatbot/chatbot';
 import Footer from '@/components/layout/footer';
+import MobileBottomNav from '@/components/layout/mobile-bottom-nav';
 
 export const metadata: Metadata = {
   title: 'PizzApp - Hermosillo Pizza Finder',
@@ -22,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body 
+      <body
         className={cn(
           "font-body antialiased bg-background text-foreground",
           fontHeadline.variable,
@@ -33,12 +34,13 @@ export default function RootLayout({
           <FirebaseClientProvider>
             <div className="relative flex min-h-screen flex-col">
               <Header />
-              <main className="flex-grow">
+              <main className="flex-grow pb-16 md:pb-0">
                 {children}
               </main>
               <Footer />
               <Toaster />
               <Chatbot />
+              <MobileBottomNav />
             </div>
           </FirebaseClientProvider>
         </ThemeProvider>

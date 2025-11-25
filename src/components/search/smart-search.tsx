@@ -32,7 +32,7 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
     setSuggestions([]);
     onClear();
   };
-  
+
   const performGeocodeSearch = (geocode: Geocode) => {
     const pizzeriasByDistance = [...allPizzerias]
       .map(pizzeria => ({
@@ -43,7 +43,7 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
         ),
       }))
       .sort((a, b) => a.distance - b.distance);
-    
+
     onSearch(pizzeriasByDistance.slice(0, 20), geocode);
     setSuggestions([]);
   };
@@ -83,7 +83,7 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
       .filter(p => p.name.toLowerCase().includes(lowerCaseQuery))
       .slice(0, 3)
       .map((p): Suggestion => ({ type: 'pizzeria', label: p.name, data: p }));
-    
+
     setSuggestions(localPizzeriaSuggestions);
 
     // 2. AI search for addresses and other terms (debounced)
@@ -91,32 +91,32 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
       try {
         const result = await getSmartSearchSuggestions({ query: currentQuery });
         const aiSuggestions: Suggestion[] = [];
-        
+
         if (result.geocode) {
-           // Create a primary suggestion for the geocoded location
+          // Create a primary suggestion for the geocoded location
           aiSuggestions.push({
             type: 'geocode',
             label: `Pizzerías cerca de ${currentQuery}`,
             data: result.geocode,
           });
         }
-        
+
         result.suggestions?.forEach(label => {
-            // Avoid adding duplicate labels from local search
-            if (!localPizzeriaSuggestions.some(p => p.label === label)) {
-                aiSuggestions.push({ type: 'ai', label, data: label });
-            }
+          // Avoid adding duplicate labels from local search
+          if (!localPizzeriaSuggestions.some(p => p.label === label)) {
+            aiSuggestions.push({ type: 'ai', label, data: label });
+          }
         });
 
         // Combine and set suggestions, giving priority to local results
         setSuggestions(prev => {
-            const combined = [...prev.filter(s => s.type === 'pizzeria'), ...aiSuggestions];
-            const uniqueLabels = new Set<string>();
-            return combined.filter(s => {
-                if (uniqueLabels.has(s.label)) return false;
-                uniqueLabels.add(s.label);
-                return true;
-            }).slice(0, 5);
+          const combined = [...prev.filter(s => s.type === 'pizzeria'), ...aiSuggestions];
+          const uniqueLabels = new Set<string>();
+          return combined.filter(s => {
+            if (uniqueLabels.has(s.label)) return false;
+            uniqueLabels.add(s.label);
+            return true;
+          }).slice(0, 5);
         });
 
       } catch (error) {
@@ -145,16 +145,16 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
         </div>
         <Input
           placeholder="Busca por nombre, dirección o colonia..."
-          className="pl-11 h-12 text-base shadow-lg rounded-full pr-12"
+          className="pl-11 h-10 text-sm md:h-12 md:text-base shadow-lg rounded-full pr-12"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => fetchSuggestions(query)}
         />
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {query && (
-             <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={handleClear}>
+            <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={handleClear}>
               <X className="h-5 w-5 text-muted-foreground" />
-             </Button>
+            </Button>
           )}
         </div>
       </div>
