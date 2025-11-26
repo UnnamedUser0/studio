@@ -172,13 +172,13 @@ export default function Home() {
                     <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
                   ) : (
                     pizzeriasForRanking && pizzeriasForRanking.length >= 3 && (
-                      <div className="relative w-full max-w-5xl mx-auto h-[450px] scale-100 origin-bottom mt-12">
+                      <div className="relative w-[calc(100%+4rem)] -ml-8 md:w-full md:ml-auto md:mx-auto max-w-5xl h-[450px] scale-100 origin-bottom mt-12">
                         {/* Base Platform - Wider and brighter highlights */}
                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[98%] h-6 bg-primary/30 rounded-full blur-md"></div>
                         <div className="absolute bottom-0 left-[1%] w-[40%] h-3 bg-gradient-to-r from-primary to-transparent rounded-full blur-[3px] opacity-80"></div>
                         <div className="absolute bottom-0 right-[1%] w-[40%] h-3 bg-gradient-to-l from-primary to-transparent rounded-full blur-[3px] opacity-80"></div>
 
-                        <div className="absolute bottom-4 md:bottom-6 w-full flex items-end justify-center gap-2 md:gap-8 px-2">
+                        <div className="absolute bottom-4 md:bottom-6 w-[85%] md:w-full left-1/2 -translate-x-1/2 flex items-end justify-center gap-2 md:gap-8 px-2">
                           {/* 2nd Place (Left) */}
                           <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end group">
                             {/* Card Container */}

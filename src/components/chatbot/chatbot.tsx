@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, User, CornerDownLeft, X, Loader2 } from 'lucide-react';
-import { pizzAppChat, PizzAppChatInput } from '@/ai/flows/pizzapp-chat-flow';
+import { runPizzAppAssistant, PizzAppAssistantInput } from '@/ai/flows/pizzapp-assistant-flow';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { PizzaBotIcon } from '../icons/pizza-bot-icon';
 import { cn } from '@/lib/utils';
@@ -33,7 +33,7 @@ export default function Chatbot() {
     const userMessage: Message = { role: 'user', content: [{ text: input }] };
     setMessages(prev => [...prev, userMessage]);
 
-    const chatInput: PizzAppChatInput = {
+    const chatInput: PizzAppAssistantInput = {
       history: messages.map(m => ({
         role: m.role,
         content: m.content,
@@ -45,7 +45,7 @@ export default function Chatbot() {
 
     startTransition(async () => {
       try {
-        const result = await pizzAppChat(chatInput);
+        const result = await runPizzAppAssistant(chatInput);
         const botMessage: Message = { role: 'model', content: [{ text: result.answer }] };
         setMessages(prev => [...prev, botMessage]);
       } catch (error) {
