@@ -25,6 +25,7 @@
     --ring: 3 100% 61%;
     --radius: 0.75rem;
   }
+
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -52,32 +53,50 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   .typing-animation {
-    animation: 
+    animation:
       typing 4s steps(8, end) infinite,
       blink-caret .75s step-end infinite;
   }
 
   @keyframes typing {
-    from { width: 0 }
-    to { width: 7ch } /* 7ch is the length of "PizzApp" */
+    from {
+      width: 0
+    }
+
+    to {
+      width: 7ch
+    }
+
+    /* 7ch is the length of "PizzApp" */
   }
 
   @keyframes blink-caret {
-    from, to { border-color: transparent }
-    50% { border-color: hsl(var(--primary)); }
+
+    from,
+    to {
+      border-color: transparent
+    }
+
+    50% {
+      border-color: hsl(var(--primary));
+    }
   }
 
   @keyframes float {
     0% {
       transform: translateY(0px) rotate(0deg);
     }
+
     50% {
       transform: translateY(-4px) rotate(0deg);
     }
+
     100% {
       transform: translateY(0px) rotate(0deg);
     }
@@ -93,16 +112,47 @@
   .glow-gold {
     box-shadow: 0 0 8px #FBBF24, 0 0 12px #FBBF24;
   }
+
   .glow-silver {
     box-shadow: 0 0 8px #D1D5DB, 0 0 12px #D1D5DB;
   }
+
   .glow-bronze {
     box-shadow: 0 0 8px #F97316, 0 0 12px #F97316;
   }
+
   .glow-primary {
     box-shadow: 0 0 8px hsl(var(--primary)), 0 0 12px hsl(var(--primary));
   }
+
   .animate-float {
     animation: float 4s ease-in-out infinite;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body:not(.no-custom-cursor) {
+    cursor: url('/normal.png'), auto;
+  }
+
+  body:not(.no-custom-cursor) a,
+  body:not(.no-custom-cursor) button,
+  body:not(.no-custom-cursor) [role="button"],
+  body:not(.no-custom-cursor) input,
+  body:not(.no-custom-cursor) select,
+  body:not(.no-custom-cursor) textarea,
+  body:not(.no-custom-cursor) label,
+  body:not(.no-custom-cursor) .cursor-pointer,
+  body:not(.no-custom-cursor) .leaflet-interactive,
+  body:not(.no-custom-cursor) .leaflet-control {
+    cursor: url('/click.png'), pointer !important;
+  }
+
+  body:not(.no-custom-cursor) .leaflet-container {
+    cursor: url('/normal.png'), auto !important;
+  }
+
+  body:not(.no-custom-cursor) .leaflet-dragging .leaflet-grab {
+    cursor: url('/click.png'), grabbing !important;
   }
 }

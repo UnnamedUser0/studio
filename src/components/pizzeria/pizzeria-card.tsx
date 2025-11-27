@@ -38,6 +38,7 @@ export default function PizzeriaCard({ pizzeria, onClick, rankingPlace, compact 
           getGlowClass(rankingPlace)
         )}
         onClick={onClick}
+        role="button"
         tabIndex={0}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
       >

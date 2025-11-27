@@ -13,12 +13,66 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Pizza, LogOut, Shield, Moon, Sun } from 'lucide-react';
+import { Pizza, LogOut, Shield, Moon, Sun, MousePointer2, MousePointerClick } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User } from '@/lib/types';
 import { Badge } from '../ui/badge';
+import { useState, useEffect } from 'react';
 
+
+function CursorSwitcher() {
+  const [enabled, setEnabled] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const isDisabled = localStorage.getItem('custom-cursor-disabled') === 'true';
+    setEnabled(!isDisabled);
+    if (isDisabled) {
+      document.body.classList.add('no-custom-cursor');
+    } else {
+      document.body.classList.remove('no-custom-cursor');
+    }
+  }, []);
+
+  const toggleCursor = () => {
+    const newState = !enabled;
+    setEnabled(newState);
+    if (newState) {
+      document.body.classList.remove('no-custom-cursor');
+      localStorage.removeItem('custom-cursor-disabled');
+    } else {
+      document.body.classList.add('no-custom-cursor');
+      localStorage.setItem('custom-cursor-disabled', 'true');
+    }
+  };
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" disabled>
+        <MousePointer2 className="h-[1.2rem] w-[1.2rem]" />
+      </Button>
+    )
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleCursor}
+      aria-label={enabled ? "Desactivar cursor personalizado" : "Activar cursor personalizado"}
+      className="hover:bg-primary hover:text-primary-foreground hover:glow-primary"
+      title={enabled ? "Desactivar cursor personalizado" : "Activar cursor personalizado"}
+    >
+      {enabled ? (
+        <MousePointerClick className="h-[1.2rem] w-[1.2rem]" />
+      ) : (
+        <MousePointer2 className="h-[1.2rem] w-[1.2rem] opacity-50" />
+      )}
+    </Button>
+  );
+}
 
 function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
@@ -41,10 +95,10 @@ export default function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
-  
-  const userProfileRef = useMemoFirebase(() => 
-      user ? doc(firestore, 'users', user.uid) : null,
-      [firestore, user]
+
+  const userProfileRef = useMemoFirebase(() =>
+    user ? doc(firestore, 'users', user.uid) : null,
+    [firestore, user]
   );
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userProfileRef);
@@ -58,7 +112,7 @@ export default function Header() {
         <div className="flex items-center space-x-2 mr-8">
           <Link href="/" className="flex items-center space-x-2">
             <Pizza className="h-7 w-7 text-primary" />
-            <div className="w-[7ch]"> 
+            <div className="w-[7ch]">
               <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap border-r-4 border-r-primary typing-animation">
                 PizzApp
               </span>
@@ -80,16 +134,19 @@ export default function Header() {
           </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
+          <div className="hidden md:flex">
+            <CursorSwitcher />
+          </div>
           <ThemeSwitcher />
           {isUserLoading || (user && isProfileLoading) ? (
-             <Skeleton className="h-9 w-24" />
+            <Skeleton className="h-9 w-24" />
           ) : user ? (
             <div className="flex items-center gap-4">
               {isAdmin && (
-                 <Link href="/admin">
-                    <Badge variant="default" className="cursor-pointer hover:bg-primary/80">
-                        Administrador
-                    </Badge>
+                <Link href="/admin">
+                  <Badge variant="default" className="cursor-pointer hover:bg-primary/80">
+                    Administrador
+                  </Badge>
                 </Link>
               )}
               <DropdownMenu>
