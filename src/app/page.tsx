@@ -20,6 +20,7 @@ import WhyChoosePizzapp from '@/components/layout/why-choose-pizzapp';
 import TestimonialsCarousel from '@/components/testimonial/testimonials-carousel';
 import TestimonialForm from '@/components/testimonial/testimonial-form';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
+import WelcomeScreen from '@/components/welcome/welcome-screen';
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
   loading: () => <div />,
@@ -33,6 +34,7 @@ export default function Home() {
   const [searchCenter, setSearchCenter] = useState<Geocode | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
   const [isTestimonialDialogOpen, setIsTestimonialDialogOpen] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
 
   const allPizzerias = useMemo(() => {
     if (!pizzeriasData) return [];
@@ -121,6 +123,10 @@ export default function Home() {
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (showWelcome) {
+    return <WelcomeScreen onEnter={() => setShowWelcome(false)} />;
   }
 
   return (
