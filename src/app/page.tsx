@@ -1,14 +1,15 @@
 
 'use client';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
 import getDistance from 'geolib/es/getDistance';
 import dynamic from 'next/dynamic';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import MapView from '@/components/map/map-view';
 import { Loader2, MessageSquarePlus, List } from 'lucide-react';
-import { Pizzeria, Testimonial } from '@/lib/types';
+import { Pizzeria, Testimonial, User } from '@/lib/types';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -21,6 +22,7 @@ import TestimonialsCarousel from '@/components/testimonial/testimonials-carousel
 import TestimonialForm from '@/components/testimonial/testimonial-form';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import WelcomeScreen from '@/components/welcome/welcome-screen';
+import RankingManager from '@/components/admin/ranking-manager';
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
   loading: () => <div />,
@@ -34,7 +36,56 @@ export default function Home() {
   const [searchCenter, setSearchCenter] = useState<Geocode | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
   const [isTestimonialDialogOpen, setIsTestimonialDialogOpen] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(true);
+
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [isCheckingWelcome, setIsCheckingWelcome] = useState(true);
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkWelcome = () => {
+      const forceWelcome = searchParams.get('welcome') === 'true';
+      const hasSeen = localStorage.getItem('hasSeenWelcome');
+
+      if (forceWelcome) {
+        setShowWelcome(true);
+      } else if (!hasSeen) {
+        setShowWelcome(true);
+      } else {
+        setShowWelcome(false);
+      }
+      setIsCheckingWelcome(false);
+    };
+    checkWelcome();
+  }, [searchParams]);
+
+  const handleEnterApp = () => {
+    localStorage.setItem('hasSeenWelcome', 'true');
+    setShowWelcome(false);
+    // Remove query param if present
+    if (searchParams.get('welcome') === 'true') {
+      router.replace('/');
+    }
+  };
+
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  // Fetch User Profile to check admin
+  const userProfileRef = useMemoFirebase(() =>
+    user ? doc(firestore, 'users', user.uid) : null,
+    [firestore, user]
+  );
+  const { data: userProfile } = useDoc<User>(userProfileRef);
+  const isAdmin = userProfile?.isAdmin === true;
+
+  // Fetch Ranking Settings
+  const rankingSettingsRef = useMemoFirebase(() =>
+    firestore ? doc(firestore, 'settings', 'ranking') : null,
+    [firestore]
+  );
+  const { data: rankingSettings } = useDoc<{ pizzeriaIds: string[] }>(rankingSettingsRef);
 
   const allPizzerias = useMemo(() => {
     if (!pizzeriasData) return [];
@@ -56,13 +107,21 @@ export default function Home() {
     setHasMounted(true);
   }, []);
 
-  const firestore = useFirestore();
-
   const pizzeriasForRanking = useMemo(() => {
     if (!allPizzerias) return [];
+
+    // If we have manual ranking settings, use them
+    if (rankingSettings?.pizzeriaIds && rankingSettings.pizzeriaIds.length > 0) {
+      const ranked = rankingSettings.pizzeriaIds
+        .map(id => allPizzerias.find(p => p.id === id))
+        .filter((p): p is Pizzeria => !!p); // Filter out undefined
+
+      if (ranked.length > 0) return ranked;
+    }
+
     const sorted = [...allPizzerias].sort((a, b) => b.rating - a.rating);
     return sorted.slice(0, 3);
-  }, [allPizzerias]);
+  }, [allPizzerias, rankingSettings]);
 
   const testimonialsQuery = useMemoFirebase(() =>
     firestore ? query(collection(firestore, 'testimonials'), orderBy('createdAt', 'desc')) : null,
@@ -117,16 +176,16 @@ export default function Home() {
 
   const pizzeriasToShowInList = isSearching ? visiblePizzerias : (pizzeriasForRanking || []);
 
-  if (!hasMounted) {
+  if (!hasMounted || isCheckingWelcome) {
     return (
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
   if (showWelcome) {
-    return <WelcomeScreen onEnter={() => setShowWelcome(false)} />;
+    return <WelcomeScreen onEnter={handleEnterApp} />;
   }
 
   return (
@@ -173,7 +232,17 @@ export default function Home() {
             <div className="bg-background relative">
               <div id="ranking" className="container py-12">
                 <ScrollReveal>
-                  <h2 className="text-3xl font-headline text-center mb-24">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
+                  <div className="flex flex-col items-center justify-center mb-24">
+                    <h2 className="text-3xl font-headline text-center">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
+                    {isAdmin && allPizzerias && (
+                      <div className="mt-4">
+                        <RankingManager
+                          allPizzerias={allPizzerias}
+                          currentRankingIds={rankingSettings?.pizzeriaIds}
+                        />
+                      </div>
+                    )}
+                  </div>
                   {!allPizzerias ? (
                     <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
                   ) : (

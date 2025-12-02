@@ -36,7 +36,7 @@ service cloud.firestore {
       allow get, delete: if isOwner(userId);
       allow list: if false;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id && !('isAdmin' in request.resource.data);
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false);
     }
 
     /**
@@ -79,6 +79,17 @@ service cloud.firestore {
       allow get, list: if true;
       allow create: if isSignedIn();
       allow update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Controls access to application settings (e.g., ranking).
+     * @path /settings/{settingId}
+     * @allow (get, list) Anyone can read settings.
+     * @allow (create, update, delete) Only admins can manage settings.
+     */
+    match /settings/{settingId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     // --- Helper Functions ---

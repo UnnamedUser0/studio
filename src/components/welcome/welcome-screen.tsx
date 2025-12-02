@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 // Dynamically import the 3D scene to avoid SSR issues
 const Pizza3DScene = dynamic(() => import('./pizza-3d-scene'), { ssr: false });
-import PizzaCursorEffect from './pizza-cursor-effect';
+
 import { Pizza } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -74,8 +74,8 @@ export default function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
                 {/* Logo - Main Title Position */}
                 <div className="flex items-center justify-center gap-2 -mb-32 md:mb-4 scale-150 origin-center relative z-20">
                     <Pizza className="h-12 w-12 text-primary" />
-                    <div className="w-auto text-left">
-                        <span className="font-bold font-headline text-5xl inline-block overflow-hidden whitespace-nowrap border-r-4 border-r-primary typing-animation text-foreground pb-3 leading-normal">
+                    <div className="w-[7ch] text-left font-bold font-headline text-5xl">
+                        <span className="inline-block overflow-hidden whitespace-nowrap border-r-4 border-r-primary typing-animation text-foreground pb-3 leading-normal">
                             PizzApp
                         </span>
                     </div>

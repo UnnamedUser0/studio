@@ -30,9 +30,18 @@ export default function Pizza3DScene() {
 
     return (
         <div className="w-full h-full" style={{ touchAction: 'none' }}>
-            <Canvas dpr={[1, 2]} camera={{ fov: 45, position: [0, 0, 5] }} gl={{ alpha: true }} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'transparent' }}>
+            <Canvas
+                dpr={[1, 2]}
+                performance={{ min: 0.5 }}
+                camera={{ fov: 45, position: [0, 0, 5] }}
+                gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'transparent' }}
+            >
                 <ambientLight intensity={0.5} />
                 <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
+                <Suspense fallback={null}>
+                    <Environment preset="city" />
+                </Suspense>
                 <Suspense fallback={<Loader />}>
                     <PresentationControls
                         speed={1.5}
@@ -44,9 +53,10 @@ export default function Pizza3DScene() {
                             <Model scale={scale} />
                         </Float>
                     </PresentationControls>
-                    <Environment preset="city" />
                 </Suspense>
             </Canvas>
         </div>
     );
 }
+
+useGLTF.preload('/pizza-model.glb');

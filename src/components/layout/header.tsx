@@ -13,12 +13,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Pizza, LogOut, Shield, Moon, Sun, MousePointer2, MousePointerClick } from 'lucide-react';
+import { Pizza, LogOut, Shield, Moon, Sun, MousePointer2, MousePointerClick, Settings as SettingsIcon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import { useState, useEffect } from 'react';
+import SettingsDialog from '@/components/user/settings-dialog';
 
 
 function CursorSwitcher() {
@@ -95,6 +96,7 @@ export default function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const userProfileRef = useMemoFirebase(() =>
     user ? doc(firestore, 'users', user.uid) : null,
@@ -108,18 +110,18 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-[1001] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-16">
-      <div className="container flex h-full items-center">
-        <div className="flex items-center space-x-2 mr-8">
-          <Link href="/" className="flex items-center space-x-2">
-            <Pizza className="h-7 w-7 text-primary" />
-            <div className="w-[7ch]">
-              <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap border-r-4 border-r-primary typing-animation">
-                PizzApp
-              </span>
-            </div>
-          </Link>
-        </div>
-        <nav className="hidden md:flex items-center space-x-8 text-sm font-medium">
+      <div className="absolute left-4 md:left-8 top-0 h-full flex items-center z-20">
+        <Link href="/" className="flex items-center space-x-2">
+          <Pizza className="h-7 w-7 text-primary" />
+          <div className="w-[7ch]">
+            <span className="font-bold font-headline text-xl inline-block overflow-hidden whitespace-nowrap border-r-4 border-r-primary typing-animation">
+              PizzApp
+            </span>
+          </div>
+        </Link>
+      </div>
+      <div className="w-full px-4 md:px-8 flex h-full items-center">
+        <nav className="hidden md:flex items-center space-x-8 text-sm font-medium ml-64">
           <Link href="/" className={navLinkClasses}>
             Inicio
           </Link>
@@ -132,6 +134,9 @@ export default function Header() {
           <Link href="/contact" className={navLinkClasses}>
             Contacto
           </Link>
+          <Link href="/?welcome=true" className={navLinkClasses}>
+            Bienvenida
+          </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <div className="hidden md:flex">
@@ -142,18 +147,22 @@ export default function Header() {
             <Skeleton className="h-9 w-24" />
           ) : user ? (
             <div className="flex items-center gap-4">
-              {isAdmin && (
+              {isAdmin ? (
                 <Link href="/admin">
                   <Badge variant="default" className="cursor-pointer hover:bg-primary/80">
                     Administrador
                   </Badge>
                 </Link>
+              ) : (
+                <Badge variant="secondary" className="cursor-default">
+                  Usuario
+                </Badge>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-primary/20">
                     <Avatar className="h-9 w-9 border-2 border-primary/50">
-                      <AvatarImage src={`https://api.dicebear.com/8.x/micah/svg?seed=${user.email}`} alt={user.displayName || user.email || ''} />
+                      <AvatarImage src={user.photoURL || `https://api.dicebear.com/8.x/micah/svg?seed=${user.email}`} alt={user.displayName || user.email || ''} />
                       <AvatarFallback>{user.email ? user.email.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
                     </Avatar>
                   </Button>
@@ -175,6 +184,10 @@ export default function Header() {
                         </Link>
                       </DropdownMenuItem>
                     )}
+                    <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+                      <SettingsIcon className="mr-2 h-4 w-4" />
+                      <span>Configuración</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => auth?.signOut()}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Cerrar Sesión</span>
@@ -182,6 +195,7 @@ export default function Header() {
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
             </div>
           ) : (
             <Button asChild>
