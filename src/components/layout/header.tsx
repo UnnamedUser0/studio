@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useUser, useAuth, useDoc, useMemoFirebase, useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { signOut, useSession } from 'next-auth/react';
+
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -85,6 +85,7 @@ function ThemeSwitcher() {
       onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
       aria-label="Toggle theme"
       className="hover:bg-primary hover:text-primary-foreground hover:glow-primary"
+      title={theme === 'light' ? "Cambiar a modo oscuro" : "Cambiar a modo claro"}
     >
       <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
       <Moon className="absolute h-[1.2rem] w-[1_2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -93,18 +94,29 @@ function ThemeSwitcher() {
 }
 
 export default function Header() {
-  const { user, isUserLoading } = useUser();
-  const auth = useAuth();
-  const firestore = useFirestore();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isUserLoading = status === 'loading';
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
 
-  const userProfileRef = useMemoFirebase(() =>
-    user ? doc(firestore, 'users', user.uid) : null,
-    [firestore, user]
-  );
+  useEffect(() => {
+    if (user?.id) {
+      setIsProfileLoading(true);
+      import('@/app/actions').then(({ getUserProfile }) => {
+        getUserProfile(user.id!).then((profile) => {
+          setUserProfile(profile as unknown as User);
+          setIsProfileLoading(false);
+        });
+      });
+    } else {
+      setUserProfile(null);
+    }
+  }, [user?.id]);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userProfileRef);
-  const isAdmin = userProfile?.isAdmin === true;
+  // @ts-ignore
+  const isAdmin = (user as any)?.isAdmin === true || userProfile?.isAdmin === true;
 
   const navLinkClasses = "relative text-sm font-medium transition-colors hover:text-primary after:content-[''] after:absolute after:left-1/2 after:-bottom-1.5 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-primary after:transition-all after:duration-300 hover:after:w-full";
 
@@ -162,7 +174,7 @@ export default function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-primary/20">
                     <Avatar className="h-9 w-9 border-2 border-primary/50">
-                      <AvatarImage src={user.photoURL || `https://api.dicebear.com/8.x/micah/svg?seed=${user.email}`} alt={user.displayName || user.email || ''} />
+                      <AvatarImage src={user.image || `https://api.dicebear.com/8.x/micah/svg?seed=${user.email}`} alt={user.name || user.email || ''} />
                       <AvatarFallback>{user.email ? user.email.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
                     </Avatar>
                   </Button>
@@ -170,7 +182,7 @@ export default function Header() {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none truncate">{userProfile?.username || user.email}</p>
+                      <p className="text-sm font-medium leading-none truncate">{userProfile?.username || user.name || user.email}</p>
                       <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
@@ -188,7 +200,7 @@ export default function Header() {
                       <SettingsIcon className="mr-2 h-4 w-4" />
                       <span>Configuración</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => auth?.signOut()}>
+                    <DropdownMenuItem onClick={() => signOut()}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Cerrar Sesión</span>
                     </DropdownMenuItem>

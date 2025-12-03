@@ -1,40 +1,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { useSession } from 'next-auth/react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { addTestimonial } from '@/app/actions';
 
 export default function TestimonialForm({ onSuccess }: { onSuccess: () => void }) {
-    const { user } = useUser();
-    const firestore = useFirestore();
+    const { data: session } = useSession();
+    const user = session?.user;
     const { toast } = useToast();
-    const [name, setName] = useState(user?.displayName || '');
+    const [name, setName] = useState(user?.name || '');
     const [email, setEmail] = useState(user?.email || '');
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (user) {
-            setName(user.displayName || '');
+            setName(user.name || '');
             setEmail(user.email || '');
         }
     }, [user]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!firestore) {
-             toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'No se pudo conectar con la base de datos.',
-            });
-            return;
-        }
         if (!comment || !name) {
             toast({
                 variant: 'destructive',
@@ -47,16 +39,13 @@ export default function TestimonialForm({ onSuccess }: { onSuccess: () => void }
         setIsSubmitting(true);
 
         try {
-            const testimonialRef = collection(firestore, 'testimonials');
-            const newTestimonial = {
-                author: name,
-                email: email,
+            await addTestimonial({
+                name,
+                email: email || undefined,
                 comment,
                 role: 'Usuario de PizzApp',
-                createdAt: new Date().toISOString(),
-            };
-
-            await addDoc(testimonialRef, newTestimonial);
+                avatarUrl: user?.image || undefined
+            });
 
             toast({
                 title: '¡Gracias por tu opinión!',

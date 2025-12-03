@@ -1,14 +1,13 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Pizzeria, Review } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
 import ReviewCard from '@/components/pizzeria/review-card';
 import { Loader2, MessageSquare } from 'lucide-react';
+import { getReviews } from '@/app/actions';
 
 interface PizzeriaReviewsManagerProps {
     pizzerias: Pizzeria[];
@@ -30,7 +29,10 @@ export default function PizzeriaReviewsManager({ pizzerias }: PizzeriaReviewsMan
                             <CardTitle className="text-sm font-medium">
                                 {pizzeria.name}
                             </CardTitle>
-                            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                                <span className="text-xs">{pizzeria.reviewCount || 0}</span>
+                                <MessageSquare className="h-4 w-4" />
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{pizzeria.rating?.toFixed(1) || 'N/A'}</div>
@@ -54,11 +56,26 @@ export default function PizzeriaReviewsManager({ pizzerias }: PizzeriaReviewsMan
 }
 
 function PizzeriaReviewsSheetContent({ pizzeria }: { pizzeria: Pizzeria }) {
-    const firestore = useFirestore();
-    const reviewsQuery = useMemoFirebase(() =>
-        firestore ? query(collection(firestore, 'pizzerias', pizzeria.id, 'reviews'), orderBy('createdAt', 'desc')) : null,
-        [firestore, pizzeria.id]);
-    const { data: reviews, isLoading } = useCollection<Review>(reviewsQuery);
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        setIsLoading(true);
+        getReviews(pizzeria.id).then((data) => {
+            const adaptedReviews = data.map(r => ({
+                id: r.id.toString(),
+                author: r.user.name || r.user.email?.split('@')[0] || 'Anónimo',
+                userId: r.userId,
+                pizzeriaId: r.pizzeriaId,
+                rating: r.rating,
+                comment: r.comment || '',
+                createdAt: r.createdAt.toISOString(),
+                avatarUrl: r.user.image || undefined,
+            }));
+            setReviews(adaptedReviews);
+            setIsLoading(false);
+        });
+    }, [pizzeria.id]);
 
     return (
         <>

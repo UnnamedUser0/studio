@@ -1,8 +1,7 @@
 
 'use client';
 import { useState } from 'react';
-import { useAuth } from '@/firebase';
-import { initiateEmailSignIn, initiateEmailSignUp } from '@/firebase/non-blocking-login';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { registerUser } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
   loading: () => <div />,
@@ -18,22 +19,37 @@ const Footer = dynamic(() => import('@/components/layout/footer'), {
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const auth = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password && auth) {
-      await initiateEmailSignIn(auth, email, password);
-      router.push('/');
+    if (email && password) {
+      const result = await signIn('credentials', { email, password, redirect: false });
+      if (result?.error) {
+        toast({ title: "Error", description: "Credenciales inválidas", variant: "destructive" });
+      } else {
+        router.push('/');
+        router.refresh();
+      }
     }
   };
-  
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password && auth) {
-      await initiateEmailSignUp(auth, email, password);
-      router.push('/');
+    if (email && password) {
+      try {
+        await registerUser(email, password);
+        const result = await signIn('credentials', { email, password, redirect: false });
+        if (result?.error) {
+          toast({ title: "Error", description: "Error al iniciar sesión tras registro", variant: "destructive" });
+        } else {
+          router.push('/');
+          router.refresh();
+        }
+      } catch (error) {
+        toast({ title: "Error", description: "Error al registrar usuario (posiblemente ya existe)", variant: "destructive" });
+      }
     }
   };
 

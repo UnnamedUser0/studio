@@ -2,16 +2,14 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useFirestore } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
 import { Loader2, DownloadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Pizzeria } from '@/lib/types';
 import getDistance from 'geolib/es/getDistance';
+import { addPizzeria } from '@/app/actions';
 
 export default function OsmImporter({ existingPizzerias }: { existingPizzerias: Pizzeria[] }) {
     const [isLoading, setIsLoading] = useState(false);
-    const firestore = useFirestore();
     const { toast } = useToast();
 
     const fetchOsmData = async () => {
@@ -57,20 +55,17 @@ export default function OsmImporter({ existingPizzerias }: { existingPizzerias: 
                         ? `${element.tags['addr:street']} ${element.tags['addr:housenumber'] || ''}, Hermosillo`
                         : 'Dirección no disponible';
 
-                    const newPizzeria: Omit<Pizzeria, 'id'> = {
+                    const newPizzeria = {
                         name: name,
                         address: address,
                         lat: lat,
                         lng: lng,
                         category: 'Pizza',
                         source: 'OpenStreetMap',
-                        rating: 0, // Default rating
                     };
 
-                    if (firestore) {
-                        batchPromises.push(addDoc(collection(firestore, 'pizzerias'), newPizzeria));
-                        newCount++;
-                    }
+                    batchPromises.push(addPizzeria(newPizzeria));
+                    newCount++;
                 }
             }
 

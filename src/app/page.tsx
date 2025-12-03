@@ -1,8 +1,7 @@
 
 'use client';
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
-import { collection, query, orderBy, doc } from 'firebase/firestore';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import { useSession } from 'next-auth/react';
 import getDistance from 'geolib/es/getDistance';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -30,7 +29,7 @@ const Footer = dynamic(() => import('@/components/layout/footer'), {
 
 type Geocode = { lat: number, lng: number };
 
-export default function Home() {
+function HomeContent() {
   const [selectedPizzeria, setSelectedPizzeria] = useState<Pizzeria | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchCenter, setSearchCenter] = useState<Geocode | null>(null);
@@ -69,37 +68,111 @@ export default function Home() {
     }
   };
 
-  const { user } = useUser();
-  const firestore = useFirestore();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   // Fetch User Profile to check admin
-  const userProfileRef = useMemoFirebase(() =>
-    user ? doc(firestore, 'users', user.uid) : null,
-    [firestore, user]
-  );
-  const { data: userProfile } = useDoc<User>(userProfileRef);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+  useEffect(() => {
+    if (user?.id) {
+      import('@/app/actions').then(({ getUserProfile }) => {
+        getUserProfile(user.id!).then((profile) => {
+          // Adapt Prisma User to App User type if needed, or just use what's needed
+          setUserProfile(profile as unknown as User);
+        });
+      });
+    }
+  }, [user?.id]);
+
   const isAdmin = userProfile?.isAdmin === true;
 
   // Fetch Ranking Settings
-  const rankingSettingsRef = useMemoFirebase(() =>
-    firestore ? doc(firestore, 'settings', 'ranking') : null,
-    [firestore]
-  );
-  const { data: rankingSettings } = useDoc<{ pizzeriaIds: string[] }>(rankingSettingsRef);
-
-  const allPizzerias = useMemo(() => {
-    if (!pizzeriasData) return [];
-    return pizzeriasData.map((pizzeria, index) => {
-      const image = PlaceHolderImages[index % PlaceHolderImages.length];
-      const stableRating = 3.5 + ((pizzeria.id.charCodeAt(0) * 7) % 15) / 10;
-      return {
-        ...pizzeria,
-        imageUrl: image.imageUrl,
-        imageHint: image.imageHint,
-        rating: Math.min(5, stableRating)
-      };
+  const [rankingSettings, setRankingSettings] = useState<{ pizzeriaIds: string[] } | null>(null);
+  useEffect(() => {
+    import('@/app/actions').then(({ getRankingSettings }) => {
+      getRankingSettings().then(setRankingSettings);
     });
   }, []);
+
+  const [dbPizzerias, setDbPizzerias] = useState<Pizzeria[]>([]);
+
+  useEffect(() => {
+    import('@/app/actions').then(({ getAllPizzerias }) => {
+      getAllPizzerias().then((data) => {
+        const adapted = data.map((p: any) => ({
+          ...p,
+          rating: p.rating,
+          category: p.category || 'Pizza',
+          source: p.source || 'Database',
+          imageHint: 'pizza',
+          imageUrl: p.imageUrl || undefined,
+          reviews: [],
+          reviewCount: p.reviewCount
+        })) as unknown as Pizzeria[];
+        setDbPizzerias(adapted);
+      });
+    });
+  }, []);
+
+  const allPizzerias: Pizzeria[] = useMemo(() => {
+    const staticPizzerias = pizzeriasData as unknown as Pizzeria[];
+    if (!dbPizzerias || dbPizzerias.length === 0) {
+      // Fallback to static with 0 rating if DB is empty/loading, or maybe we want to show 0 for static
+      // The user wants REAL ratings. Static data has no real ratings.
+      // We should probably show static data with 0 rating if not in DB.
+      return staticPizzerias.map((p, index) => {
+        const image = PlaceHolderImages[index % PlaceHolderImages.length];
+        return {
+          ...p,
+          imageUrl: image.imageUrl,
+          imageHint: image.imageHint,
+          rating: 0,
+          reviewCount: 0
+        };
+      });
+    }
+
+    const dbIds = new Set(dbPizzerias.map(p => p.id));
+
+    // Map static pizzerias to include images but 0 rating
+    const mappedStatic = staticPizzerias.map((p, index) => {
+      const image = PlaceHolderImages[index % PlaceHolderImages.length];
+      return {
+        ...p,
+        imageUrl: image.imageUrl,
+        imageHint: image.imageHint,
+        rating: 0,
+        reviewCount: 0
+      };
+    });
+
+    const filteredStatic = mappedStatic.filter(p => !dbIds.has(p.id));
+
+    // Merge: DB pizzerias take precedence. 
+    // We also need to assign images to DB pizzerias if they don't have one
+    const mappedDb = dbPizzerias.map((p, index) => {
+      // Try to find matching static to get consistent image if possible, or just use placeholder logic
+      // The index logic might be inconsistent if we mix sources.
+      // Let's just use the ID hash or similar if we want consistency, or just random.
+      // For now, let's just use the same placeholder logic but we need an index.
+      // We can just use the index in the final array?
+      // Let's just keep it simple.
+      if (p.imageUrl) return p;
+
+      // Find if it was in static data to preserve "identity" if possible
+      const staticMatch = staticPizzerias.find(sp => sp.id === p.id);
+      if (staticMatch) {
+        const staticIndex = staticPizzerias.indexOf(staticMatch);
+        const image = PlaceHolderImages[staticIndex % PlaceHolderImages.length];
+        return { ...p, imageUrl: image.imageUrl, imageHint: image.imageHint };
+      }
+
+      const image = PlaceHolderImages[index % PlaceHolderImages.length];
+      return { ...p, imageUrl: image.imageUrl, imageHint: image.imageHint };
+    });
+
+    return [...mappedDb, ...filteredStatic].sort((a, b) => b.rating - a.rating);
+  }, [dbPizzerias]);
 
   const [visiblePizzerias, setVisiblePizzerias] = useState<Pizzeria[]>([]);
 
@@ -123,10 +196,28 @@ export default function Home() {
     return sorted.slice(0, 3);
   }, [allPizzerias, rankingSettings]);
 
-  const testimonialsQuery = useMemoFirebase(() =>
-    firestore ? query(collection(firestore, 'testimonials'), orderBy('createdAt', 'desc')) : null,
-    [firestore]);
-  const { data: testimonials, isLoading: isLoadingTestimonials } = useCollection<Testimonial>(testimonialsQuery);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  useEffect(() => {
+    import('@/app/actions').then(({ getTestimonials }) => {
+      getTestimonials().then((data) => {
+        // Adapt Prisma Testimonial to App Testimonial type
+        const mappedTestimonials: Testimonial[] = data.map((t: any) => ({
+          id: t.id.toString(),
+          author: t.name,
+          email: t.email || undefined,
+          role: t.role || 'Usuario',
+          comment: t.content,
+          createdAt: t.createdAt.toISOString(),
+          avatarUrl: t.avatarUrl,
+          reply: t.replyText ? {
+            text: t.replyText,
+            repliedAt: t.repliedAt ? t.repliedAt.toISOString() : new Date().toISOString()
+          } : undefined
+        }));
+        setTestimonials(mappedTestimonials);
+      });
+    });
+  }, []);
 
   const handleSelectPizzeria = useCallback((pizzeria: Pizzeria) => {
     setSelectedPizzeria(pizzeria);
@@ -262,16 +353,16 @@ export default function Home() {
                                 <div className="absolute -inset-1 bg-gradient-to-r from-gray-300 to-gray-100 rounded-lg blur opacity-40"></div>
                                 <div className="md:hidden">
                                   <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[1]}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[1])}
+                                    pizzeria={pizzeriasForRanking[1]!}
+                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}
                                     rankingPlace={2}
                                     compact
                                   />
                                 </div>
                                 <div className="hidden md:block">
                                   <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[1]}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[1])}
+                                    pizzeria={pizzeriasForRanking[1]!}
+                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}
                                     rankingPlace={2}
                                   />
                                 </div>
@@ -291,16 +382,16 @@ export default function Home() {
                                 <div className="absolute -inset-1 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-lg blur opacity-50 animate-pulse"></div>
                                 <div className="md:hidden">
                                   <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[0]}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[0])}
+                                    pizzeria={pizzeriasForRanking[0]!}
+                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}
                                     rankingPlace={1}
                                     compact
                                   />
                                 </div>
                                 <div className="hidden md:block">
                                   <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[0]}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[0])}
+                                    pizzeria={pizzeriasForRanking[0]!}
+                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}
                                     rankingPlace={1}
                                   />
                                 </div>
@@ -321,16 +412,16 @@ export default function Home() {
                                 <div className="absolute -inset-1 bg-gradient-to-r from-orange-300 to-orange-200 rounded-lg blur opacity-40"></div>
                                 <div className="md:hidden">
                                   <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[2]}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[2])}
+                                    pizzeria={pizzeriasForRanking[2]!}
+                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}
                                     rankingPlace={3}
                                     compact
                                   />
                                 </div>
                                 <div className="hidden md:block">
                                   <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[2]}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[2])}
+                                    pizzeria={pizzeriasForRanking[2]!}
+                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}
                                     rankingPlace={3}
                                   />
                                 </div>
@@ -395,5 +486,13 @@ export default function Home() {
         </main>
       </div>
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

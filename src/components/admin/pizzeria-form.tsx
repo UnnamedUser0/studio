@@ -7,13 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
-import { doc, setDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import type { Pizzeria } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
-
+import { addPizzeria, updatePizzeria } from '@/app/actions';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
@@ -33,7 +29,6 @@ interface PizzeriaFormProps {
 
 export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps) {
   const { toast } = useToast();
-  const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<PizzeriaFormValues>({
@@ -59,61 +54,36 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
         source: pizzeria.source,
       });
     } else {
-        reset({
-            name: '',
-            address: '',
-            lat: 29.073,
-            lng: -110.957,
-            category: 'Pizza',
-            source: 'Admin'
-        });
+      reset({
+        name: '',
+        address: '',
+        lat: 29.073,
+        lng: -110.957,
+        category: 'Pizza',
+        source: 'Admin'
+      });
     }
   }, [pizzeria, reset]);
 
   const onSubmit: SubmitHandler<PizzeriaFormValues> = async (data) => {
-    if (!firestore) return;
     setIsSubmitting(true);
-    
-    if (pizzeria) {
-      // Update existing document
-      const docRef = doc(firestore, 'pizzerias', pizzeria.id);
-      setDoc(docRef, data, { merge: true })
-        .then(() => {
-            toast({ title: 'Pizzería actualizada', description: `${data.name} se ha actualizado correctamente.` });
-            onSuccess();
-        })
-        .catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: docRef.path,
-                operation: 'update',
-                requestResourceData: data,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        }).finally(() => {
-            setIsSubmitting(false);
-        });
 
-    } else {
-      // Create new document
-      const collectionRef = collection(firestore, 'pizzerias');
-      const newPizzeriaData = { ...data, id: ''};
-      addDoc(collectionRef, newPizzeriaData)
-        .then((docRef) => {
-            setDoc(docRef, { id: docRef.id }, { merge: true });
-            toast({ title: 'Pizzería agregada', description: `${data.name} se ha añadido correctamente.` });
-            onSuccess();
-        })
-        .catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: collectionRef.path,
-                operation: 'create',
-                requestResourceData: newPizzeriaData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        })
-        .finally(() => {
-            setIsSubmitting(false);
-        });
+    try {
+      if (pizzeria) {
+        // Update existing document
+        await updatePizzeria(pizzeria.id, data);
+        toast({ title: 'Pizzería actualizada', description: `${data.name} se ha actualizado correctamente.` });
+        onSuccess();
+      } else {
+        // Create new document
+        await addPizzeria(data);
+        toast({ title: 'Pizzería agregada', description: `${data.name} se ha añadido correctamente.` });
+        onSuccess();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Ocurrió un error al guardar la pizzería.', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -143,7 +113,7 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
           {errors.lng && <p className="text-sm text-destructive mt-1">{errors.lng.message}</p>}
         </div>
       </div>
-      
+
       <div className="flex justify-end pt-4">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

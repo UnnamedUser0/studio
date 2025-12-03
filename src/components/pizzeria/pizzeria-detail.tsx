@@ -6,16 +6,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Pizzeria, Review, User } from '@/lib/types';
-import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
-import { collection, doc, addDoc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { addReview, getReviews } from '@/app/actions';
+import ReviewCard from './review-card';
 
 const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => (
     <div className="flex items-center">
@@ -29,30 +28,19 @@ const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (ra
     </div>
 );
 
-import ReviewCard from './review-card';
-
-const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
-    const { user } = useUser();
-    const firestore = useFirestore();
+const AddReview = ({ pizzeriaId, onReviewAdded }: { pizzeriaId: string, onReviewAdded: () => void }) => {
+    const { data: session } = useSession();
+    const user = session?.user;
     const { toast } = useToast();
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
     const [submitted, setSubmitted] = useState(false);
 
-    const handlePublish = () => {
-        if (!user || !firestore || rating === 0 || !comment) return;
+    const handlePublish = async () => {
+        if (!user || !user.id || rating === 0 || !comment) return;
 
-        const reviewRef = collection(firestore, 'pizzerias', pizzeriaId, 'reviews');
-        const newReview: Omit<Review, 'id'> = {
-            userId: user.uid,
-            pizzeriaId: pizzeriaId,
-            rating,
-            comment,
-            createdAt: new Date().toISOString(),
-            author: user.displayName || user.email?.split('@')[0] || 'Anónimo',
-        };
-
-        addDoc(reviewRef, newReview).then(() => {
+        try {
+            await addReview(pizzeriaId, rating, comment, user.id);
             toast({
                 title: "¡Opinión enviada!",
                 description: "Gracias por compartir tu experiencia."
@@ -61,15 +49,15 @@ const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
             setComment('');
             setRating(0);
             setSubmitted(true);
-            setTimeout(() => setSubmitted(false), 3000); // Reset after 3 seconds
-        }).catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: reviewRef.path,
-                operation: 'create',
-                requestResourceData: newReview,
+            onReviewAdded();
+            setTimeout(() => setSubmitted(false), 3000);
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "No se pudo enviar la opinión.",
+                variant: "destructive"
             });
-            errorEmitter.emit('permission-error', permissionError);
-        });
+        }
     };
 
     if (!user) {
@@ -101,7 +89,7 @@ const AddReview = ({ pizzeriaId }: { pizzeriaId: string }) => {
             </CardHeader>
             <CardContent className="space-y-4">
                 <Textarea
-                    placeholder={`¿Qué te pareció, ${user.displayName || user.email}?`}
+                    placeholder={`¿Qué te pareció, ${user.name || user.email}?`}
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                 />
@@ -119,11 +107,34 @@ type PizzeriaDetailProps = {
 };
 
 export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
-    const firestore = useFirestore();
-    const reviewsQuery = useMemoFirebase(() =>
-        firestore ? query(collection(firestore, 'pizzerias', pizzeria.id, 'reviews'), orderBy('createdAt', 'desc')) : null,
-        [firestore, pizzeria.id]);
-    const { data: reviews, isLoading } = useCollection<Review>(reviewsQuery);
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchReviews = () => {
+        setIsLoading(true);
+        getReviews(pizzeria.id).then((data) => {
+            // Adapt Prisma Review to App Review type
+            const adaptedReviews = data.map(r => ({
+                id: r.id.toString(),
+                author: r.user.name || r.user.email?.split('@')[0] || 'Anónimo',
+                userId: r.userId,
+                pizzeriaId: r.pizzeriaId,
+                rating: r.rating,
+                comment: r.comment || '',
+                createdAt: r.createdAt.toISOString(),
+                reply: r.replyText ? {
+                    text: r.replyText,
+                    repliedAt: r.repliedAt ? r.repliedAt.toISOString() : new Date().toISOString()
+                } : undefined
+            }));
+            setReviews(adaptedReviews);
+            setIsLoading(false);
+        });
+    };
+
+    useEffect(() => {
+        fetchReviews();
+    }, [pizzeria.id]);
 
     const imageUrl = pizzeria.imageUrl || 'https://picsum.photos/seed/default/400/400';
     const imageHint = pizzeria.imageHint || 'pizza';
@@ -177,7 +188,7 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
                             {reviews?.length === 0 && !isLoading && (
                                 <p className="text-center text-muted-foreground py-4">Sé el primero en dejar una opinión.</p>
                             )}
-                            <AddReview pizzeriaId={pizzeria.id} />
+                            <AddReview pizzeriaId={pizzeria.id} onReviewAdded={fetchReviews} />
                         </div>
                     </div>
                 </div>

@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { PizzaBotIcon } from '../icons/pizza-bot-icon';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
-import { Part } from '@genkit-ai/google-genai';
+import { Part } from 'genkit';
 
 
 type Message = {

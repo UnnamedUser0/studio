@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useFirestore } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { addPizzeria } from '@/app/actions';
 import { Loader2, DownloadCloud, Key } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Pizzeria } from '@/lib/types';
@@ -16,7 +15,6 @@ export default function HereImporter({ existingPizzerias }: { existingPizzerias:
     const [isLoading, setIsLoading] = useState(false);
     const [apiKey, setApiKey] = useState('');
     const [isOpen, setIsOpen] = useState(false);
-    const firestore = useFirestore();
     const { toast } = useToast();
 
     const fetchHereData = async () => {
@@ -63,20 +61,18 @@ export default function HereImporter({ existingPizzerias }: { existingPizzerias:
                 if (!isDuplicate) {
                     const address = item.address.label || 'Dirección no disponible';
 
-                    const newPizzeria: Omit<Pizzeria, 'id'> = {
+                    const newPizzeria = {
                         name: name,
                         address: address,
                         lat: lat,
                         lng: lng,
                         category: 'Pizza',
                         source: 'HERE WeGo',
-                        rating: 0,
+                        // rating is not needed for addPizzeria, it defaults or is handled
                     };
 
-                    if (firestore) {
-                        batchPromises.push(addDoc(collection(firestore, 'pizzerias'), newPizzeria));
-                        newCount++;
-                    }
+                    batchPromises.push(addPizzeria(newPizzeria));
+                    newCount++;
                 }
             }
 

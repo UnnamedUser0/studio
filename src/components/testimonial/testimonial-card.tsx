@@ -2,83 +2,65 @@
 import { useState } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Testimonial, User } from '@/lib/types';
+import type { Testimonial } from '@/lib/types';
 import { Quote, Trash2, MessageSquareReply, CornerDownLeft } from 'lucide-react';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useSession } from 'next-auth/react';
 import { Button } from '../ui/button';
-import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { deleteTestimonial, replyTestimonial } from '@/app/actions';
 
 type TestimonialCardProps = {
   testimonial: Testimonial;
 };
 
 export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
-  const { user } = useUser();
-  const firestore = useFirestore();
+  const { data: session } = useSession();
   const { toast } = useToast();
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
   const [replyText, setReplyText] = useState(testimonial.reply?.text || '');
-  
-  const userProfileRef = useMemoFirebase(() => 
-    user ? doc(firestore, 'users', user.uid) : null,
-    [firestore, user]
-  );
-  const { data: userProfile } = useDoc<User>(userProfileRef);
-  const isAdmin = userProfile?.isAdmin === true;
-  
+
+  const isAdmin = (session?.user as any)?.isAdmin === true;
+
   const avatarSeed = testimonial.email || testimonial.author;
 
-  const handleDelete = () => {
-    if (!firestore || !isAdmin) return;
+  const handleDelete = async () => {
+    if (!isAdmin) return;
 
-    const testimonialRef = doc(firestore, 'testimonials', testimonial.id);
-    deleteDoc(testimonialRef).then(() => {
-        toast({
+    try {
+      await deleteTestimonial(Number(testimonial.id));
+      toast({
         title: 'Testimonio eliminado',
         description: 'El testimonio ha sido borrado correctamente.',
-        });
-    }).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: testimonialRef.path,
-            operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
-
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo eliminar el testimonio.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleReply = () => {
-    if (!firestore || !isAdmin || !replyText) return;
+  const handleReply = async () => {
+    if (!isAdmin || !replyText) return;
 
-    const testimonialRef = doc(firestore, 'testimonials', testimonial.id);
-    const replyData = {
-      reply: {
-        text: replyText,
-        repliedAt: new Date().toISOString(),
-      },
-    };
-
-    updateDoc(testimonialRef, replyData).then(() => {
-        toast({
+    try {
+      await replyTestimonial(Number(testimonial.id), replyText);
+      toast({
         title: 'Respuesta publicada',
         description: 'Tu respuesta ha sido añadida al testimonio.',
-        });
-        setIsReplyDialogOpen(false);
-    }).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: testimonialRef.path,
-            operation: 'update',
-            requestResourceData: replyData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
-
+      });
+      setIsReplyDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo publicar la respuesta.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -87,18 +69,25 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
         <CardContent className="p-6 flex-grow">
           <Quote className="h-8 w-8 text-primary/30 mb-4" />
           <p className="text-muted-foreground mb-4">&quot;{testimonial.comment}&quot;</p>
-          
+
           {testimonial.reply && (
             <div className="mt-4 ml-4 pl-4 border-l-2 border-accent">
-                <p className="text-sm font-semibold text-accent">Respuesta del equipo:</p>
-                <p className="text-sm text-muted-foreground italic">&quot;{testimonial.reply.text}&quot;</p>
+              <p className="text-sm font-semibold text-accent">Respuesta del equipo:</p>
+              <p className="text-sm text-muted-foreground italic">&quot;{testimonial.reply.text}&quot;</p>
             </div>
           )}
         </CardContent>
         <div className="bg-muted/50 p-6 border-t-2 border-primary/10">
           <div className="flex items-center gap-4">
             <Avatar className="h-12 w-12 border-2 border-primary">
-              <AvatarImage src={`https://api.dicebear.com/8.x/micah/svg?seed=${avatarSeed}`} alt={testimonial.author} />
+              <AvatarImage
+                src={
+                  (session?.user?.email && testimonial.email === session.user.email && session.user.image)
+                    ? session.user.image
+                    : (testimonial.avatarUrl || `https://api.dicebear.com/8.x/micah/svg?seed=${avatarSeed}`)
+                }
+                alt={testimonial.author}
+              />
               <AvatarFallback>{testimonial.author.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
@@ -110,7 +99,7 @@ export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
       </div>
       {isAdmin && (
         <CardFooter className="p-2 bg-muted/50 border-t-2 border-primary/10 justify-end gap-2">
-           <Dialog open={isReplyDialogOpen} onOpenChange={setIsReplyDialogOpen}>
+          <Dialog open={isReplyDialogOpen} onOpenChange={setIsReplyDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="sm">
                 <MessageSquareReply className="h-4 w-4 mr-2" />

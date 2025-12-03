@@ -1,24 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { useUser, useAuth, useFirestore } from '@/firebase';
-import { updateProfile, deleteUser } from 'firebase/auth';
-import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { useState, useRef, useEffect } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Settings, User, LogOut, Trash2, Shield, FileText, Smartphone } from 'lucide-react';
+import { Settings, Trash2, Shield, FileText, Smartphone, Upload, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
     AlertDialog,
@@ -31,23 +25,27 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-
-const AVATAR_SEEDS = [
-    'micah', 'avataaars', 'bottts', 'cat', 'dog', 'identicon',
-    'initials', 'lorelei', 'notionists', 'open-peeps', 'personas', 'pixel-art'
-];
+import { updateUserAvatar, deleteUserAccount, uploadAvatar } from '@/app/actions';
 
 const PREDEFINED_AVATARS = [
     'Felix', 'Aneka', 'Zoe', 'Marc', 'Bandit', 'Coco', 'Dixie',
-    'Garfield', 'Bella', 'Charlie', 'Luna', 'Oreo'
+    'Garfield', 'Bella', 'Charlie', 'Luna', 'Oreo', 'Molly', 'Max',
+    'Buddy', 'Daisy', 'Rocky', 'Bear', 'Jack', 'Ginger', 'Pepper'
 ];
 
 export default function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-    const { user } = useUser();
-    const auth = useAuth();
-    const firestore = useFirestore();
+    const { data: session, update } = useSession();
+    const user = session?.user;
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (user?.image) {
+            setAvatarUrl(user.image);
+        }
+    }, [user]);
 
     if (!user) return null;
 
@@ -58,28 +56,14 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
         return `${maskedName}@${domain}`;
     };
 
-    const handleUpdateAvatar = async (seed: string) => {
-        if (!user || !auth) return;
-        setLoading(true);
+    const updateAvatarUrl = async (photoURL: string) => {
+        if (!user.id) return;
+
+        setAvatarUrl(photoURL);
+
         try {
-            const photoURL = `https://api.dicebear.com/8.x/micah/svg?seed=${seed}`;
-            await updateProfile(user, { photoURL });
-
-            // Force user reload to update local state
-            await user.reload();
-            // Force token refresh to ensure listeners pick up changes
-            await user.getIdToken(true);
-
-            // Also update in Firestore if you keep a user record there
-            if (firestore) {
-                await updateDoc(doc(firestore, 'users', user.uid), { photoURL });
-            }
-
-            // Manually update any avatar images on the page with the new URL immediately
-            const avatarImages = document.querySelectorAll('img[alt="' + (user.displayName || user.email || '') + '"]');
-            avatarImages.forEach((img: any) => {
-                img.src = photoURL;
-            });
+            await updateUserAvatar(user.id, photoURL);
+            await update({ image: photoURL }); // Update session
 
             toast({
                 title: "¡Avatar Actualizado! 🎉",
@@ -87,12 +71,6 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                 className: "bg-green-500 text-white border-none",
                 duration: 3000,
             });
-
-            // Small delay to allow state propagation
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-
         } catch (error) {
             console.error("Error updating avatar:", error);
             toast({
@@ -100,16 +78,65 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                 description: "No se pudo actualizar el avatar. Inténtalo de nuevo.",
                 variant: "destructive"
             });
+        }
+    };
+
+    const handleUpdateAvatar = async (seed: string) => {
+        setLoading(true);
+        try {
+            const photoURL = `https://api.dicebear.com/8.x/micah/svg?seed=${seed}`;
+            await updateAvatarUrl(photoURL);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleLogoutAll = async () => {
-        // Note: True "logout from all devices" requires backend admin SDK to revoke refresh tokens.
-        // Here we will just sign out the current session and show a message.
+    const handleUploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast({
+                title: "Error",
+                description: "Por favor selecciona un archivo de imagen válido.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            toast({
+                title: "Error",
+                description: "La imagen es demasiado grande. El máximo es 5MB.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setLoading(true);
         try {
-            await auth?.signOut();
+            const formData = new FormData();
+            formData.append('file', file);
+            const photoURL = await uploadAvatar(formData);
+            await updateAvatarUrl(photoURL);
+        } catch (error: any) {
+            console.error("Error uploading avatar:", error);
+            toast({
+                title: "Error al subir imagen",
+                description: `No se pudo subir la imagen: ${error.message || 'Error desconocido'}`,
+                variant: "destructive"
+            });
+        } finally {
+            setLoading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+
+    const handleLogoutAll = async () => {
+        try {
+            await signOut();
             toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
             onOpenChange(false);
         } catch (error) {
@@ -118,21 +145,15 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
     };
 
     const handleDeleteAccount = async () => {
-        if (!user || !firestore) return;
+        if (!user.id) return;
         setLoading(true);
         try {
-            // Delete user data from Firestore
-            await deleteDoc(doc(firestore, 'users', user.uid));
-            // Delete user authentication
-            await deleteUser(user);
+            await deleteUserAccount(user.id);
+            await signOut();
             toast({ title: "Cuenta eliminada", description: "Lamentamos verte partir. Tu cuenta ha sido eliminada." });
             onOpenChange(false);
         } catch (error: any) {
-            if (error.code === 'auth/requires-recent-login') {
-                toast({ title: "Error", description: "Por seguridad, debes volver a iniciar sesión antes de eliminar tu cuenta.", variant: "destructive" });
-            } else {
-                toast({ title: "Error", description: "No se pudo eliminar la cuenta.", variant: "destructive" });
-            }
+            toast({ title: "Error", description: "No se pudo eliminar la cuenta.", variant: "destructive" });
         } finally {
             setLoading(false);
         }
@@ -162,12 +183,28 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                             <h3 className="text-lg font-medium">Información Personal</h3>
                             <div className="grid gap-4 p-4 border rounded-lg bg-muted/30">
                                 <div className="flex items-center gap-4">
-                                    <Avatar className="h-16 w-16 border-2 border-primary">
-                                        <AvatarImage src={user.photoURL || `https://api.dicebear.com/8.x/micah/svg?seed=${user.email}`} />
-                                        <AvatarFallback>YO</AvatarFallback>
-                                    </Avatar>
+                                    <div className="relative group">
+                                        <Avatar className="h-20 w-20 border-2 border-primary">
+                                            <AvatarImage src={avatarUrl || user.image || `https://api.dicebear.com/8.x/micah/svg?seed=${user.email}`} />
+                                            <AvatarFallback>YO</AvatarFallback>
+                                        </Avatar>
+                                        <button
+                                            className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg hover:bg-primary/90 transition-colors"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={loading}
+                                        >
+                                            <Camera className="w-4 h-4" />
+                                        </button>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleUploadAvatar}
+                                        />
+                                    </div>
                                     <div className="space-y-1">
-                                        <p className="font-medium text-lg">{user.displayName || 'Usuario'}</p>
+                                        <p className="font-medium text-lg">{user.name || 'Usuario'}</p>
                                         <p className="text-sm text-muted-foreground flex items-center gap-2">
                                             {maskEmail(user.email || '')}
                                             <Shield className="w-3 h-3 text-green-500" />
@@ -179,8 +216,20 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
 
                         {/* Avatar Selection */}
                         <div className="space-y-4">
-                            <h3 className="text-lg font-medium">Cambiar Avatar</h3>
-                            <ScrollArea className="h-32 border rounded-md p-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-medium">Cambiar Avatar</h3>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={loading}
+                                >
+                                    <Upload className="w-4 h-4" />
+                                    Subir Foto
+                                </Button>
+                            </div>
+                            <ScrollArea className="h-48 border rounded-md p-4">
                                 <div className="flex flex-wrap gap-4 justify-center">
                                     {PREDEFINED_AVATARS.map((seed) => (
                                         <button
@@ -205,7 +254,7 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                             <div className="space-y-3">
                                 <Button variant="outline" className="w-full justify-start gap-2" onClick={handleLogoutAll}>
                                     <Smartphone className="w-4 h-4" />
-                                    Cerrar sesión en todos los dispositivos
+                                    Cerrar sesión
                                 </Button>
 
                                 <AlertDialog>

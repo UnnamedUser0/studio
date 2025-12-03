@@ -6,7 +6,7 @@ import Header from '@/components/layout/header';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { cn } from '@/lib/utils';
 import { fontHeadline, fontBody } from '@/app/fonts';
-import { FirebaseClientProvider } from '@/firebase';
+import { AuthProvider } from '@/components/providers/auth-provider';
 import Chatbot from '@/components/chatbot/chatbot';
 import Footer from '@/components/layout/footer';
 import MobileBottomNav from '@/components/layout/mobile-bottom-nav';
@@ -31,7 +31,7 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <FirebaseClientProvider>
+          <AuthProvider>
             <div className="relative flex min-h-screen flex-col">
               <Header />
               <main className="flex-grow pb-16 md:pb-0">
@@ -42,7 +42,7 @@ export default function RootLayout({
               <Chatbot />
               <MobileBottomNav />
             </div>
-          </FirebaseClientProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

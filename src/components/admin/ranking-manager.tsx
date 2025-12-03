@@ -20,10 +20,9 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Pizzeria } from '@/lib/types';
-import { doc, setDoc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
 import { Trophy, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { updateRankingSettings } from '@/app/actions';
 
 interface RankingManagerProps {
     allPizzerias: Pizzeria[];
@@ -35,7 +34,6 @@ export default function RankingManager({ allPizzerias, currentRankingIds = [], o
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [ranking, setRanking] = useState<string[]>(['', '', '']);
-    const firestore = useFirestore();
     const { toast } = useToast();
 
     useEffect(() => {
@@ -51,12 +49,9 @@ export default function RankingManager({ allPizzerias, currentRankingIds = [], o
     }, [open, JSON.stringify(currentRankingIds)]);
 
     const handleSave = async () => {
-        if (!firestore) return;
         setLoading(true);
         try {
-            await setDoc(doc(firestore, 'settings', 'ranking'), {
-                pizzeriaIds: ranking.filter(id => id !== '')
-            });
+            await updateRankingSettings(ranking.filter(id => id !== ''));
             toast({
                 title: "Ranking actualizado",
                 description: "Las pizzerías destacadas han sido actualizadas.",
@@ -110,7 +105,7 @@ export default function RankingManager({ allPizzerias, currentRankingIds = [], o
                                     <SelectTrigger id={`pos-${index}`}>
                                         <SelectValue placeholder="Seleccionar pizzería" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent side="bottom" avoidCollisions={false} className="max-h-[200px]">
                                         {allPizzerias.map((pizzeria) => (
                                             <SelectItem key={pizzeria.id} value={pizzeria.id}>
                                                 {pizzeria.name}

@@ -7,6 +7,7 @@ export type Review = {
   rating: number;
   comment: string;
   createdAt: string;
+  avatarUrl?: string;
   reply?: {
     text: string;
     repliedAt: string;
@@ -25,6 +26,7 @@ export type Pizzeria = {
   reviews?: Review[];
   imageUrl?: string;
   imageHint?: string;
+  reviewCount?: number;
 };
 
 export type Testimonial = {
@@ -34,6 +36,7 @@ export type Testimonial = {
   role: string;
   comment: string;
   createdAt: string;
+  avatarUrl?: string;
   reply?: {
     text: string;
     repliedAt: string;

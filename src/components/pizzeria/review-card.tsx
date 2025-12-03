@@ -2,82 +2,73 @@
 import { Star, Trash2, MessageSquareReply, CornerDownLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Review, User } from '@/lib/types';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import type { Review } from '@/lib/types';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
-import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { deleteReview, replyReview } from '@/app/actions';
 
 export default function ReviewCard({ review, pizzeriaId }: { review: Review, pizzeriaId: string }) {
-    const { user } = useUser();
-    const firestore = useFirestore();
+    const { data: session } = useSession();
     const { toast } = useToast();
     const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
     const [replyText, setReplyText] = useState(review.reply?.text || '');
 
-    const userProfileRef = useMemoFirebase(() =>
-        user ? doc(firestore, 'users', user.uid) : null,
-        [firestore, user]
-    );
-    const { data: userProfile } = useDoc<User>(userProfileRef);
-    const isAdmin = userProfile?.isAdmin === true;
+    const isAdmin = (session?.user as any)?.isAdmin === true;
 
-    const handleDelete = () => {
-        if (!firestore) return;
-        const reviewRef = doc(firestore, 'pizzerias', pizzeriaId, 'reviews', review.id);
+    const handleDelete = async () => {
+        if (!isAdmin) return;
 
-        deleteDoc(reviewRef).then(() => {
+        try {
+            await deleteReview(Number(review.id));
             toast({
                 title: 'Opinión eliminada',
                 description: 'La opinión ha sido borrada.',
             });
-        }).catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: reviewRef.path,
-                operation: 'delete',
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'No se pudo eliminar la opinión.',
+                variant: 'destructive',
             });
-            errorEmitter.emit('permission-error', permissionError);
-        });
+        }
     }
 
-    const handleReply = () => {
-        if (!firestore || !isAdmin || !replyText) return;
+    const handleReply = async () => {
+        if (!isAdmin || !replyText) return;
 
-        const reviewRef = doc(firestore, 'pizzerias', pizzeriaId, 'reviews', review.id);
-        const replyData = {
-            reply: {
-                text: replyText,
-                repliedAt: new Date().toISOString(),
-            },
-        };
-
-        updateDoc(reviewRef, replyData).then(() => {
+        try {
+            await replyReview(Number(review.id), replyText);
             toast({
                 title: 'Respuesta publicada',
                 description: 'Tu respuesta ha sido añadida a la opinión.',
             });
             setIsReplyDialogOpen(false);
-        }).catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: reviewRef.path,
-                operation: 'update',
-                requestResourceData: replyData,
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'No se pudo publicar la respuesta.',
+                variant: 'destructive',
             });
-            errorEmitter.emit('permission-error', permissionError);
-        });
+        }
     };
 
     return (
         <Card>
             <CardHeader className="flex-row gap-4 items-start p-4">
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src={`https://api.dicebear.com/8.x/micah/svg?seed=${review.userId}`} alt={review.author} />
+                    <AvatarImage
+                        src={
+                            (session?.user?.id && review.userId === session.user.id && session.user.image)
+                                ? session.user.image
+                                : (review.avatarUrl || `https://api.dicebear.com/8.x/micah/svg?seed=${review.userId}`)
+                        }
+                        alt={review.author}
+                    />
                     <AvatarFallback>{review.author ? review.author.charAt(0) : 'A'}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
