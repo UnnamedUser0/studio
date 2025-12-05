@@ -171,8 +171,9 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
 
                 <Tabs defaultValue="profile" className="flex-1 flex flex-col overflow-hidden">
                     <div className="px-6 pt-2">
-                        <TabsList className="grid w-full grid-cols-2">
+                        <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="profile">Perfil</TabsTrigger>
+                            <TabsTrigger value="account">Cuenta</TabsTrigger>
                             <TabsTrigger value="about">Acerca de</TabsTrigger>
                         </TabsList>
                     </div>
@@ -247,38 +248,46 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                                 </div>
                             </ScrollArea>
                         </div>
+                    </TabsContent>
 
-                        {/* Danger Zone */}
-                        <div className="space-y-4 pt-4 border-t">
-                            <h3 className="text-lg font-medium text-destructive">Zona de Peligro</h3>
-                            <div className="space-y-3">
-                                <Button variant="outline" className="w-full justify-start gap-2" onClick={handleLogoutAll}>
-                                    <Smartphone className="w-4 h-4" />
-                                    Cerrar sesión
-                                </Button>
+                    <TabsContent value="account" className="flex-1 overflow-y-auto p-6 space-y-6">
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-medium">Gestión de Cuenta</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Aquí puedes gestionar la seguridad y el estado de tu cuenta.
+                            </p>
 
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" className="w-full justify-start gap-2">
-                                            <Trash2 className="w-4 h-4" />
-                                            Eliminar Cuenta
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta y removerá tus datos de nuestros servidores.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                                Sí, eliminar cuenta
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
+                            <div className="space-y-4 pt-4 border-t">
+                                <h3 className="text-lg font-medium text-destructive">Zona de Peligro</h3>
+                                <div className="space-y-3">
+                                    <Button variant="outline" className="w-full justify-start gap-2" onClick={handleLogoutAll}>
+                                        <Smartphone className="w-4 h-4" />
+                                        Cerrar sesión
+                                    </Button>
+
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" className="w-full justify-start gap-2">
+                                                <Trash2 className="w-4 h-4" />
+                                                Eliminar Cuenta
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta y removerá tus datos de nuestros servidores.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                                    Sí, eliminar cuenta
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
                             </div>
                         </div>
                     </TabsContent>

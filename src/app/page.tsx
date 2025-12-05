@@ -22,6 +22,7 @@ import TestimonialForm from '@/components/testimonial/testimonial-form';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import WelcomeScreen from '@/components/welcome/welcome-screen';
 import RankingManager from '@/components/admin/ranking-manager';
+import ExplorarPizzerias from '@/components/pizzeria/explorar-pizzerias';
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
   loading: () => <div />,
@@ -283,26 +284,7 @@ function HomeContent() {
     <>
       <div className="relative w-full h-full flex-grow flex flex-col">
         {/* ... Sheet and MapView ... */}
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="secondary"
-              className="absolute top-20 left-4 z-[1001] shadow-lg hover:shadow-xl hover:-translate-y-1 active:translate-y-px transition-all duration-300 pointer-events-auto h-8 text-xs px-3 md:h-10 md:text-sm md:px-4"
-            >
-              <List className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-              {isSearching ? 'Ver Resultados' : 'Explorar Pizzerías'}
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[90vw] max-w-[600px] p-0 flex flex-col">
-            <PizzeriaList
-              pizzerias={pizzeriasToShowInList}
-              onPizzeriaSelect={handleSelectPizzeria}
-              isSearching={isSearching}
-              onClearSearch={handleClearSearch}
-              isLoading={!allPizzerias}
-            />
-          </SheetContent>
-        </Sheet>
+
 
         <main className="flex-grow flex flex-col">
           <div className="h-[55vh] md:h-[70vh] w-full">
@@ -439,6 +421,18 @@ function HomeContent() {
                 </ScrollReveal>
               </div>
 
+              {allPizzerias && (
+                <ExplorarPizzerias
+                  pizzerias={allPizzerias}
+                  onLocate={(pizzeria) => {
+                    handleSelectPizzeria(pizzeria);
+                    setSearchCenter({ lat: pizzeria.lat, lng: pizzeria.lng });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  isAdmin={isAdmin}
+                />
+              )}
+
               <div id="testimonials" className="bg-muted/50 py-16">
                 <div className="container">
                   <ScrollReveal>
@@ -480,7 +474,9 @@ function HomeContent() {
                 </div>
               </div>
 
-              <WhyChoosePizzapp />
+
+
+              <WhyChoosePizzapp isAdmin={isAdmin} />
             </div>
           )}
         </main>

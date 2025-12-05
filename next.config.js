@@ -30,6 +30,9 @@ const nextConfig = {
     ],
   },
   experimental: {
+    serverActions: {
+      bodySizeLimit: '5mb',
+    },
     // This is to allow the Next.js dev server to be accessed from the
     // preview URL of the remote development environment.
   },

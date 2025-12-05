@@ -69,6 +69,20 @@ model Pizzeria {
   updatedAt DateTime @updatedAt
   
   reviews   Review[]
+  items     MenuItem[]
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  imageUrl    String?
+  category    String?
+  pizzeriaId  String
+  pizzeria    Pizzeria @relation(fields: [pizzeriaId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Testimonial {
@@ -100,4 +114,14 @@ model Review {
   
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   pizzeria   Pizzeria @relation(fields: [pizzeriaId], references: [id], onDelete: Cascade)
+}
+
+model FeatureCard {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  iconName    String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
