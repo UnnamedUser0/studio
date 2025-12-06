@@ -9,9 +9,10 @@ import { Testimonial } from '@/lib/types';
 
 type TestimonialsCarouselProps = {
   testimonials: Testimonial[];
+  canManageContent?: boolean;
 };
 
-export default function TestimonialsCarousel({ testimonials }: TestimonialsCarouselProps) {
+export default function TestimonialsCarousel({ testimonials, canManageContent }: TestimonialsCarouselProps) {
   return (
     <Carousel
       plugins={[Autoplay({ delay: 3000, stopOnInteraction: true, stopOnMouseEnter: true })]}
@@ -25,7 +26,7 @@ export default function TestimonialsCarousel({ testimonials }: TestimonialsCarou
         {testimonials.map((testimonial) => (
           <CarouselItem key={testimonial.id} className="md:basis-1/2 lg:basis-1/3">
             <div className="p-1 h-full">
-              <TestimonialCard testimonial={testimonial} />
+              <TestimonialCard testimonial={testimonial} canManageContent={canManageContent} />
             </div>
           </CarouselItem>
         ))}
@@ -35,5 +36,3 @@ export default function TestimonialsCarousel({ testimonials }: TestimonialsCarou
     </Carousel>
   );
 }
-
-    

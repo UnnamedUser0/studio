@@ -48,4 +48,5 @@ export type User = {
   email: string;
   username: string;
   isAdmin: boolean;
+  permissions?: string | null;
 }

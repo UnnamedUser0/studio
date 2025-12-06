@@ -11,6 +11,8 @@ import Chatbot from '@/components/chatbot/chatbot';
 import Footer from '@/components/layout/footer';
 import MobileBottomNav from '@/components/layout/mobile-bottom-nav';
 
+import { AdminHeartbeat } from '@/components/AdminHeartbeat';
+
 export const metadata: Metadata = {
   title: 'PizzApp - Hermosillo Pizza Finder',
   description: 'Find the best pizzerias in Hermosillo, Sonora.',
@@ -32,6 +34,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <AuthProvider>
+            <AdminHeartbeat />
             <div className="relative flex min-h-screen flex-col">
               <Header />
               <main className="flex-grow pb-16 md:pb-0">

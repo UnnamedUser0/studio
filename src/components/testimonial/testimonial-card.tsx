@@ -14,15 +14,28 @@ import { deleteTestimonial, replyTestimonial } from '@/app/actions';
 
 type TestimonialCardProps = {
   testimonial: Testimonial;
+  canManageContent?: boolean;
 };
 
-export default function TestimonialCard({ testimonial }: TestimonialCardProps) {
+export default function TestimonialCard({ testimonial, canManageContent }: TestimonialCardProps) {
   const { data: session } = useSession();
   const { toast } = useToast();
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
   const [replyText, setReplyText] = useState(testimonial.reply?.text || '');
 
-  const isAdmin = (session?.user as any)?.isAdmin === true;
+  const permissions = (session?.user as any)?.permissions as string | null;
+  const userEmail = session?.user?.email;
+  const SUPER_ADMIN_EMAIL = "va21070541@bachilleresdesonora.edu.mx";
+
+  const hasPermission = (perm: string) => {
+    if (userEmail === SUPER_ADMIN_EMAIL) return true;
+    if (!permissions) return false;
+    return permissions.split(',').map(p => p.trim()).includes(perm);
+  };
+
+  const isAdmin = canManageContent !== undefined
+    ? canManageContent
+    : ((session?.user as any)?.isAdmin === true && hasPermission('manage_content'));
 
   const avatarSeed = testimonial.email || testimonial.author;
 

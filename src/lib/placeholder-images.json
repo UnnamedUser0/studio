@@ -39,7 +39,7 @@
     {
       "id": "pizzeria-7",
       "description": "Margherita pizza with basil leaves.",
-      "imageUrl": "https://images.unsplash.com/photo-1598021680137-2b767b40ad4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtYXJnaGVyaXRhJTIwcGl6emF8ZW58MHx8fHwxNzYzNTk4MzA3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "margherita pizza"
     },
     {
@@ -51,7 +51,7 @@
     {
       "id": "pizzeria-9",
       "description": "Friends sharing pizza at a restaurant.",
-      "imageUrl": "https://images.unsplash.com/photo-1563223073-3c20b22a7045?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzaGFyaW5nJTIwcGl6emF8ZW58MHx8fHwxNzYzNTk4MzQwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1080&q=80",
       "imageHint": "sharing pizza"
     },
     {

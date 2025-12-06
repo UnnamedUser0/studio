@@ -206,9 +206,49 @@ export async function updateUserAvatar(userId: string, imageUrl: string) {
     })
 }
 
+export async function updateUserProfile(userId: string, name: string, imageUrl?: string) {
+    return await prisma.user.update({
+        where: { id: userId },
+        data: {
+            name,
+            ...(imageUrl ? { image: imageUrl } : {})
+        }
+    })
+}
+
 export async function deleteUserAccount(userId: string) {
     return await prisma.user.delete({
         where: { id: userId }
+    })
+}
+
+export async function getLayoutSettings() {
+    const setting = await prisma.globalSettings.findUnique({
+        where: { key: 'layout_settings' }
+    })
+    if (!setting) return {
+        sheetWidth: 75, // vw
+        cardScale: 1,
+        buttonScale: 1,
+        buttonLayout: 'grid' // 'grid' | 'stack'
+    }
+    try {
+        return JSON.parse(setting.value)
+    } catch (e) {
+        return {
+            sheetWidth: 75,
+            cardScale: 1,
+            buttonScale: 1,
+            buttonLayout: 'grid'
+        }
+    }
+}
+
+export async function updateLayoutSettings(settings: any) {
+    return await prisma.globalSettings.upsert({
+        where: { key: 'layout_settings' },
+        update: { value: JSON.stringify(settings) },
+        create: { key: 'layout_settings', value: JSON.stringify(settings) }
     })
 }
 

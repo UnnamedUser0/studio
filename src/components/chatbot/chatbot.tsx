@@ -5,12 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, User, CornerDownLeft, X, Loader2 } from 'lucide-react';
-import { runPizzAppAssistant, PizzAppAssistantInput } from '@/ai/flows/pizzapp-assistant-flow';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { PizzaBotIcon } from '../icons/pizza-bot-icon';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
-import { Part } from 'genkit';
 
 
 type Message = {
@@ -27,32 +25,45 @@ export default function Chatbot() {
 
   const toggleChat = () => setIsOpen(!isOpen);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return;
 
     const userMessage: Message = { role: 'user', content: [{ text: input }] };
     setMessages(prev => [...prev, userMessage]);
-
-    const chatInput: PizzAppAssistantInput = {
-      history: messages.map(m => ({
-        role: m.role,
-        content: m.content,
-      })) as Part[],
-      message: input,
-    };
-
+    const currentInput = input;
     setInput('');
 
-    startTransition(async () => {
-      try {
-        const result = await runPizzAppAssistant(chatInput);
-        const botMessage: Message = { role: 'model', content: [{ text: result.answer }] };
-        setMessages(prev => [...prev, botMessage]);
-      } catch (error) {
-        console.error("Error calling chatbot flow:", error);
-        const errorMessage: Message = { role: 'model', content: [{ text: "Lo siento, estoy teniendo problemas para conectarme. Inténtalo de nuevo más tarde." }] };
-        setMessages(prev => [...prev, errorMessage]);
+    // Local simple bot logic
+    const getBotResponse = (query: string) => {
+      const lower = query.toLowerCase();
+      if (lower.includes('hola') || lower.includes('buenos días') || lower.includes('buenas')) {
+        return "¡Hola! Soy Pizzi, tu asistente virtual. ¿En qué puedo ayudarte a encontrar la mejor pizza hoy?";
       }
+      if (lower.includes('menu') || lower.includes('menú') || lower.includes('carta')) {
+        return "Puedes ver el menú de cada pizzería haciendo clic en el botón 'Ver menú' en las tarjetas de las pizzerías.";
+      }
+      if (lower.includes('horario') || lower.includes('abierto')) {
+        return "La mayoría de nuestras pizzerías abren de 11:00 AM a 11:00 PM. Te recomiendo verificar el horario específico en la ficha de cada una.";
+      }
+      if (lower.includes('ubicación') || lower.includes('donde') || lower.includes('llegar')) {
+        return "Usa el botón 'Cómo llegar' en la tarjeta de la pizzería que te interese para ver la ruta en el mapa.";
+      }
+      if (lower.includes('mejor') || lower.includes('ranking') || lower.includes('top')) {
+        return "¡Nuestra sección de Ranking muestra las pizzerías mejor valoradas por la comunidad! Échale un vistazo.";
+      }
+      if (lower.includes('gracias')) {
+        return "¡De nada! Disfruta tu pizza 🍕";
+      }
+      return "Interesante pregunta. Aunque soy un bot sencillo, te sugiero explorar la sección de 'Explorar Pizzerías' para más detalles o contactar directamente al local.";
+    };
+
+    startTransition(async () => {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const responseText = getBotResponse(currentInput);
+      const botMessage: Message = { role: 'model', content: [{ text: responseText }] };
+      setMessages(prev => [...prev, botMessage]);
     });
   };
 

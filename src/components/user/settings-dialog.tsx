@@ -25,7 +25,10 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { updateUserAvatar, deleteUserAccount, uploadAvatar } from '@/app/actions';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { updateUserAvatar, deleteUserAccount, uploadAvatar, updateUserProfile } from '@/app/actions';
 
 const PREDEFINED_AVATARS = [
     'Felix', 'Aneka', 'Zoe', 'Marc', 'Bandit', 'Coco', 'Dixie',
@@ -39,15 +42,60 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [name, setName] = useState('');
+    const [gender, setGender] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (user?.image) {
             setAvatarUrl(user.image);
         }
+        if (user?.name) {
+            setName(user.name);
+        }
     }, [user]);
 
     if (!user) return null;
+
+    const handleUpdateProfile = async () => {
+        if (!user.id) return;
+        setLoading(true);
+        try {
+            let newAvatarUrl = avatarUrl;
+
+            // Generate avatar if gender is selected or if name changed and no custom avatar set
+            if (gender || (name !== user.name && !avatarUrl?.includes('uploads'))) {
+                const seed = name || 'random';
+                if (gender === 'male') {
+                    newAvatarUrl = `https://avatar.iran.liara.run/public/boy?username=${seed}`;
+                } else if (gender === 'female') {
+                    newAvatarUrl = `https://avatar.iran.liara.run/public/girl?username=${seed}`;
+                } else {
+                    // Default/Other/Random
+                    newAvatarUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${seed}`;
+                }
+            }
+
+            await updateUserProfile(user.id, name, newAvatarUrl || undefined);
+            await update({ name: name, image: newAvatarUrl });
+            setAvatarUrl(newAvatarUrl);
+
+            toast({
+                title: "Perfil actualizado",
+                description: "Tus datos han sido guardados correctamente.",
+                className: "bg-green-500 text-white border-none",
+            });
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Error",
+                description: "No se pudo actualizar el perfil.",
+                variant: "destructive"
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const maskEmail = (email: string) => {
         const [name, domain] = email.split('@');
@@ -204,12 +252,42 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                                             onChange={handleUploadAvatar}
                                         />
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="font-medium text-lg">{user.name || 'Usuario'}</p>
-                                        <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                            {maskEmail(user.email || '')}
-                                            <Shield className="w-3 h-3 text-green-500" />
-                                        </p>
+                                    <div className="space-y-1 flex-1">
+                                        <div className="grid gap-2">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div className="space-y-1">
+                                                    <Label htmlFor="name" className="text-xs">Nombre</Label>
+                                                    <Input
+                                                        id="name"
+                                                        value={name}
+                                                        onChange={(e) => setName(e.target.value)}
+                                                        placeholder="Tu nombre"
+                                                        className="h-8"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label htmlFor="gender" className="text-xs">Género</Label>
+                                                    <Select value={gender} onValueChange={setGender}>
+                                                        <SelectTrigger id="gender" className="h-8">
+                                                            <SelectValue placeholder="Seleccionar" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="male">Masculino</SelectItem>
+                                                            <SelectItem value="female">Femenino</SelectItem>
+                                                            <SelectItem value="other">Otro</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                size="sm"
+                                                onClick={handleUpdateProfile}
+                                                disabled={loading || (name === user.name && !gender)}
+                                                className="w-full"
+                                            >
+                                                Actualizar Perfil y Avatar
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -218,7 +296,7 @@ export default function SettingsDialog({ open, onOpenChange }: { open: boolean; 
                         {/* Avatar Selection */}
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-medium">Cambiar Avatar</h3>
+                                <h3 className="text-lg font-medium">Avatares Predeterminados</h3>
                                 <Button
                                     variant="outline"
                                     size="sm"

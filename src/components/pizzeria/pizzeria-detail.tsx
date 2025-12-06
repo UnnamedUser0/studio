@@ -122,6 +122,7 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
                 rating: r.rating,
                 comment: r.comment || '',
                 createdAt: r.createdAt.toISOString(),
+                avatarUrl: r.user.image || undefined,
                 reply: r.replyText ? {
                     text: r.replyText,
                     repliedAt: r.repliedAt ? r.repliedAt.toISOString() : new Date().toISOString()

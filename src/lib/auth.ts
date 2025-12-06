@@ -39,6 +39,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 session.user.id = token.sub
                 // @ts-ignore
                 session.user.isAdmin = token.isAdmin as boolean
+                // @ts-ignore
+                session.user.permissions = token.permissions as string | null
             }
             return session
         },
@@ -48,6 +50,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (user) {
                 // @ts-ignore
                 token.isAdmin = user.isAdmin;
+                // @ts-ignore
+                token.permissions = user.permissions;
                 token.picture = user.image;
                 token.name = user.name;
             }

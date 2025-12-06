@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
@@ -16,20 +16,43 @@ import {
 } from "@/components/ui/carousel";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import PizzeriaList from './pizzeria-list';
+import Autoplay from "embla-carousel-autoplay"
+
+import LayoutEditor, { LayoutSettings } from '@/components/admin/layout-editor';
 
 export default function ExplorarPizzerias({
     pizzerias,
     onLocate,
-    isAdmin
+    isAdmin,
+    initialLayoutSettings
 }: {
     pizzerias: Pizzeria[];
     onLocate: (pizzeria: Pizzeria) => void;
     isAdmin?: boolean;
+    initialLayoutSettings?: LayoutSettings;
 }) {
     const [selectedPizzeriaForMenu, setSelectedPizzeriaForMenu] = useState<Pizzeria | null>(null);
+    const [layoutSettings, setLayoutSettings] = useState<LayoutSettings>(initialLayoutSettings || {
+        sheetWidth: 75,
+        cardScale: 1,
+        buttonScale: 1,
+        buttonLayout: 'grid'
+    });
+
+    useEffect(() => {
+        if (initialLayoutSettings) {
+            setLayoutSettings(initialLayoutSettings);
+        }
+    }, [initialLayoutSettings]);
 
     return (
-        <section id="explorar-pizzerias" className="py-16 bg-muted/30">
+        <section id="explorar-pizzerias" className="py-16 bg-muted/30 relative">
+            {isAdmin && (
+                <LayoutEditor
+                    initialSettings={layoutSettings}
+                    onSettingsChange={setLayoutSettings}
+                />
+            )}
             <div className="container">
                 <ScrollReveal>
                     <div className="max-w-3xl mx-auto text-center mb-12">
@@ -46,6 +69,11 @@ export default function ExplorarPizzerias({
                             align: "start",
                             loop: true,
                         }}
+                        plugins={[
+                            Autoplay({
+                                delay: 3000,
+                            }),
+                        ]}
                         className="w-full"
                     >
                         <CarouselContent>
@@ -86,19 +114,29 @@ export default function ExplorarPizzerias({
                                                     </span>
                                                 </div>
 
-                                                <div className="mt-auto flex gap-3">
+                                                <div className="mt-auto flex flex-col gap-2">
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            className="flex-1 bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all"
+                                                            onClick={() => setSelectedPizzeriaForMenu(pizzeria)}
+                                                        >
+                                                            Ver menú
+                                                        </Button>
+                                                        <Button
+                                                            variant="secondary"
+                                                            className="flex-1 bg-black text-white hover:bg-gray-800 shadow-md hover:shadow-lg transition-all"
+                                                            onClick={() => onLocate(pizzeria)}
+                                                        >
+                                                            Cómo llegar
+                                                        </Button>
+                                                    </div>
                                                     <Button
-                                                        className="flex-1 bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all"
-                                                        onClick={() => setSelectedPizzeriaForMenu(pizzeria)}
+                                                        variant="outline"
+                                                        className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
+                                                        onClick={() => onLocate(pizzeria)} // Opening detail view allows rating
                                                     >
-                                                        Ver menú
-                                                    </Button>
-                                                    <Button
-                                                        variant="secondary"
-                                                        className="flex-1 bg-black text-white hover:bg-gray-800 shadow-md hover:shadow-lg transition-all"
-                                                        onClick={() => onLocate(pizzeria)}
-                                                    >
-                                                        Cómo llegar
+                                                        <Star className="w-4 h-4 mr-2 fill-current" />
+                                                        Calificar
                                                     </Button>
                                                 </div>
                                             </CardContent>
@@ -117,26 +155,30 @@ export default function ExplorarPizzerias({
                         <SheetTrigger asChild>
                             <Button size="lg" variant="outline" className="gap-2">
                                 <List className="w-5 h-5" />
-                                Ver todas las pizzerías
+                                <span className="hidden sm:inline">Ver todas las pizzerías</span>
+                                <span className="sm:hidden">Ver todas</span>
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="left" className="w-[90vw] max-w-[600px] p-0 flex flex-col">
+                        <SheetContent
+                            side="left"
+                            className="p-0 flex flex-col transition-all duration-300"
+                            style={{
+                                width: `${layoutSettings.sheetWidth}vw`,
+                                maxWidth: '100vw'
+                            }}
+                        >
                             <PizzeriaList
                                 pizzerias={pizzerias}
                                 onPizzeriaSelect={(p) => {
                                     onLocate(p);
-                                    // Close sheet? The user might want to see the map.
-                                    // PizzeriaList doesn't have close logic passed, but onLocate usually handles navigation.
-                                    // We might need to close the sheet programmatically if we had a ref, but usually selecting implies navigation.
-                                    // However, SheetTrigger handles open state. We can use a controlled sheet if needed, but for now let's rely on default behavior or user closing it.
-                                    // Actually, if onLocate scrolls to map, the sheet might cover it.
-                                    // We should probably close the sheet.
-                                    // But I don't have a close handler here easily without state.
-                                    // Let's leave it as is, user can close it.
                                 }}
                                 isSearching={false}
                                 onClearSearch={() => { }}
                                 isLoading={false}
+                                onViewMenu={(p) => setSelectedPizzeriaForMenu(p)}
+                                onNavigate={(p) => onLocate(p)}
+                                onRate={(p) => onLocate(p)}
+                                layoutSettings={layoutSettings}
                             />
                         </SheetContent>
                     </Sheet>

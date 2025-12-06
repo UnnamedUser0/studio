@@ -6,18 +6,25 @@ import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet
 import { Button } from '../ui/button';
 import { X, Loader2 } from 'lucide-react';
 
+import { LayoutSettings } from '@/components/admin/layout-editor';
+
 type PizzeriaListProps = {
   pizzerias: Pizzeria[];
   onPizzeriaSelect: (pizzeria: Pizzeria) => void;
   isSearching: boolean;
   onClearSearch: () => void;
   isLoading: boolean;
+  onViewMenu?: (pizzeria: Pizzeria) => void;
+  onNavigate?: (pizzeria: Pizzeria) => void;
+  onRate?: (pizzeria: Pizzeria) => void;
+  compact?: boolean;
+  layoutSettings?: LayoutSettings;
 };
 
-export default function PizzeriaList({ pizzerias, onPizzeriaSelect, isSearching, onClearSearch, isLoading }: PizzeriaListProps) {
+export default function PizzeriaList({ pizzerias, onPizzeriaSelect, isSearching, onClearSearch, isLoading, onViewMenu, onNavigate, onRate, compact, layoutSettings }: PizzeriaListProps) {
   const title = isSearching ? 'Resultados de Búsqueda' : 'Mejores Pizzerías';
-  const description = isSearching 
-    ? `Mostrando las ${pizzerias.length} pizzerías más cercanas.` 
+  const description = isSearching
+    ? `Mostrando las ${pizzerias.length} pizzerías más cercanas.`
     : 'Explora las pizzerías mejor calificadas de Hermosillo.';
 
   return (
@@ -46,7 +53,16 @@ export default function PizzeriaList({ pizzerias, onPizzeriaSelect, isSearching,
             </div>
           ) : pizzerias.length > 0 ? (
             pizzerias.map((pizzeria) => (
-              <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} onClick={() => onPizzeriaSelect(pizzeria)} />
+              <PizzeriaCard
+                key={pizzeria.id}
+                pizzeria={pizzeria}
+                onClick={() => onPizzeriaSelect(pizzeria)}
+                onViewMenu={onViewMenu ? () => onViewMenu(pizzeria) : undefined}
+                onNavigate={onNavigate ? () => onNavigate(pizzeria) : undefined}
+                onRate={onRate ? () => onRate(pizzeria) : undefined}
+                compact={compact}
+                layoutSettings={layoutSettings}
+              />
             ))
           ) : (
             <div className="text-center text-muted-foreground py-10">

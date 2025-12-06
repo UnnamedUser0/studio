@@ -85,13 +85,33 @@ function HomeContent() {
     }
   }, [user?.id]);
 
+  const SUPER_ADMIN_EMAIL = "va21070541@bachilleresdesonora.edu.mx";
+  const userEmail = user?.email;
+  const permissions = userProfile?.permissions;
+
+  const hasPermission = (perm: string) => {
+    if (userEmail === SUPER_ADMIN_EMAIL) return true;
+    if (!permissions) return false;
+    return permissions.split(',').map(p => p.trim()).includes(perm);
+  };
+
   const isAdmin = userProfile?.isAdmin === true;
+  const canManagePizzerias = isAdmin && hasPermission('manage_pizzerias');
+  const canManageContent = isAdmin && hasPermission('manage_content');
 
   // Fetch Ranking Settings
   const [rankingSettings, setRankingSettings] = useState<{ pizzeriaIds: string[] } | null>(null);
   useEffect(() => {
     import('@/app/actions').then(({ getRankingSettings }) => {
       getRankingSettings().then(setRankingSettings);
+    });
+  }, []);
+
+  // Fetch Layout Settings
+  const [layoutSettings, setLayoutSettings] = useState<any>(null);
+  useEffect(() => {
+    import('@/app/actions').then(({ getLayoutSettings }) => {
+      getLayoutSettings().then(setLayoutSettings);
     });
   }, []);
 
@@ -118,9 +138,6 @@ function HomeContent() {
   const allPizzerias: Pizzeria[] = useMemo(() => {
     const staticPizzerias = pizzeriasData as unknown as Pizzeria[];
     if (!dbPizzerias || dbPizzerias.length === 0) {
-      // Fallback to static with 0 rating if DB is empty/loading, or maybe we want to show 0 for static
-      // The user wants REAL ratings. Static data has no real ratings.
-      // We should probably show static data with 0 rating if not in DB.
       return staticPizzerias.map((p, index) => {
         const image = PlaceHolderImages[index % PlaceHolderImages.length];
         return {
@@ -150,14 +167,7 @@ function HomeContent() {
     const filteredStatic = mappedStatic.filter(p => !dbIds.has(p.id));
 
     // Merge: DB pizzerias take precedence. 
-    // We also need to assign images to DB pizzerias if they don't have one
     const mappedDb = dbPizzerias.map((p, index) => {
-      // Try to find matching static to get consistent image if possible, or just use placeholder logic
-      // The index logic might be inconsistent if we mix sources.
-      // Let's just use the ID hash or similar if we want consistency, or just random.
-      // For now, let's just use the same placeholder logic but we need an index.
-      // We can just use the index in the final array?
-      // Let's just keep it simple.
       if (p.imageUrl) return p;
 
       // Find if it was in static data to preserve "identity" if possible
@@ -283,9 +293,6 @@ function HomeContent() {
   return (
     <>
       <div className="relative w-full h-full flex-grow flex flex-col">
-        {/* ... Sheet and MapView ... */}
-
-
         <main className="flex-grow flex flex-col">
           <div className="h-[55vh] md:h-[70vh] w-full">
             <MapView
@@ -307,7 +314,7 @@ function HomeContent() {
                 <ScrollReveal>
                   <div className="flex flex-col items-center justify-center mb-24">
                     <h2 className="text-3xl font-headline text-center">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
-                    {isAdmin && allPizzerias && (
+                    {canManagePizzerias && allPizzerias && (
                       <div className="mt-4">
                         <RankingManager
                           allPizzerias={allPizzerias}
@@ -429,7 +436,8 @@ function HomeContent() {
                     setSearchCenter({ lat: pizzeria.lat, lng: pizzeria.lng });
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  isAdmin={isAdmin}
+                  isAdmin={canManagePizzerias}
+                  initialLayoutSettings={layoutSettings}
                 />
               )}
 
@@ -444,7 +452,7 @@ function HomeContent() {
                     </div>
 
                     {hasMounted && testimonials && testimonials.length > 0 && (
-                      <TestimonialsCarousel testimonials={testimonials} />
+                      <TestimonialsCarousel testimonials={testimonials} canManageContent={canManageContent} />
                     )}
 
                     {hasMounted && (
@@ -474,9 +482,7 @@ function HomeContent() {
                 </div>
               </div>
 
-
-
-              <WhyChoosePizzapp isAdmin={isAdmin} />
+              <WhyChoosePizzapp isAdmin={canManageContent} />
             </div>
           )}
         </main>

@@ -13,13 +13,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Pizza, LogOut, Shield, Moon, Sun, MousePointer2, MousePointerClick, Settings as SettingsIcon } from 'lucide-react';
+import { Pizza, LogOut, Shield, Moon, Sun, MousePointer2, MousePointerClick, Settings as SettingsIcon, Skull } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import { useState, useEffect } from 'react';
 import SettingsDialog from '@/components/user/settings-dialog';
+import { OnlineUsersIndicator } from '@/components/admin/online-users-indicator';
 
 
 function CursorSwitcher() {
@@ -151,7 +152,8 @@ export default function Header() {
           </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
-          <div className="hidden md:flex">
+          <div className="hidden md:flex items-center gap-2">
+            <OnlineUsersIndicator />
             <CursorSwitcher />
           </div>
           <ThemeSwitcher />
@@ -189,12 +191,22 @@ export default function Header() {
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     {isAdmin && (
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin">
-                          <Shield className="mr-2 h-4 w-4" />
-                          <span>Panel de Admin</span>
-                        </Link>
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin">
+                            <Shield className="mr-2 h-4 w-4" />
+                            <span>Panel de Admin</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        {user.email === "va21070541@bachilleresdesonora.edu.mx" && (
+                          <DropdownMenuItem asChild>
+                            <Link href="/admin/granting">
+                              <Skull className="mr-2 h-4 w-4 text-destructive" />
+                              <span>Otorgamiento y Eliminación</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                      </>
                     )}
                     <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
                       <SettingsIcon className="mr-2 h-4 w-4" />
