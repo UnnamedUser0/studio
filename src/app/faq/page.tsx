@@ -1,24 +1,51 @@
+'use client';
 
-import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Smartphone, MapPin, Headset, Plus, MessageCircle } from 'lucide-react';
+import { Plus, MessageCircle, Pencil, Trash2, Loader2, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { IconPicker, IconByName } from '@/components/admin/icon-picker';
+import { useToast } from '@/hooks/use-toast';
+import {
+  getFaqCategories,
+  createFaqCategory,
+  updateFaqCategory,
+  deleteFaqCategory,
+  createFaqQuestion,
+  updateFaqQuestion,
+  deleteFaqQuestion
+} from '@/app/actions/faq';
 
-const Footer = dynamic(() => import('@/components/layout/footer'), {
-  loading: () => <div />,
-});
+type FaqQuestion = {
+  id: string;
+  question: string;
+  answer: string;
+};
 
-const faqCategories = [
+type FaqCategory = {
+  id: string;
+  title: string;
+  iconName: string;
+  questions: FaqQuestion[];
+};
+
+const DEFAULT_CATEGORIES = [
   {
     title: 'Uso de la Aplicación',
-    icon: <Smartphone className="h-6 w-6" />,
+    iconName: 'Smartphone',
     questions: [
       {
         question: '¿Cómo busco pizzerías en PizzApp?',
@@ -36,7 +63,7 @@ const faqCategories = [
   },
   {
     title: 'Datos y Mapas',
-    icon: <MapPin className="h-6 w-6" />,
+    iconName: 'MapPin',
     questions: [
       {
         question: '¿De dónde proviene la información de las pizzerías?',
@@ -54,7 +81,7 @@ const faqCategories = [
   },
   {
     title: 'Soporte y Contacto',
-    icon: <Headset className="h-6 w-6" />,
+    iconName: 'Headset',
     questions: [
       {
         question: '¿A quién puedo contactar si tengo un problema con la aplicación?',
@@ -83,41 +110,218 @@ const CustomAccordionTrigger = ({ children }: { children: React.ReactNode }) => 
   </AccordionTrigger>
 );
 
-
-import { ScrollReveal } from '@/components/ui/scroll-reveal';
-
-// ... imports
-
 export default function FAQPage() {
+  const { data: session } = useSession();
+  // @ts-ignore
+  const isAdmin = session?.user?.isAdmin === true;
+  const { toast } = useToast();
+
+  const [categories, setCategories] = useState<FaqCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Dialog states
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<FaqCategory | null>(null);
+  const [categoryForm, setCategoryForm] = useState({ title: '', iconName: 'HelpCircle' });
+
+  const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<FaqQuestion | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [questionForm, setQuestionForm] = useState({ question: '', answer: '' });
+
+  const fetchData = async () => {
+    try {
+      const data = await getFaqCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error("Failed to fetch FAQs", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleSeed = async () => {
+    setLoading(true);
+    try {
+      for (const cat of DEFAULT_CATEGORIES) {
+        await createFaqCategory({ title: cat.title, iconName: cat.iconName });
+        // Note: In a real app we'd need the ID of the created category to add questions.
+        // For simplicity, we'll just reload and let the user add questions or improve the seed logic server-side.
+        // But since we can't easily get the ID back from the void action without changing it,
+        // we will just seed categories first.
+        // Actually, let's improve this: we'll just seed categories.
+      }
+      // Re-fetch to get IDs
+      const newCats = await getFaqCategories();
+
+      // Now try to match and add questions (simple heuristic)
+      for (const cat of DEFAULT_CATEGORIES) {
+        const dbCat = newCats.find(c => c.title === cat.title);
+        if (dbCat) {
+          for (const q of cat.questions) {
+            await createFaqQuestion({ ...q, categoryId: dbCat.id });
+          }
+        }
+      }
+
+      toast({ title: "Completado", description: "FAQs por defecto cargadas." });
+      fetchData();
+    } catch (error) {
+      toast({ title: "Error", description: "Error al cargar defaults.", variant: "destructive" });
+      setLoading(false);
+    }
+  };
+
+  // Category Handlers
+  const openCategoryDialog = (category?: FaqCategory) => {
+    if (category) {
+      setEditingCategory(category);
+      setCategoryForm({ title: category.title, iconName: category.iconName });
+    } else {
+      setEditingCategory(null);
+      setCategoryForm({ title: '', iconName: 'HelpCircle' });
+    }
+    setIsCategoryDialogOpen(true);
+  };
+
+  const handleCategorySubmit = async () => {
+    try {
+      if (editingCategory) {
+        await updateFaqCategory(editingCategory.id, categoryForm);
+        toast({ title: "Actualizado", description: "Categoría actualizada." });
+      } else {
+        await createFaqCategory(categoryForm);
+        toast({ title: "Creado", description: "Nueva categoría creada." });
+      }
+      setIsCategoryDialogOpen(false);
+      fetchData();
+    } catch (error) {
+      toast({ title: "Error", description: "Error al guardar categoría.", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm("¿Eliminar esta categoría y todas sus preguntas?")) return;
+    try {
+      await deleteFaqCategory(id);
+      toast({ title: "Eliminado", description: "Categoría eliminada." });
+      fetchData();
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo eliminar.", variant: "destructive" });
+    }
+  };
+
+  // Question Handlers
+  const openQuestionDialog = (categoryId: string, question?: FaqQuestion) => {
+    setSelectedCategoryId(categoryId);
+    if (question) {
+      setEditingQuestion(question);
+      setQuestionForm({ question: question.question, answer: question.answer });
+    } else {
+      setEditingQuestion(null);
+      setQuestionForm({ question: '', answer: '' });
+    }
+    setIsQuestionDialogOpen(true);
+  };
+
+  const handleQuestionSubmit = async () => {
+    try {
+      if (editingQuestion) {
+        await updateFaqQuestion(editingQuestion.id, questionForm);
+        toast({ title: "Actualizado", description: "Pregunta actualizada." });
+      } else if (selectedCategoryId) {
+        await createFaqQuestion({ ...questionForm, categoryId: selectedCategoryId });
+        toast({ title: "Creado", description: "Nueva pregunta agregada." });
+      }
+      setIsQuestionDialogOpen(false);
+      fetchData();
+    } catch (error) {
+      toast({ title: "Error", description: "Error al guardar pregunta.", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteQuestion = async (id: string) => {
+    if (!confirm("¿Eliminar esta pregunta?")) return;
+    try {
+      await deleteFaqQuestion(id);
+      toast({ title: "Eliminado", description: "Pregunta eliminada." });
+      fetchData();
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo eliminar.", variant: "destructive" });
+    }
+  };
+
+  if (loading) return <div className="py-20 flex justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+
   return (
     <div className="container py-12 md:py-20">
       <ScrollReveal>
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-center relative">
           <h1 className="font-headline text-4xl md:text-5xl font-bold">Preguntas Frecuentes</h1>
           <p className="mt-4 text-lg text-muted-foreground">
             Encuentra respuestas a las dudas más comunes sobre PizzApp.
           </p>
+          {isAdmin && (
+            <div className="mt-6 flex justify-center gap-2">
+              {categories.length === 0 && (
+                <Button onClick={handleSeed} variant="outline" size="sm">
+                  <RefreshCw className="w-4 h-4 mr-2" /> Cargar Defaults
+                </Button>
+              )}
+              <Button onClick={() => openCategoryDialog()} size="sm">
+                <Plus className="w-4 h-4 mr-2" /> Nueva Categoría
+              </Button>
+            </div>
+          )}
         </div>
       </ScrollReveal>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
-        {faqCategories.map((category, index) => (
-          <ScrollReveal key={index} delay={index * 100} className="h-full">
-            <Card className="shadow-lg rounded-xl border-t-4 border-primary h-full">
+        {categories.map((category, index) => (
+          <ScrollReveal key={category.id} delay={index * 100} className="h-full">
+            <Card className="shadow-lg rounded-xl border-t-4 border-primary h-full flex flex-col relative group">
+              {isAdmin && (
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openCategoryDialog(category)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteCategory(category.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <div className="flex-shrink-0 bg-primary/10 text-primary rounded-lg h-12 w-12 flex items-center justify-center">
-                    {category.icon}
+                    <IconByName name={category.iconName} className="h-6 w-6" />
                   </div>
                   <CardTitle className="font-headline text-2xl text-foreground">{category.title}</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-grow">
                 <Accordion type="single" collapsible className="w-full space-y-4">
                   {category.questions.map((faq, i) => (
-                    <AccordionItem value={`item-${i}`} key={i} className="border-b-0">
-                      <div className="p-4 rounded-lg border bg-background hover:border-primary/50 transition-colors group">
-                        <CustomAccordionTrigger>{faq.question}</CustomAccordionTrigger>
+                    <AccordionItem value={`item-${i}`} key={faq.id} className="border-b-0 relative group/item">
+                      <div className="p-4 rounded-lg border bg-background hover:border-primary/50 transition-colors">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-grow pr-8">
+                            <CustomAccordionTrigger>{faq.question}</CustomAccordionTrigger>
+                          </div>
+                          {isAdmin && (
+                            <div className="flex flex-col gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity absolute right-2 top-2">
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); openQuestionDialog(category.id, faq); }}>
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(faq.id); }}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                         <AccordionContent className="pt-4 text-base text-muted-foreground">
                           {faq.answer}
                         </AccordionContent>
@@ -125,6 +329,11 @@ export default function FAQPage() {
                     </AccordionItem>
                   ))}
                 </Accordion>
+                {isAdmin && (
+                  <Button variant="ghost" className="w-full mt-4 border-dashed border-2" onClick={() => openQuestionDialog(category.id)}>
+                    <Plus className="h-4 w-4 mr-2" /> Agregar Pregunta
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </ScrollReveal>
@@ -154,6 +363,66 @@ export default function FAQPage() {
         </ScrollReveal>
       </div>
 
+      {/* Category Dialog */}
+      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Título</Label>
+              <Input
+                value={categoryForm.title}
+                onChange={(e) => setCategoryForm({ ...categoryForm, title: e.target.value })}
+                placeholder="Ej: Uso de la Aplicación"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Icono</Label>
+              <IconPicker
+                value={categoryForm.iconName}
+                onChange={(icon) => setCategoryForm({ ...categoryForm, iconName: icon })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCategorySubmit}>Guardar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Question Dialog */}
+      <Dialog open={isQuestionDialogOpen} onOpenChange={setIsQuestionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingQuestion ? 'Editar Pregunta' : 'Nueva Pregunta'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Pregunta</Label>
+              <Input
+                value={questionForm.question}
+                onChange={(e) => setQuestionForm({ ...questionForm, question: e.target.value })}
+                placeholder="¿Cómo...?"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Respuesta</Label>
+              <Textarea
+                value={questionForm.answer}
+                onChange={(e) => setQuestionForm({ ...questionForm, answer: e.target.value })}
+                placeholder="Respuesta detallada..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsQuestionDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleQuestionSubmit}>Guardar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

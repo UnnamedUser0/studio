@@ -50,7 +50,7 @@ export const IconPicker = ({ value, onChange }: { value: string; onChange: (icon
     const [open, setOpen] = useState(false);
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setOpen} modal={true}>
             <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-between">
                     <div className="flex items-center gap-2">
@@ -60,7 +60,10 @@ export const IconPicker = ({ value, onChange }: { value: string; onChange: (icon
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[300px] p-0 z-[3000]">
-                <ScrollArea className="h-[300px] p-4 pointer-events-auto">
+                <div
+                    className="h-[300px] p-4 overflow-y-auto"
+                    onWheel={(e) => e.stopPropagation()}
+                >
                     <div className="grid grid-cols-4 gap-2">
                         {ICON_NAMES.map((name) => (
                             <Button
@@ -76,7 +79,7 @@ export const IconPicker = ({ value, onChange }: { value: string; onChange: (icon
                             </Button>
                         ))}
                     </div>
-                </ScrollArea>
+                </div>
             </PopoverContent>
         </Popover>
     );

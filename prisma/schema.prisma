@@ -127,3 +127,36 @@ model FeatureCard {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model FaqCategory {
+  id        String        @id @default(cuid())
+  title     String
+  iconName  String
+  order     Int           @default(0)
+  questions FaqQuestion[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model FaqQuestion {
+  id          String      @id @default(cuid())
+  question    String
+  answer      String
+  categoryId  String
+  category    FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  order       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model HelpCenterCard {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  iconName    String
+  buttonText  String
+  link        String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
