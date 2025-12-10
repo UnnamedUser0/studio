@@ -212,7 +212,11 @@ export default function Header() {
                       <SettingsIcon className="mr-2 h-4 w-4" />
                       <span>Configuración</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => signOut()}>
+                    <DropdownMenuItem onClick={async () => {
+                      import('@/app/actions/admin').then(({ markUserOffline }) => {
+                        markUserOffline().finally(() => signOut());
+                      });
+                    }}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Cerrar Sesión</span>
                     </DropdownMenuItem>

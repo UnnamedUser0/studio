@@ -43,7 +43,7 @@ export function OnlineUsersIndicator() {
         }
 
         fetchOnlineUsers()
-        const interval = setInterval(fetchOnlineUsers, 10000) // Check every 10 seconds
+        const interval = setInterval(fetchOnlineUsers, 3000) // Check every 3 seconds
 
         return () => clearInterval(interval)
     }, [session])

@@ -18,6 +18,7 @@ type MenuItem = {
     price: number;
     imageUrl: string | null;
     category: string | null;
+    legend: string | null;
 };
 
 export default function MenuModal({
@@ -37,7 +38,7 @@ export default function MenuModal({
     const [loading, setLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-    const [formData, setFormData] = useState({ name: '', description: '', price: '', imageUrl: '', category: 'Pizza' });
+    const [formData, setFormData] = useState({ name: '', description: '', price: '', imageUrl: '', category: 'Pizza', legend: '' });
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
@@ -92,6 +93,7 @@ export default function MenuModal({
                 price,
                 imageUrl: formData.imageUrl,
                 category: formData.category,
+                legend: formData.legend,
                 pizzeriaId
             };
 
@@ -122,7 +124,7 @@ export default function MenuModal({
 
     const openNew = () => {
         setEditingItem(null);
-        setFormData({ name: '', description: '', price: '', imageUrl: '', category: 'Pizza' });
+        setFormData({ name: '', description: '', price: '', imageUrl: '', category: 'Pizza', legend: '' });
         setIsFormOpen(true);
     };
 
@@ -133,7 +135,8 @@ export default function MenuModal({
             description: item.description || '',
             price: item.price.toString(),
             imageUrl: item.imageUrl || '',
-            category: item.category || 'Pizza'
+            category: item.category || 'Pizza',
+            legend: item.legend || ''
         });
         setIsFormOpen(true);
     };
@@ -185,6 +188,10 @@ export default function MenuModal({
                                 <Label>Descripción</Label>
                                 <Textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Ingredientes, tamaño, etc." />
                             </div>
+                            <div className="space-y-2">
+                                <Label>Leyenda (Opcional)</Label>
+                                <Input value={formData.legend} onChange={e => setFormData({ ...formData, legend: e.target.value })} placeholder="Avisos sobre precios, disponibilidad, etc." />
+                            </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Precio ($)</Label>
@@ -227,6 +234,9 @@ export default function MenuModal({
                                                 <span className="font-bold text-primary">${item.price.toFixed(2)}</span>
                                             </div>
                                             <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{item.description}</p>
+                                            {item.legend && (
+                                                <p className="text-xs text-amber-500 mt-1 font-medium">{item.legend}</p>
+                                            )}
                                             <div className="flex items-center justify-between mt-2">
                                                 <span className="text-xs bg-secondary px-2 py-0.5 rounded-full text-secondary-foreground">
                                                     {item.category || 'General'}

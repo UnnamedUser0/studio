@@ -16,7 +16,7 @@ export function AdminHeartbeat() {
         // Update every 30 seconds
         const interval = setInterval(() => {
             updateHeartbeat()
-        }, 30000)
+        }, 5000)
 
         return () => clearInterval(interval)
     }, [session])

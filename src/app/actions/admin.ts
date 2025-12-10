@@ -65,6 +65,19 @@ export async function updateHeartbeat() {
     })
 }
 
+export async function markUserOffline() {
+    const session = await auth()
+    if (!session?.user?.id) return
+
+    // Set lastActiveAt to 5 minutes ago to ensure they appear offline immediately
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+
+    await prisma.user.update({
+        where: { id: session.user.id },
+        data: { lastActiveAt: fiveMinutesAgo }
+    })
+}
+
 export async function deleteUser(userId: string) {
     const session = await auth()
     if (!session?.user?.email || session.user.email !== SUPER_ADMIN_EMAIL) {

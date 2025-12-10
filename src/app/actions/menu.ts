@@ -17,7 +17,7 @@ export async function getMenuItems(pizzeriaId: string) {
     }
 }
 
-export async function createMenuItem(data: { name: string; description?: string; price: number; imageUrl?: string; category?: string; pizzeriaId: string }) {
+export async function createMenuItem(data: { name: string; description?: string; price: number; imageUrl?: string; category?: string; pizzeriaId: string; legend?: string }) {
     const session = await auth();
     // @ts-ignore
     if (!session?.user?.isAdmin) {
@@ -30,7 +30,7 @@ export async function createMenuItem(data: { name: string; description?: string;
     revalidatePath('/');
 }
 
-export async function updateMenuItem(id: string, data: { name?: string; description?: string; price?: number; imageUrl?: string; category?: string }) {
+export async function updateMenuItem(id: string, data: { name?: string; description?: string; price?: number; imageUrl?: string; category?: string; legend?: string }) {
     const session = await auth();
     // @ts-ignore
     if (!session?.user?.isAdmin) {

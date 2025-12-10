@@ -57,6 +57,17 @@ export default function MapView({
         onLocateUser={onLocateUser}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
+        onViewMenu={onSelectPizzeria}
+        onNavigate={(pizzeria) => {
+          // This prop is for the popup button, which handles routing internally in PizzaMap
+          // But we can also open external maps if needed, though the user requested internal routing.
+          // Since PizzaMap handles internal routing via drawRoute when the button is clicked inside the popup,
+          // we might not need to do anything here, or we can use this to trigger the detail view if routing fails.
+          // However, the popup implementation in PizzaMap calls drawRoute directly.
+          // The prop is mainly to satisfy the interface if we want to bubble up the event.
+          // Let's just log it for now or leave it empty as the logic is inside PizzaMap.
+          console.log('Navigate to:', pizzeria.name);
+        }}
       />
 
       {/* Smart Search Bar */}

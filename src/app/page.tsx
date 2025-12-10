@@ -276,6 +276,12 @@ function HomeContent() {
     setSelectedPizzeria(null);
   }, []);
 
+  const handleNavigate = useCallback((pizzeria: Pizzeria) => {
+    if (!pizzeria.lat || !pizzeria.lng) return;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${pizzeria.lat},${pizzeria.lng}`;
+    window.open(url, '_blank');
+  }, []);
+
   const pizzeriasToShowInList = isSearching ? visiblePizzerias : (pizzeriasForRanking || []);
 
   if (!hasMounted || isCheckingWelcome) {
@@ -308,183 +314,199 @@ function HomeContent() {
             />
           </div>
 
-          {!isSearching && (
-            <div className="bg-background relative">
-              <div id="ranking" className="container py-12">
-                <ScrollReveal>
-                  <div className="flex flex-col items-center justify-center mb-24">
-                    <h2 className="text-3xl font-headline text-center">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
-                    {canManagePizzerias && allPizzerias && (
-                      <div className="mt-4">
-                        <RankingManager
-                          allPizzerias={allPizzerias}
-                          currentRankingIds={rankingSettings?.pizzeriaIds}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  {!allPizzerias ? (
-                    <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
-                  ) : (
-                    pizzeriasForRanking && pizzeriasForRanking.length >= 3 && (
-                      <div className="relative w-[calc(100%+4rem)] -ml-8 md:w-full md:ml-auto md:mx-auto max-w-5xl h-[450px] scale-100 origin-bottom mt-12">
-                        {/* Base Platform - Wider and brighter highlights */}
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[98%] h-6 bg-primary/30 rounded-full blur-md"></div>
-                        <div className="absolute bottom-0 left-[1%] w-[40%] h-3 bg-gradient-to-r from-primary to-transparent rounded-full blur-[3px] opacity-80"></div>
-                        <div className="absolute bottom-0 right-[1%] w-[40%] h-3 bg-gradient-to-l from-primary to-transparent rounded-full blur-[3px] opacity-80"></div>
+          <div className="bg-background relative">
+            <div id="ranking" className="container py-12">
+              <ScrollReveal>
+                <div className="flex flex-col items-center justify-center mb-24">
+                  <h2 className="text-3xl font-headline text-center">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
+                  {canManagePizzerias && allPizzerias && (
+                    <div className="mt-4">
+                      <RankingManager
+                        allPizzerias={allPizzerias}
+                        currentRankingIds={rankingSettings?.pizzeriaIds}
+                      />
+                    </div>
+                  )}
+                </div>
+                {!allPizzerias ? (
+                  <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                ) : (
+                  pizzeriasForRanking && pizzeriasForRanking.length >= 3 && (
+                    <div className="relative w-[calc(100%+4rem)] -ml-8 md:w-full md:ml-auto md:mx-auto max-w-5xl h-[450px] scale-100 origin-bottom mt-12">
+                      {/* Base Platform - Wider and brighter highlights */}
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[98%] h-6 bg-primary/30 rounded-full blur-md"></div>
+                      <div className="absolute bottom-0 left-[1%] w-[40%] h-3 bg-gradient-to-r from-primary to-transparent rounded-full blur-[3px] opacity-80"></div>
+                      <div className="absolute bottom-0 right-[1%] w-[40%] h-3 bg-gradient-to-l from-primary to-transparent rounded-full blur-[3px] opacity-80"></div>
 
-                        <div className="absolute bottom-4 md:bottom-6 w-[85%] md:w-full left-1/2 -translate-x-1/2 flex items-end justify-center gap-2 md:gap-8 px-2">
-                          {/* 2nd Place (Left) */}
-                          <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end group">
-                            {/* Card Container */}
-                            <div className="absolute bottom-[110px] md:bottom-[140px] left-1/2 -translate-x-1/2 w-[140px] md:w-[300px] z-20 transition-transform duration-300 hover:-translate-y-2">
-                              <div className="relative">
-                                <div className="absolute -inset-1 bg-gradient-to-r from-gray-300 to-gray-100 rounded-lg blur opacity-40"></div>
-                                <div className="md:hidden">
-                                  <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[1]!}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}
-                                    rankingPlace={2}
-                                    compact
-                                  />
-                                </div>
-                                <div className="hidden md:block">
-                                  <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[1]!}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}
-                                    rankingPlace={2}
-                                  />
+                      <div className="absolute bottom-4 md:bottom-6 w-[85%] md:w-full left-1/2 -translate-x-1/2 flex items-end justify-center gap-2 md:gap-8 px-2">
+                        {/* 2nd Place (Left) */}
+                        <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end group">
+                          {/* Card Container */}
+                          <div className="absolute bottom-[110px] md:bottom-[140px] left-1/2 -translate-x-1/2 w-[140px] md:w-[300px] z-20 transition-transform duration-300 hover:-translate-y-2">
+                            <div className="relative">
+                              <div className="absolute -inset-1 bg-gradient-to-r from-gray-300 to-gray-100 rounded-lg blur opacity-40"></div>
+                              <div className="md:hidden">
+                                <PizzeriaCard
+                                  pizzeria={pizzeriasForRanking[1]!}
+                                  onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}
+                                  rankingPlace={2}
+                                  compact
+                                />
+                              </div>
+                              <div className="hidden md:block relative">
+                                <PizzeriaCard
+                                  pizzeria={pizzeriasForRanking[1]!}
+                                  onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}
+                                  rankingPlace={2}
+                                />
+                                {/* Buttons for 2nd Place - Left Side */}
+                                <div className="absolute top-1/2 -translate-y-1/2 -left-32 flex flex-col gap-2 w-28">
+                                  <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}>Ver menú</Button>
+                                  <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[1]!)}>Cómo llegar</Button>
+                                  <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}>Calificar</Button>
                                 </div>
                               </div>
-                            </div>
-                            {/* Podium Block */}
-                            <div className="h-24 md:h-32 w-full bg-gradient-to-b from-slate-300 to-slate-400 dark:from-slate-700 dark:to-slate-800 rounded-t-lg relative shadow-lg border-t-4 border-slate-300 flex items-center justify-center mx-auto max-w-full">
-                              <span className="font-bold text-5xl md:text-6xl text-slate-100/50 drop-shadow-md">2</span>
                             </div>
                           </div>
+                          {/* Podium Block */}
+                          <div className="h-24 md:h-32 w-full bg-gradient-to-b from-slate-300 to-slate-400 dark:from-slate-700 dark:to-slate-800 rounded-t-lg relative shadow-lg border-t-4 border-slate-300 flex items-center justify-center mx-auto max-w-full">
+                            <span className="font-bold text-5xl md:text-6xl text-slate-100/50 drop-shadow-md">2</span>
+                          </div>
+                        </div>
 
-                          {/* 1st Place (Center) - Adjusted Height */}
-                          <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end z-10 group">
-                            {/* Card Container */}
-                            <div className="absolute bottom-[280px] left-1/2 -translate-x-1/2 w-[160px] md:w-[320px] z-30 transition-transform duration-300 hover:-translate-y-2">
-                              <div className="relative">
-                                <div className="absolute -inset-1 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-lg blur opacity-50 animate-pulse"></div>
-                                <div className="md:hidden">
-                                  <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[0]!}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}
-                                    rankingPlace={1}
-                                    compact
-                                  />
-                                </div>
-                                <div className="hidden md:block">
-                                  <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[0]!}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}
-                                    rankingPlace={1}
-                                  />
+                        {/* 1st Place (Center) - Adjusted Height */}
+                        <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end z-10 group">
+                          {/* Card Container */}
+                          <div className="absolute bottom-[280px] left-1/2 -translate-x-1/2 w-[160px] md:w-[320px] z-30 transition-transform duration-300 hover:-translate-y-2">
+                            <div className="relative">
+                              <div className="absolute -inset-1 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-lg blur opacity-50 animate-pulse"></div>
+                              <div className="md:hidden">
+                                <PizzeriaCard
+                                  pizzeria={pizzeriasForRanking[0]!}
+                                  onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}
+                                  rankingPlace={1}
+                                  compact
+                                />
+                              </div>
+                              <div className="hidden md:block relative">
+                                <PizzeriaCard
+                                  pizzeria={pizzeriasForRanking[0]!}
+                                  onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}
+                                  rankingPlace={1}
+                                />
+                                {/* Buttons for 1st Place - Top Side */}
+                                <div className="absolute -top-14 left-0 w-full flex justify-center gap-2">
+                                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}>Ver menú</Button>
+                                  <Button size="sm" variant="secondary" className="bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[0]!)}>Cómo llegar</Button>
+                                  <Button size="sm" variant="outline" className="border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}>Calificar</Button>
                                 </div>
                               </div>
-                            </div>
-                            {/* Podium Block */}
-                            <div className="h-64 w-full bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-t-lg relative shadow-xl border-t-4 border-yellow-300 flex items-center justify-center overflow-hidden mx-auto max-w-full">
-                              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
-                              <span className="font-bold text-6xl md:text-8xl text-white drop-shadow-lg">1</span>
                             </div>
                           </div>
+                          {/* Podium Block */}
+                          <div className="h-64 w-full bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-t-lg relative shadow-xl border-t-4 border-yellow-300 flex items-center justify-center overflow-hidden mx-auto max-w-full">
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                            <span className="font-bold text-6xl md:text-8xl text-white drop-shadow-lg">1</span>
+                          </div>
+                        </div>
 
-                          {/* 3rd Place (Right) */}
-                          <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end group">
-                            {/* Card Container */}
-                            <div className="absolute bottom-[90px] md:bottom-[110px] left-1/2 -translate-x-1/2 w-[140px] md:w-[300px] z-20 transition-transform duration-300 hover:-translate-y-2">
-                              <div className="relative">
-                                <div className="absolute -inset-1 bg-gradient-to-r from-orange-300 to-orange-200 rounded-lg blur opacity-40"></div>
-                                <div className="md:hidden">
-                                  <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[2]!}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}
-                                    rankingPlace={3}
-                                    compact
-                                  />
-                                </div>
-                                <div className="hidden md:block">
-                                  <PizzeriaCard
-                                    pizzeria={pizzeriasForRanking[2]!}
-                                    onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}
-                                    rankingPlace={3}
-                                  />
+                        {/* 3rd Place (Right) */}
+                        <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end group">
+                          {/* Card Container */}
+                          <div className="absolute bottom-[90px] md:bottom-[110px] left-1/2 -translate-x-1/2 w-[140px] md:w-[300px] z-20 transition-transform duration-300 hover:-translate-y-2">
+                            <div className="relative">
+                              <div className="absolute -inset-1 bg-gradient-to-r from-orange-300 to-orange-200 rounded-lg blur opacity-40"></div>
+                              <div className="md:hidden">
+                                <PizzeriaCard
+                                  pizzeria={pizzeriasForRanking[2]!}
+                                  onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}
+                                  rankingPlace={3}
+                                  compact
+                                />
+                              </div>
+                              <div className="hidden md:block relative">
+                                <PizzeriaCard
+                                  pizzeria={pizzeriasForRanking[2]!}
+                                  onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}
+                                  rankingPlace={3}
+                                />
+                                {/* Buttons for 3rd Place - Right Side */}
+                                <div className="absolute top-1/2 -translate-y-1/2 -right-32 flex flex-col gap-2 w-28">
+                                  <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}>Ver menú</Button>
+                                  <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[2]!)}>Cómo llegar</Button>
+                                  <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}>Calificar</Button>
                                 </div>
                               </div>
                             </div>
-                            {/* Podium Block */}
-                            <div className="h-20 md:h-24 w-full bg-gradient-to-b from-orange-400 to-orange-600 rounded-t-lg relative shadow-lg border-t-4 border-orange-300 flex items-center justify-center mx-auto max-w-full">
-                              <span className="font-bold text-4xl md:text-5xl text-orange-100/80 drop-shadow-md">3</span>
-                            </div>
+                          </div>
+                          {/* Podium Block */}
+                          <div className="h-20 md:h-24 w-full bg-gradient-to-b from-orange-400 to-orange-600 rounded-t-lg relative shadow-lg border-t-4 border-orange-300 flex items-center justify-center mx-auto max-w-full">
+                            <span className="font-bold text-4xl md:text-5xl text-orange-100/80 drop-shadow-md">3</span>
                           </div>
                         </div>
                       </div>
-                    )
+                    </div>
+                  )
+                )}
+              </ScrollReveal>
+            </div>
+
+            {allPizzerias && (
+              <ExplorarPizzerias
+                pizzerias={allPizzerias}
+                onLocate={(pizzeria) => {
+                  handleSelectPizzeria(pizzeria);
+                  setSearchCenter({ lat: pizzeria.lat, lng: pizzeria.lng });
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                isAdmin={canManagePizzerias}
+                initialLayoutSettings={layoutSettings}
+              />
+            )}
+
+            <div id="testimonials" className="bg-muted/50 py-16">
+              <div className="container">
+                <ScrollReveal>
+                  <div className="max-w-3xl mx-auto text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-headline font-bold">Lo que nuestra comunidad opina</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">
+                      Descubre por qué a los amantes de la pizza les encanta PizzApp.
+                    </p>
+                  </div>
+
+                  {hasMounted && testimonials && testimonials.length > 0 && (
+                    <TestimonialsCarousel testimonials={testimonials} canManageContent={canManageContent} />
+                  )}
+
+                  {hasMounted && (
+                    <div className="text-center mt-12">
+                      <Dialog open={isTestimonialDialogOpen} onOpenChange={setIsTestimonialDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button size="lg" variant="outline">
+                            <MessageSquarePlus className="mr-2 h-5 w-5" />
+                            Deja tu propia opinión
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[800px]">
+                          <DialogHeader>
+                            <DialogTitle className="font-headline text-3xl">Deja una respuesta</DialogTitle>
+                            <DialogDescription>
+                              Usa esta sección para contarnos qué te parece PizzApp. ¡Tu feedback es muy valioso!
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="py-4">
+                            <TestimonialForm onSuccess={() => setIsTestimonialDialogOpen(false)} />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   )}
                 </ScrollReveal>
               </div>
-
-              {allPizzerias && (
-                <ExplorarPizzerias
-                  pizzerias={allPizzerias}
-                  onLocate={(pizzeria) => {
-                    handleSelectPizzeria(pizzeria);
-                    setSearchCenter({ lat: pizzeria.lat, lng: pizzeria.lng });
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  isAdmin={canManagePizzerias}
-                  initialLayoutSettings={layoutSettings}
-                />
-              )}
-
-              <div id="testimonials" className="bg-muted/50 py-16">
-                <div className="container">
-                  <ScrollReveal>
-                    <div className="max-w-3xl mx-auto text-center mb-12">
-                      <h2 className="text-3xl md:text-4xl font-headline font-bold">Lo que nuestra comunidad opina</h2>
-                      <p className="mt-4 text-lg text-muted-foreground">
-                        Descubre por qué a los amantes de la pizza les encanta PizzApp.
-                      </p>
-                    </div>
-
-                    {hasMounted && testimonials && testimonials.length > 0 && (
-                      <TestimonialsCarousel testimonials={testimonials} canManageContent={canManageContent} />
-                    )}
-
-                    {hasMounted && (
-                      <div className="text-center mt-12">
-                        <Dialog open={isTestimonialDialogOpen} onOpenChange={setIsTestimonialDialogOpen}>
-                          <DialogTrigger asChild>
-                            <Button size="lg" variant="outline">
-                              <MessageSquarePlus className="mr-2 h-5 w-5" />
-                              Deja tu propia opinión
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[800px]">
-                            <DialogHeader>
-                              <DialogTitle className="font-headline text-3xl">Deja una respuesta</DialogTitle>
-                              <DialogDescription>
-                                Usa esta sección para contarnos qué te parece PizzApp. ¡Tu feedback es muy valioso!
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="py-4">
-                              <TestimonialForm onSuccess={() => setIsTestimonialDialogOpen(false)} />
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    )}
-                  </ScrollReveal>
-                </div>
-              </div>
-
-              <WhyChoosePizzapp isAdmin={canManageContent} />
             </div>
-          )}
+
+            <WhyChoosePizzapp isAdmin={canManageContent} />
+          </div>
         </main>
       </div>
     </>

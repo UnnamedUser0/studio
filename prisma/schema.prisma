@@ -15,29 +15,29 @@ model User {
   image         String?
   password      String?
   isAdmin       Boolean   @default(false)
-  permissions   String?   // JSON string of permissions
+  permissions   String? // JSON string of permissions
   lastActiveAt  DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  reviews       Review[]
+  accounts Account[]
+  sessions Session[]
+  reviews  Review[]
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -69,9 +69,9 @@ model Pizzeria {
   imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  reviews   Review[]
-  items     MenuItem[]
+
+  reviews Review[]
+  items   MenuItem[]
 }
 
 model MenuItem {
@@ -85,37 +85,55 @@ model MenuItem {
   pizzeria    Pizzeria @relation(fields: [pizzeriaId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  legend      String?
+}
+
+model FooterConfig {
+  id            String   @id @default(cuid())
+  copyrightText String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SocialLink {
+  id        String   @id @default(cuid())
+  platform  String
+  iconName  String
+  href      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Testimonial {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   name      String
   email     String?
   role      String?
   content   String
   avatarUrl String?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   replyText String?
   repliedAt DateTime?
 }
 
 model GlobalSettings {
-  key       String   @id
-  value     String
+  key   String @id
+  value String
 }
 
 model Review {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   rating     Int
   comment    String?
   userId     String
   pizzeriaId String
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
   replyText  String?
   repliedAt  DateTime?
-  
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  pizzeria   Pizzeria @relation(fields: [pizzeriaId], references: [id], onDelete: Cascade)
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pizzeria Pizzeria @relation(fields: [pizzeriaId], references: [id], onDelete: Cascade)
 }
 
 model FeatureCard {
@@ -139,14 +157,14 @@ model FaqCategory {
 }
 
 model FaqQuestion {
-  id          String      @id @default(cuid())
-  question    String
-  answer      String
-  categoryId  String
-  category    FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  order       Int         @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id         String      @id @default(cuid())
+  question   String
+  answer     String
+  categoryId String
+  category   FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  order      Int         @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 }
 
 model HelpCenterCard {
@@ -159,4 +177,24 @@ model HelpCenterCard {
   order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model FooterSection {
+  id        String       @id @default(cuid())
+  title     String
+  order     Int          @default(0)
+  links     FooterLink[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model FooterLink {
+  id        String        @id @default(cuid())
+  label     String
+  href      String
+  sectionId String
+  section   FooterSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  order     Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }
