@@ -66,6 +66,8 @@ const IconMap: Record<string, any> = {
     Messenger: MessageCircle,
 }
 
+
+
 const FooterLinkItem = ({ href, children }: { href: string; children: React.ReactNode }) => (
     <li>
         <Link

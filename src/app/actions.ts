@@ -284,3 +284,23 @@ export async function addTestimonial(data: { name: string, email?: string, comme
         }
     })
 }
+
+export async function getRankingStyles() {
+    const setting = await prisma.globalSettings.findUnique({
+        where: { key: 'ranking_styles' }
+    })
+    if (!setting) return null
+    try {
+        return JSON.parse(setting.value)
+    } catch (e) {
+        return null
+    }
+}
+
+export async function updateRankingStyles(styles: any) {
+    return await prisma.globalSettings.upsert({
+        where: { key: 'ranking_styles' },
+        update: { value: JSON.stringify(styles) },
+        create: { key: 'ranking_styles', value: JSON.stringify(styles) }
+    })
+}

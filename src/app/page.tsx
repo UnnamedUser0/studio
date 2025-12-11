@@ -8,7 +8,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 
 import MapView from '@/components/map/map-view';
 import { Loader2, MessageSquarePlus, List } from 'lucide-react';
-import { Pizzeria, Testimonial, User } from '@/lib/types';
+import { Pizzeria, Testimonial, User, Geocode } from '@/lib/types';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -23,19 +23,44 @@ import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import WelcomeScreen from '@/components/welcome/welcome-screen';
 import RankingManager from '@/components/admin/ranking-manager';
 import ExplorarPizzerias from '@/components/pizzeria/explorar-pizzerias';
-
-const Footer = dynamic(() => import('@/components/layout/footer'), {
-  loading: () => <div />,
-});
-
-type Geocode = { lat: number, lng: number };
+import { RankingStyler, RankingStyles } from '@/components/admin/ranking-styler';
+import PizzeriaReviews from '@/components/pizzeria/pizzeria-reviews';
+import PizzeriaDetail from '@/components/pizzeria/pizzeria-detail';
+import MenuModal from '@/components/pizzeria/menu-modal';
 
 function HomeContent() {
-  const [selectedPizzeria, setSelectedPizzeria] = useState<Pizzeria | null>(null);
+  const [selectedPizzeria, setSelectedPizzeria] = useState<Pizzeria | null>(null); // Used for Menu Sheet (Map/Explore)
+  const [selectedPizzeriaForMenu, setSelectedPizzeriaForMenu] = useState<Pizzeria | null>(null); // Used for Menu Modal (Ranking)
+  const [selectedPizzeriaForReviews, setSelectedPizzeriaForReviews] = useState<Pizzeria | null>(null); // Used for Reviews Sheet
   const [isSearching, setIsSearching] = useState(false);
   const [searchCenter, setSearchCenter] = useState<Geocode | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
   const [isTestimonialDialogOpen, setIsTestimonialDialogOpen] = useState(false);
+  // Fetch Ranking Styles
+  const [rankingStyles, setRankingStyles] = useState<RankingStyles>({
+    cardScale: 1,
+    cardScale1st: 1,
+    cardScale2nd: 1,
+    cardScale3rd: 1,
+    cardWidth: 320,
+    cardWidth2nd: 320,
+    cardWidth3rd: 320,
+    imageHeight: 112,
+    imageWidth: 112,
+    textSize: 1,
+    buttonScale: 1,
+    showSideActions: true,
+  });
+
+  useEffect(() => {
+    import('@/app/actions').then(({ getRankingStyles }) => {
+      getRankingStyles().then((styles) => {
+        if (styles) {
+          setRankingStyles(prev => ({ ...prev, ...styles }));
+        }
+      });
+    });
+  }, []);
 
   const [showWelcome, setShowWelcome] = useState(false);
   const [isCheckingWelcome, setIsCheckingWelcome] = useState(true);
@@ -234,41 +259,38 @@ function HomeContent() {
     setSelectedPizzeria(pizzeria);
   }, []);
 
+  const handleRatePizzeria = useCallback((pizzeria: Pizzeria) => {
+    setSelectedPizzeriaForReviews(pizzeria);
+  }, []);
+
   const handleSearch = useCallback((results: Pizzeria[], geocode?: Geocode) => {
     setIsSearching(true);
-    setVisiblePizzerias(results);
+
+    if (results.length === 0 && geocode) {
+      // If searching for a location, show pizzerias within 2.5km
+      const nearby = allPizzerias.filter(p => {
+        if (!p.lat || !p.lng) return false;
+        const distance = getDistance(
+          { latitude: geocode.lat, longitude: geocode.lng },
+          { latitude: p.lat, longitude: p.lng }
+        );
+        return distance <= 2500;
+      });
+      setVisiblePizzerias(nearby);
+    } else {
+      setVisiblePizzerias(results);
+    }
 
     if (geocode) {
       setSearchCenter(geocode);
-      setSelectedPizzeria(null);
     } else if (results.length > 0) {
       setSearchCenter({ lat: results[0].lat, lng: results[0].lng });
-    }
-  }, []);
-
-  const handleLocateUser = useCallback((coords: Geocode) => {
-    setIsSearching(true);
-    setSearchCenter(coords);
-    if (allPizzerias) {
-      const sortedByDistance = [...allPizzerias]
-        .map(pizzeria => ({
-          ...pizzeria,
-          distance: getDistance(
-            { latitude: coords.lat, longitude: coords.lng },
-            { latitude: pizzeria.lat, longitude: pizzeria.lng }
-          ),
-        }))
-        .sort((a, b) => a.distance - b.distance);
-      const nearby = sortedByDistance.slice(0, 20);
-      setVisiblePizzerias(nearby);
-      setSelectedPizzeria(null);
     }
   }, [allPizzerias]);
 
   const handleClearSearch = useCallback(() => {
-    setVisiblePizzerias([]);
     setIsSearching(false);
-    setSelectedPizzeria(null);
+    setVisiblePizzerias([]);
     setSearchCenter(null);
   }, []);
 
@@ -276,10 +298,16 @@ function HomeContent() {
     setSelectedPizzeria(null);
   }, []);
 
+  const handleLocateUser = useCallback((coords: { lat: number, lng: number }) => {
+    // setUserLocation(coords);
+  }, []);
+
+  const [routeDestination, setRouteDestination] = useState<{ lat: number, lng: number } | null>(null);
+
   const handleNavigate = useCallback((pizzeria: Pizzeria) => {
     if (!pizzeria.lat || !pizzeria.lng) return;
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${pizzeria.lat},${pizzeria.lng}`;
-    window.open(url, '_blank');
+    setRouteDestination({ lat: pizzeria.lat, lng: pizzeria.lng });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const pizzeriasToShowInList = isSearching ? visiblePizzerias : (pizzeriasForRanking || []);
@@ -302,7 +330,7 @@ function HomeContent() {
         <main className="flex-grow flex flex-col">
           <div className="h-[55vh] md:h-[70vh] w-full">
             <MapView
-              visiblePizzerias={visiblePizzerias}
+              visiblePizzerias={isSearching ? visiblePizzerias : allPizzerias}
               onSelectPizzeria={handleSelectPizzeria}
               selectedPizzeria={selectedPizzeria}
               searchCenter={searchCenter}
@@ -311,6 +339,9 @@ function HomeContent() {
               onCloseDetail={handleCloseDetail}
               onLocateUser={handleLocateUser}
               allPizzerias={allPizzerias}
+              routeDestination={routeDestination}
+              onViewMenu={handleSelectPizzeria}
+              onRate={handleRatePizzeria}
             />
           </div>
 
@@ -320,10 +351,14 @@ function HomeContent() {
                 <div className="flex flex-col items-center justify-center mb-24">
                   <h2 className="text-3xl font-headline text-center">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
                   {canManagePizzerias && allPizzerias && (
-                    <div className="mt-4">
+                    <div className="mt-4 flex gap-2">
                       <RankingManager
                         allPizzerias={allPizzerias}
                         currentRankingIds={rankingSettings?.pizzeriaIds}
+                      />
+                      <RankingStyler
+                        styles={rankingStyles}
+                        onStylesChange={setRankingStyles}
                       />
                     </div>
                   )}
@@ -341,8 +376,11 @@ function HomeContent() {
                       <div className="absolute bottom-4 md:bottom-6 w-[85%] md:w-full left-1/2 -translate-x-1/2 flex items-end justify-center gap-2 md:gap-8 px-2">
                         {/* 2nd Place (Left) */}
                         <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end group">
-                          {/* Card Container */}
-                          <div className="absolute bottom-[110px] md:bottom-[140px] left-1/2 -translate-x-1/2 w-[140px] md:w-[300px] z-20 transition-transform duration-300 hover:-translate-y-2">
+                          {/* Card Container - Expands to Left */}
+                          <div
+                            className="absolute bottom-[110px] md:bottom-[140px] right-1/2 translate-x-1/2 md:translate-x-0 md:right-0 z-20 transition-all duration-300 hover:-translate-y-2"
+                            style={{ width: `${rankingStyles.cardWidth2nd}px` }}
+                          >
                             <div className="relative">
                               <div className="absolute -inset-1 bg-gradient-to-r from-gray-300 to-gray-100 rounded-lg blur opacity-40"></div>
                               <div className="md:hidden">
@@ -358,13 +396,18 @@ function HomeContent() {
                                   pizzeria={pizzeriasForRanking[1]!}
                                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}
                                   rankingPlace={2}
+                                  inverted
+                                  sideActionsPosition="left"
+                                  rankingStyles={rankingStyles}
+                                  customScale={rankingStyles.cardScale2nd}
+                                  sideActions={rankingStyles.showSideActions ? (
+                                    <div className="flex flex-col gap-2 w-28">
+                                      <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => setSelectedPizzeriaForMenu(pizzeriasForRanking[1]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Ver menú</Button>
+                                      <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[1]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Cómo llegar</Button>
+                                      <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleRatePizzeria(pizzeriasForRanking[1]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Calificar</Button>
+                                    </div>
+                                  ) : undefined}
                                 />
-                                {/* Buttons for 2nd Place - Left Side */}
-                                <div className="absolute top-1/2 -translate-y-1/2 -left-32 flex flex-col gap-2 w-28">
-                                  <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}>Ver menú</Button>
-                                  <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[1]!)}>Cómo llegar</Button>
-                                  <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}>Calificar</Button>
-                                </div>
                               </div>
                             </div>
                           </div>
@@ -376,8 +419,11 @@ function HomeContent() {
 
                         {/* 1st Place (Center) - Adjusted Height */}
                         <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end z-10 group">
-                          {/* Card Container */}
-                          <div className="absolute bottom-[280px] left-1/2 -translate-x-1/2 w-[160px] md:w-[320px] z-30 transition-transform duration-300 hover:-translate-y-2">
+                          {/* Card Container - Centered */}
+                          <div
+                            className="absolute bottom-[280px] left-1/2 -translate-x-1/2 z-30 transition-transform duration-300 hover:-translate-y-2"
+                            style={{ width: `${rankingStyles.cardWidth}px` }}
+                          >
                             <div className="relative">
                               <div className="absolute -inset-1 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-lg blur opacity-50 animate-pulse"></div>
                               <div className="md:hidden">
@@ -393,13 +439,17 @@ function HomeContent() {
                                   pizzeria={pizzeriasForRanking[0]!}
                                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}
                                   rankingPlace={1}
+                                  sideActionsPosition="right"
+                                  rankingStyles={rankingStyles}
+                                  customScale={rankingStyles.cardScale1st}
+                                  sideActions={rankingStyles.showSideActions ? (
+                                    <div className="flex flex-col gap-2 w-28">
+                                      <Button size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => setSelectedPizzeriaForMenu(pizzeriasForRanking[0]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Ver menú</Button>
+                                      <Button size="sm" variant="secondary" className="bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[0]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Cómo llegar</Button>
+                                      <Button size="sm" variant="outline" className="border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleRatePizzeria(pizzeriasForRanking[0]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Calificar</Button>
+                                    </div>
+                                  ) : undefined}
                                 />
-                                {/* Buttons for 1st Place - Top Side */}
-                                <div className="absolute -top-14 left-0 w-full flex justify-center gap-2">
-                                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}>Ver menú</Button>
-                                  <Button size="sm" variant="secondary" className="bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[0]!)}>Cómo llegar</Button>
-                                  <Button size="sm" variant="outline" className="border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}>Calificar</Button>
-                                </div>
                               </div>
                             </div>
                           </div>
@@ -412,8 +462,11 @@ function HomeContent() {
 
                         {/* 3rd Place (Right) */}
                         <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end group">
-                          {/* Card Container */}
-                          <div className="absolute bottom-[90px] md:bottom-[110px] left-1/2 -translate-x-1/2 w-[140px] md:w-[300px] z-20 transition-transform duration-300 hover:-translate-y-2">
+                          {/* Card Container - Expands to Right */}
+                          <div
+                            className="absolute bottom-[90px] md:bottom-[110px] left-1/2 -translate-x-1/2 md:translate-x-0 md:left-0 z-20 transition-all duration-300 hover:-translate-y-2"
+                            style={{ width: `${rankingStyles.cardWidth3rd}px` }}
+                          >
                             <div className="relative">
                               <div className="absolute -inset-1 bg-gradient-to-r from-orange-300 to-orange-200 rounded-lg blur opacity-40"></div>
                               <div className="md:hidden">
@@ -429,13 +482,17 @@ function HomeContent() {
                                   pizzeria={pizzeriasForRanking[2]!}
                                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}
                                   rankingPlace={3}
+                                  sideActionsPosition="right"
+                                  rankingStyles={rankingStyles}
+                                  customScale={rankingStyles.cardScale3rd}
+                                  sideActions={rankingStyles.showSideActions ? (
+                                    <div className="flex flex-col gap-2 w-28">
+                                      <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => setSelectedPizzeriaForMenu(pizzeriasForRanking[2]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Ver menú</Button>
+                                      <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[2]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Cómo llegar</Button>
+                                      <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleRatePizzeria(pizzeriasForRanking[2]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Calificar</Button>
+                                    </div>
+                                  ) : undefined}
                                 />
-                                {/* Buttons for 3rd Place - Right Side */}
-                                <div className="absolute top-1/2 -translate-y-1/2 -right-32 flex flex-col gap-2 w-28">
-                                  <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}>Ver menú</Button>
-                                  <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[2]!)}>Cómo llegar</Button>
-                                  <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}>Calificar</Button>
-                                </div>
                               </div>
                             </div>
                           </div>
@@ -454,11 +511,8 @@ function HomeContent() {
             {allPizzerias && (
               <ExplorarPizzerias
                 pizzerias={allPizzerias}
-                onLocate={(pizzeria) => {
-                  handleSelectPizzeria(pizzeria);
-                  setSearchCenter({ lat: pizzeria.lat, lng: pizzeria.lng });
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
+                onLocate={handleNavigate}
+                onRate={handleRatePizzeria}
                 isAdmin={canManagePizzerias}
                 initialLayoutSettings={layoutSettings}
               />
@@ -509,6 +563,30 @@ function HomeContent() {
           </div>
         </main>
       </div>
+
+      {/* Existing Menu Sheet (triggered by selectedPizzeria) */}
+      <Sheet open={!!selectedPizzeria} onOpenChange={() => setSelectedPizzeria(null)}>
+        <SheetContent className="w-full sm:max-w-md p-0 overflow-hidden flex flex-col">
+          {selectedPizzeria && <PizzeriaDetail pizzeria={selectedPizzeria} />}
+        </SheetContent>
+      </Sheet>
+
+      {/* New Reviews Sheet */}
+      <Sheet open={!!selectedPizzeriaForReviews} onOpenChange={() => setSelectedPizzeriaForReviews(null)}>
+        <SheetContent className="w-full sm:max-w-md p-0 overflow-hidden flex flex-col">
+          {selectedPizzeriaForReviews && <PizzeriaReviews pizzeria={selectedPizzeriaForReviews} />}
+        </SheetContent>
+      </Sheet>
+
+      {selectedPizzeriaForMenu && (
+        <MenuModal
+          isOpen={!!selectedPizzeriaForMenu}
+          onClose={() => setSelectedPizzeriaForMenu(null)}
+          pizzeriaId={selectedPizzeriaForMenu.id}
+          pizzeriaName={selectedPizzeriaForMenu.name}
+          isAdmin={canManagePizzerias}
+        />
+      )}
     </>
   );
 }

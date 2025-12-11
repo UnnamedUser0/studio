@@ -7,7 +7,7 @@ import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 import type { Pizzeria } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star, X } from 'lucide-react';
+import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createRoot } from 'react-dom/client';
 import getDistance from 'geolib/es/getDistance';
@@ -45,6 +45,8 @@ type PizzaMapProps = {
   onToggleFullscreen: () => void;
   onViewMenu?: (pizzeria: Pizzeria) => void;
   onNavigate?: (pizzeria: Pizzeria) => void;
+  onRate?: (pizzeria: Pizzeria) => void;
+  routeDestination?: { lat: number, lng: number } | null;
 };
 
 export default function PizzaMap({
@@ -56,7 +58,9 @@ export default function PizzaMap({
   isFullscreen,
   onToggleFullscreen,
   onViewMenu,
-  onNavigate
+  onNavigate,
+  onRate,
+  routeDestination
 }: PizzaMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -66,6 +70,8 @@ export default function PizzaMap({
   const popupRef = useRef<L.Popup | null>(null);
   const { toast } = useToast();
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
+
+
 
   const handleLocateMe = () => {
     const map = mapInstanceRef.current;
@@ -81,56 +87,91 @@ export default function PizzaMap({
     }
 
     toast({
-      title: 'Obteniendo ubicación...',
-      description: 'Por favor espera mientras obtenemos tu ubicación precisa.',
+      title: 'Obteniendo ubicación precisa...',
+      description: 'Esto puede tomar unos segundos para asegurar la mejor precisión.',
     });
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const latlng = new L.LatLng(latitude, longitude);
-        setUserLocation({ lat: latitude, lng: longitude });
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 20000,
+      maximumAge: 0
+    };
 
-        if (myLocationMarkerRef.current) {
-          myLocationMarkerRef.current.setLatLng(latlng);
-        } else {
-          myLocationMarkerRef.current = L.marker(latlng, { icon: myLocationIcon }).addTo(map);
+    let watchId: number;
+    let bestPosition: GeolocationPosition | null = null;
+    let accuracyThreshold = 15; // meters
+
+    // Use watchPosition to get the best possible location
+    watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        console.log(`Location update: ${latitude}, ${longitude} (Accuracy: ${accuracy}m)`);
+
+        // Update if it's the first reading or better accuracy
+        if (!bestPosition || accuracy < bestPosition.coords.accuracy) {
+          bestPosition = position;
+
+          const latlng = new L.LatLng(latitude, longitude);
+          setUserLocation({ lat: latitude, lng: longitude });
+
+          if (myLocationMarkerRef.current) {
+            myLocationMarkerRef.current.setLatLng(latlng);
+          } else {
+            myLocationMarkerRef.current = L.marker(latlng, { icon: myLocationIcon }).addTo(map);
+          }
+
+          // Fly to location only on first update or significant improvement
+          if (!userLocation || accuracy < 50) {
+            map.flyTo(latlng, 16);
+            onLocateUser({ lat: latitude, lng: longitude });
+          }
         }
 
-        map.flyTo(latlng, 15);
-        onLocateUser({ lat: latitude, lng: longitude });
-
-        toast({
-          title: 'Ubicación encontrada',
-          description: 'Mostrando pizzerías cercanas a tu ubicación.',
-        });
+        // If accuracy is good enough, stop watching
+        if (accuracy <= accuracyThreshold) {
+          navigator.geolocation.clearWatch(watchId);
+          toast({
+            title: 'Ubicación precisa encontrada',
+            description: `Precisión: ${accuracy.toFixed(0)} metros.`,
+          });
+        }
       },
       (error) => {
-        let errorMessage = 'No se pudo obtener tu ubicación.';
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Permiso denegado. Por favor habilita la ubicación en tu navegador.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'La información de ubicación no está disponible.';
-            break;
-          case error.TIMEOUT:
-            errorMessage = 'Se agotó el tiempo de espera para obtener la ubicación.';
-            break;
+        console.error("Geolocation error:", error);
+        // Only show error if we haven't found any position yet
+        if (!bestPosition) {
+          let errorMessage = 'No se pudo obtener tu ubicación.';
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Permiso denegado. Verifica que el sitio tenga permisos de ubicación en tu navegador y sistema operativo.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Ubicación no disponible. Asegúrate de tener el GPS activado.';
+              break;
+            case error.TIMEOUT:
+              errorMessage = 'Tiempo de espera agotado. Intenta de nuevo en un lugar abierto.';
+              break;
+          }
+          toast({
+            variant: 'destructive',
+            title: 'Error de ubicación',
+            description: errorMessage,
+          });
         }
-
-        toast({
-          variant: 'destructive',
-          title: 'Error de ubicación',
-          description: errorMessage,
-        });
+        navigator.geolocation.clearWatch(watchId);
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
+      options
     );
+
+    // Stop watching after 15 seconds regardless
+    setTimeout(() => {
+      navigator.geolocation.clearWatch(watchId);
+      if (bestPosition) {
+        // Ensure we are centered on the best position found
+        const { latitude, longitude } = (bestPosition as GeolocationPosition).coords;
+        map.flyTo([latitude, longitude], 16);
+      }
+    }, 15000);
   };
 
   const drawRoute = async (destination: { lat: number, lng: number }) => {
@@ -191,6 +232,13 @@ export default function PizzaMap({
     }
   };
 
+  // Effect to handle routeDestination prop
+  useEffect(() => {
+    if (routeDestination) {
+      drawRoute(routeDestination);
+    }
+  }, [routeDestination]);
+
   // Effect for map initialization and cleanup
   useEffect(() => {
     if (mapContainerRef.current && !mapInstanceRef.current) {
@@ -226,108 +274,31 @@ export default function PizzaMap({
     };
   }, []);
 
-  // Effect for updating markers and handling popup
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !pizzerias) return;
+  const [showAll, setShowAll] = useState(false);
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
+  // Filter pizzerias based on distance if user location is known and not showing all
+  const visiblePizzerias = pizzerias.filter(pizzeria => {
+    // Always show selected pizzeria
+    if (selectedPizzeria?.id === pizzeria.id) return true;
 
-    pizzerias.forEach(pizzeria => {
-      if (typeof pizzeria.lat !== 'number' || typeof pizzeria.lng !== 'number') return;
+    // If explicitly showing all, show everything
+    if (showAll) return true;
 
-      const isSelected = selectedPizzeria?.id === pizzeria.id;
-      const marker = L.marker([pizzeria.lat, pizzeria.lng], {
-        icon: isSelected ? selectedIcon : defaultIcon,
-      })
-        .addTo(map)
-        .on('click', () => {
-          onMarkerClick(pizzeria);
-        });
+    // If we have a search center (meaning a search was performed), show pizzerias
+    if (searchCenter) return true;
 
-      if (isSelected) {
-        marker.setZIndexOffset(1000);
+    // If user location is known, filter by distance (2.5km)
+    if (userLocation && typeof pizzeria.lat === 'number' && typeof pizzeria.lng === 'number') {
+      const distance = getDistance(
+        { latitude: userLocation.lat, longitude: userLocation.lng },
+        { latitude: pizzeria.lat, longitude: pizzeria.lng }
+      );
+      return distance <= 2500; // 2.5km in meters
+    }
 
-        // Create Popup Content
-        const popupContent = document.createElement('div');
-        const root = createRoot(popupContent);
-
-        const distance = userLocation
-          ? (getDistance(
-            { latitude: userLocation.lat, longitude: userLocation.lng },
-            { latitude: pizzeria.lat, longitude: pizzeria.lng }
-          ) / 1000).toFixed(1) + ' km'
-          : 'Calculando...';
-
-        root.render(
-          <div className="w-[280px] p-1 font-sans">
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="text-lg font-bold text-red-600 leading-tight">{pizzeria.name}</h3>
-            </div>
-
-            <div className="space-y-2 mb-4 text-sm text-gray-600">
-              <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-pink-500 mt-0.5 shrink-0" />
-                <span className="leading-tight">{pizzeria.address || 'Dirección no disponible'}</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Ruler className="w-4 h-4 text-gray-400 shrink-0" />
-                <span>Distancia: {distance}</span>
-              </div>
-
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                <span className="font-medium text-gray-900">Rating: {pizzeria.rating?.toFixed(1) || 'N/A'}</span>
-                <div className="flex ml-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-3 h-3 ${i < Math.round(pizzeria.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <Button
-                className="bg-red-600 hover:bg-red-700 text-white h-9 text-sm font-medium"
-                onClick={() => {
-                  if (onViewMenu) onViewMenu(pizzeria);
-                  else onMarkerClick(pizzeria); // Fallback to opening details
-                }}
-              >
-                Ver menú
-              </Button>
-              <Button
-                className="bg-red-600 hover:bg-red-700 text-white h-9 text-sm font-medium"
-                onClick={() => drawRoute({ lat: pizzeria.lat, lng: pizzeria.lng })}
-              >
-                Cómo llegar
-              </Button>
-            </div>
-          </div>
-        );
-
-        const popup = L.popup({
-          offset: [0, -35],
-          closeButton: true,
-          className: 'custom-popup',
-          maxWidth: 300
-        })
-          .setLatLng([pizzeria.lat, pizzeria.lng])
-          .setContent(popupContent)
-          .openOn(map);
-
-        popupRef.current = popup;
-      }
-
-      markersRef.current.push(marker);
-    });
-  }, [pizzerias, selectedPizzeria, onMarkerClick, userLocation]);
+    // Otherwise (no user location, no search, not showing all), hide everything
+    return false;
+  });
 
   // Effect for changing map view
   useEffect(() => {
@@ -354,6 +325,114 @@ export default function PizzaMap({
       }
     }
   }, [selectedPizzeria, searchCenter, routeLayerRef, userLocation]);
+
+  // Update markers based on visiblePizzerias
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+
+    // Use visiblePizzerias instead of prop pizzerias
+    visiblePizzerias.forEach(pizzeria => {
+      if (typeof pizzeria.lat !== 'number' || typeof pizzeria.lng !== 'number') return;
+
+      const isSelected = selectedPizzeria?.id === pizzeria.id;
+      const marker = L.marker([pizzeria.lat, pizzeria.lng], {
+        icon: isSelected ? selectedIcon : defaultIcon,
+      })
+        .addTo(map);
+
+      // Create Popup Content for ALL markers
+      const popupContent = document.createElement('div');
+      const root = createRoot(popupContent);
+
+      const distance = userLocation
+        ? (getDistance(
+          { latitude: userLocation.lat, longitude: userLocation.lng },
+          { latitude: pizzeria.lat, longitude: pizzeria.lng }
+        ) / 1000).toFixed(1) + ' km'
+        : 'Calculando...';
+
+      root.render(
+        <div className="w-[280px] p-1 font-sans">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-lg font-bold text-red-600 leading-tight">{pizzeria.name}</h3>
+          </div>
+
+          <div className="space-y-2 mb-4 text-sm text-gray-600">
+            <div className="flex items-start gap-2">
+              <MapPin className="w-4 h-4 text-pink-500 mt-0.5 shrink-0" />
+              <span className="leading-tight">{pizzeria.address || 'Dirección no disponible'}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Ruler className="w-4 h-4 text-gray-400 shrink-0" />
+              <span>Distancia: {distance}</span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+              <span className="font-medium text-gray-900">Rating: {pizzeria.rating?.toFixed(1) || 'N/A'}</span>
+              <div className="flex ml-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-3 h-3 ${i < Math.round(pizzeria.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white h-9 text-sm font-medium"
+              onClick={() => {
+                if (onViewMenu) onViewMenu(pizzeria);
+              }}
+            >
+              Ver menú
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white h-9 text-sm font-medium"
+              onClick={() => drawRoute({ lat: pizzeria.lat, lng: pizzeria.lng })}
+            >
+              Cómo llegar
+            </Button>
+            <Button
+              className="col-span-2 bg-yellow-500 hover:bg-yellow-600 text-white h-9 text-sm font-medium"
+              onClick={() => {
+                if (onRate) onRate(pizzeria);
+              }}
+            >
+              <Star className="w-4 h-4 mr-2 fill-current" />
+              Calificar
+            </Button>
+          </div>
+        </div>
+      );
+
+      const popup = L.popup({
+        offset: [0, -35],
+        closeButton: true,
+        className: 'custom-popup',
+        maxWidth: 300
+      }).setContent(popupContent);
+
+      marker.bindPopup(popup);
+
+      if (isSelected) {
+        marker.setZIndexOffset(1000);
+        marker.openPopup();
+        popupRef.current = popup;
+      }
+
+      markersRef.current.push(marker);
+    });
+  }, [visiblePizzerias, selectedPizzeria, onMarkerClick, userLocation]);
 
   return (
     <div className="relative h-full w-full z-0">
@@ -384,6 +463,17 @@ export default function PizzaMap({
             <Maximize2 className="h-4 w-4 md:h-5 md:w-5" />
           )}
         </Button>
+
+        {userLocation && (
+          <Button
+            variant={showAll ? "default" : "secondary"}
+            size="sm"
+            onClick={() => setShowAll(!showAll)}
+            className="shadow-lg rounded-full h-8 md:h-10 px-3 text-xs md:text-sm font-medium"
+          >
+            {showAll ? "Ver cercanas" : "Ver todas"}
+          </Button>
+        )}
       </div>
 
       <style jsx global>{`

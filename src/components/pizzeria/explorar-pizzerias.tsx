@@ -23,11 +23,13 @@ import LayoutEditor, { LayoutSettings } from '@/components/admin/layout-editor';
 export default function ExplorarPizzerias({
     pizzerias,
     onLocate,
+    onRate,
     isAdmin,
     initialLayoutSettings
 }: {
     pizzerias: Pizzeria[];
     onLocate: (pizzeria: Pizzeria) => void;
+    onRate: (pizzeria: Pizzeria) => void;
     isAdmin?: boolean;
     initialLayoutSettings?: LayoutSettings;
 }) {
@@ -133,7 +135,7 @@ export default function ExplorarPizzerias({
                                                     <Button
                                                         variant="outline"
                                                         className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
-                                                        onClick={() => onLocate(pizzeria)} // Opening detail view allows rating
+                                                        onClick={() => onRate(pizzeria)}
                                                     >
                                                         <Star className="w-4 h-4 mr-2 fill-current" />
                                                         Calificar
@@ -177,7 +179,7 @@ export default function ExplorarPizzerias({
                                 isLoading={false}
                                 onViewMenu={(p) => setSelectedPizzeriaForMenu(p)}
                                 onNavigate={(p) => onLocate(p)}
-                                onRate={(p) => onLocate(p)}
+                                onRate={onRate}
                                 layoutSettings={layoutSettings}
                             />
                         </SheetContent>

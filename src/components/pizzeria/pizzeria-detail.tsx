@@ -1,149 +1,62 @@
 'use client';
+
 import Image from 'next/image';
-import { Star, Loader2, CheckCircle, Trash2, MessageSquareReply, CornerDownLeft } from 'lucide-react';
+import { Loader2, Pizza } from 'lucide-react';
 import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Pizzeria, Review, User } from '@/lib/types';
-import { useSession } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import type { Pizzeria } from '@/lib/types';
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { addReview, getReviews } from '@/app/actions';
-import ReviewCard from './review-card';
-
-const StarRatingInput = ({ rating, setRating }: { rating: number, setRating: (rating: number) => void }) => (
-    <div className="flex items-center">
-        {[1, 2, 3, 4, 5].map((star) => (
-            <Star
-                key={star}
-                className={`w-5 h-5 cursor-pointer transition-colors ${rating >= star ? 'text-accent fill-accent' : 'text-muted-foreground/50 hover:text-accent'}`}
-                onClick={() => setRating(star)}
-            />
-        ))}
-    </div>
-);
-
-const AddReview = ({ pizzeriaId, onReviewAdded }: { pizzeriaId: string, onReviewAdded: () => void }) => {
-    const { data: session } = useSession();
-    const user = session?.user;
-    const { toast } = useToast();
-    const [rating, setRating] = useState(0);
-    const [comment, setComment] = useState('');
-    const [submitted, setSubmitted] = useState(false);
-
-    const handlePublish = async () => {
-        if (!user || !user.id || rating === 0 || !comment) return;
-
-        try {
-            await addReview(pizzeriaId, rating, comment, user.id);
-            toast({
-                title: "¡Opinión enviada!",
-                description: "Gracias por compartir tu experiencia."
-            });
-
-            setComment('');
-            setRating(0);
-            setSubmitted(true);
-            onReviewAdded();
-            setTimeout(() => setSubmitted(false), 3000);
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: "No se pudo enviar la opinión.",
-                variant: "destructive"
-            });
-        }
-    };
-
-    if (!user) {
-        return (
-            <Card className="text-center">
-                <CardContent className="p-6">
-                    <p className="text-muted-foreground">Debes <a href="/login" className="text-primary underline">iniciar sesión</a> para dejar una opinión.</p>
-                </CardContent>
-            </Card>
-        )
-    }
-
-    if (submitted) {
-        return (
-            <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                <CardContent className="p-6 text-center text-green-700 dark:text-green-300">
-                    <CheckCircle className="h-8 w-8 mx-auto mb-2" />
-                    <p className="font-semibold">¡Gracias por tu opinión!</p>
-                    <p className="text-sm">Tu comentario ha sido publicado.</p>
-                </CardContent>
-            </Card>
-        );
-    }
-
-    return (
-        <Card>
-            <CardHeader>
-                <h4 className="font-headline text-lg">Deja tu opinión</h4>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <Textarea
-                    placeholder={`¿Qué te pareció, ${user.name || user.email}?`}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                />
-                <div className="flex justify-between items-center">
-                    <StarRatingInput rating={rating} setRating={setRating} />
-                    <Button onClick={handlePublish} disabled={rating === 0 || !comment}>Publicar</Button>
-                </div>
-            </CardContent>
-        </Card>
-    )
-}
+import { getMenuItems } from '@/app/actions/menu';
 
 type PizzeriaDetailProps = {
     pizzeria: Pizzeria;
 };
 
+type MenuItem = {
+    id: string;
+    name: string;
+    description: string | null;
+    price: number;
+    imageUrl: string | null;
+    category: string | null;
+    legend: string | null;
+    pizzeriaId: string;
+};
+
 export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
-    const [reviews, setReviews] = useState<Review[]>([]);
+    const [items, setItems] = useState<MenuItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchReviews = () => {
-        setIsLoading(true);
-        getReviews(pizzeria.id).then((data) => {
-            // Adapt Prisma Review to App Review type
-            const adaptedReviews = data.map(r => ({
-                id: r.id.toString(),
-                author: r.user.name || r.user.email?.split('@')[0] || 'Anónimo',
-                userId: r.userId,
-                pizzeriaId: r.pizzeriaId,
-                rating: r.rating,
-                comment: r.comment || '',
-                createdAt: r.createdAt.toISOString(),
-                avatarUrl: r.user.image || undefined,
-                reply: r.replyText ? {
-                    text: r.replyText,
-                    repliedAt: r.repliedAt ? r.repliedAt.toISOString() : new Date().toISOString()
-                } : undefined
-            }));
-            setReviews(adaptedReviews);
-            setIsLoading(false);
-        });
-    };
-
     useEffect(() => {
-        fetchReviews();
+        const fetchData = async () => {
+            setIsLoading(true);
+            try {
+                const menuItems = await getMenuItems(pizzeria.id);
+                setItems(menuItems);
+            } catch (error) {
+                console.error("Error fetching menu:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
     }, [pizzeria.id]);
 
     const imageUrl = pizzeria.imageUrl || 'https://picsum.photos/seed/default/400/400';
     const imageHint = pizzeria.imageHint || 'pizza';
 
-    const averageRating = reviews && reviews.length > 0
-        ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
-        : pizzeria.rating || 0;
+    // Group items by category
+    const groupedItems = items.reduce((acc, item) => {
+        const category = item.category || 'General';
+        if (!acc[category]) {
+            acc[category] = [];
+        }
+        acc[category].push(item);
+        return acc;
+    }, {} as Record<string, MenuItem[]>);
 
+    const categories = Object.keys(groupedItems).sort();
 
     return (
         <>
@@ -166,31 +79,57 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
             </SheetHeader>
             <ScrollArea className="flex-1">
                 <div className="p-6 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <h3 className="font-headline text-xl text-foreground">Calificación General</h3>
-                        </CardHeader>
-                        <CardContent className="flex items-center gap-4">
-                            <div className="flex items-center text-2xl font-bold">
-                                <Star className="w-6 h-6 text-accent fill-accent mr-2" />
-                                {averageRating.toFixed(1)}
+                    <div>
+                        <h3 className="font-headline text-xl mb-4 text-foreground">Menú</h3>
+
+                        {isLoading ? (
+                            <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+                        ) : items.length === 0 ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                                <Pizza className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                <p>El menú digital aún no está disponible.</p>
+                                <p className="text-sm">Visita el local para ver sus especialidades.</p>
                             </div>
-                            <p className="text-muted-foreground">basado en {reviews?.length || 0} opiniones</p>
-                        </CardContent>
-                    </Card>
-                    <div id="ranking">
-                        <h3 className="font-headline text-xl mb-4 text-foreground">Opiniones de la Comunidad</h3>
-                        <div className="space-y-4">
-                            {isLoading ? (
-                                <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
-                            ) : (
-                                reviews && reviews.map(review => <ReviewCard key={review.id} review={review} pizzeriaId={pizzeria.id} />)
-                            )}
-                            {reviews?.length === 0 && !isLoading && (
-                                <p className="text-center text-muted-foreground py-4">Sé el primero en dejar una opinión.</p>
-                            )}
-                            <AddReview pizzeriaId={pizzeria.id} onReviewAdded={fetchReviews} />
-                        </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {categories.map(category => {
+                                    const categoryItems = groupedItems[category];
+                                    if (!categoryItems || categoryItems.length === 0) return null;
+                                    return (
+                                        <div key={category} className="space-y-3">
+                                            <h4 className="font-bold text-lg text-primary border-b pb-1">{category}</h4>
+                                            <div className="grid gap-3">
+                                                {categoryItems.map(item => (
+                                                    <Card key={item.id} className="overflow-hidden">
+                                                        <CardContent className="p-3 flex gap-3">
+                                                            {item.imageUrl && (
+                                                                <div className="relative w-20 h-20 shrink-0 rounded-md overflow-hidden">
+                                                                    <Image
+                                                                        src={item.imageUrl}
+                                                                        alt={item.name}
+                                                                        fill
+                                                                        className="object-cover"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex justify-between items-start gap-2">
+                                                                    <h5 className="font-bold truncate">{item.name}</h5>
+                                                                    <span className="font-semibold text-primary shrink-0">${item.price.toFixed(2)}</span>
+                                                                </div>
+                                                                {item.description && (
+                                                                    <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{item.description}</p>
+                                                                )}
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
             </ScrollArea>

@@ -27,6 +27,9 @@ type MapViewProps = {
   searchCenter: Geocode | null;
   onCloseDetail: () => void;
   onLocateUser: (coords: Geocode) => void;
+  routeDestination?: { lat: number, lng: number } | null;
+  onViewMenu?: (pizzeria: Pizzeria) => void;
+  onRate?: (pizzeria: Pizzeria) => void;
 };
 
 export default function MapView({
@@ -39,6 +42,9 @@ export default function MapView({
   searchCenter,
   onCloseDetail,
   onLocateUser,
+  routeDestination,
+  onViewMenu,
+  onRate,
 }: MapViewProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -57,7 +63,7 @@ export default function MapView({
         onLocateUser={onLocateUser}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
-        onViewMenu={onSelectPizzeria}
+        onViewMenu={onViewMenu || onSelectPizzeria}
         onNavigate={(pizzeria) => {
           // This prop is for the popup button, which handles routing internally in PizzaMap
           // But we can also open external maps if needed, though the user requested internal routing.
@@ -68,6 +74,8 @@ export default function MapView({
           // Let's just log it for now or leave it empty as the logic is inside PizzaMap.
           console.log('Navigate to:', pizzeria.name);
         }}
+        onRate={onRate || onSelectPizzeria}
+        routeDestination={routeDestination}
       />
 
       {/* Smart Search Bar */}
