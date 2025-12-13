@@ -199,12 +199,34 @@ export default function Header() {
                           </Link>
                         </DropdownMenuItem>
                         {user.email === "va21070541@bachilleresdesonora.edu.mx" && (
-                          <DropdownMenuItem asChild>
-                            <Link href="/admin/granting">
-                              <Skull className="mr-2 h-4 w-4 text-destructive" />
-                              <span>Otorgamiento y Eliminación</span>
-                            </Link>
-                          </DropdownMenuItem>
+                          <>
+                            <DropdownMenuItem asChild>
+                              <Link href="/admin/granting">
+                                <Skull className="mr-2 h-4 w-4 text-destructive" />
+                                <span>Otorgamiento y Eliminación</span>
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href="http://localhost:5555" target="_blank" rel="noopener noreferrer">
+                                <div className="flex items-center">
+                                  <svg
+                                    className="mr-2 h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
+                                    />
+                                  </svg>
+                                  <span>Base de datos</span>
+                                </div>
+                              </Link>
+                            </DropdownMenuItem>
+                          </>
                         )}
                       </>
                     )}

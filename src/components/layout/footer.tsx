@@ -6,5 +6,5 @@ export default async function Footer() {
   const socialLinks = await getSocialLinks()
   const config = await getFooterConfig()
 
-  return <FooterClient initialSections={sections} initialSocialLinks={socialLinks} initialCopyright={config?.copyrightText} />
+  return <FooterClient initialSections={sections} initialSocialLinks={socialLinks} initialCopyright={config?.copyrightText} initialFooterSize={(config as any)?.footerSize} />
 }

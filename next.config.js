@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+require('events').EventEmitter.defaultMaxListeners = 20;
+
 const nextConfig = {
   /* config options here */
   typescript: {
@@ -45,6 +47,8 @@ const nextConfig = {
   },
   allowedDevOrigins: [
     'https://*.cluster-thle3dudhffpwss7zs5hxaeu2o.cloudworkstations.dev',
+    'http://192.168.1.8:3000',
+    'http://192.168.1.8:3002',
   ],
 };
 

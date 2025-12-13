@@ -30,9 +30,10 @@ const selectedIcon = new L.Icon({
 });
 
 const myLocationIcon = new L.Icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/128/3178/3178610.png',
-  iconSize: [25, 25],
-  iconAnchor: [12, 12],
+  iconUrl: '/icono512.jpg', // Local custom icon
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  className: 'drop-shadow-md rounded-full' // Added rounded-full in case it's square
 });
 
 type PizzaMapProps = {
@@ -68,10 +69,9 @@ export default function PizzaMap({
   const myLocationMarkerRef = useRef<L.Marker | null>(null);
   const routeLayerRef = useRef<L.Polyline | null>(null);
   const popupRef = useRef<L.Popup | null>(null);
+  const trafficLayerRef = useRef<L.TileLayer | null>(null);
   const { toast } = useToast();
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
-
-
 
   const handleLocateMe = () => {
     const map = mapInstanceRef.current;
@@ -87,91 +87,131 @@ export default function PizzaMap({
     }
 
     toast({
-      title: 'Obteniendo ubicación precisa...',
-      description: 'Esto puede tomar unos segundos para asegurar la mejor precisión.',
+      title: 'Obteniendo ubicación...',
     });
 
-    const options = {
-      enableHighAccuracy: true,
-      timeout: 20000,
-      maximumAge: 0
-    };
+    // Progressive accuracy: Start fast with WiFi, improve with GPS
+    let watchId: number | undefined;
+    let bestAccuracy = Infinity;
 
-    let watchId: number;
-    let bestPosition: GeolocationPosition | null = null;
-    let accuracyThreshold = 15; // meters
-
-    // Use watchPosition to get the best possible location
-    watchId = navigator.geolocation.watchPosition(
+    // Phase 1: Get quick initial position with WiFi/IP (low accuracy but fast)
+    navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
-        console.log(`Location update: ${latitude}, ${longitude} (Accuracy: ${accuracy}m)`);
+        console.log('=== INITIAL LOCATION (WiFi/IP) ===');
+        console.log(`Latitude: ${latitude}`);
+        console.log(`Longitude: ${longitude}`);
+        console.log(`Accuracy: ${accuracy} meters`);
+        console.log('==================================');
 
-        // Update if it's the first reading or better accuracy
-        if (!bestPosition || accuracy < bestPosition.coords.accuracy) {
-          bestPosition = position;
+        bestAccuracy = accuracy;
+        const latlng = new L.LatLng(latitude, longitude);
+        setUserLocation({ lat: latitude, lng: longitude });
 
-          const latlng = new L.LatLng(latitude, longitude);
-          setUserLocation({ lat: latitude, lng: longitude });
-
-          if (myLocationMarkerRef.current) {
-            myLocationMarkerRef.current.setLatLng(latlng);
-          } else {
-            myLocationMarkerRef.current = L.marker(latlng, { icon: myLocationIcon }).addTo(map);
-          }
-
-          // Fly to location only on first update or significant improvement
-          if (!userLocation || accuracy < 50) {
-            map.flyTo(latlng, 16);
-            onLocateUser({ lat: latitude, lng: longitude });
-          }
+        if (myLocationMarkerRef.current) {
+          myLocationMarkerRef.current.setLatLng(latlng);
+        } else {
+          myLocationMarkerRef.current = L.marker(latlng, { icon: myLocationIcon }).addTo(map);
         }
 
-        // If accuracy is good enough, stop watching
-        if (accuracy <= accuracyThreshold) {
-          navigator.geolocation.clearWatch(watchId);
-          toast({
-            title: 'Ubicación precisa encontrada',
-            description: `Precisión: ${accuracy.toFixed(0)} metros.`,
-          });
-        }
+        map.flyTo(latlng, 16);
+        onLocateUser({ lat: latitude, lng: longitude });
+
+        toast({
+          title: 'Ubicación encontrada',
+          description: `Precisión inicial: ${accuracy.toFixed(0)}m - Mejorando...`,
+        });
+
+        // Phase 2: Start watching for better accuracy with GPS
+        watchId = navigator.geolocation.watchPosition(
+          (betterPosition) => {
+            const { latitude: lat, longitude: lng, accuracy: acc } = betterPosition.coords;
+
+            // Only update if accuracy improved significantly
+            if (acc < bestAccuracy * 0.8) { // At least 20% improvement
+              console.log('=== IMPROVED LOCATION (GPS) ===');
+              console.log(`Latitude: ${lat}`);
+              console.log(`Longitude: ${lng}`);
+              console.log(`Accuracy: ${acc} meters (improved from ${bestAccuracy.toFixed(0)}m)`);
+              console.log('================================');
+
+              bestAccuracy = acc;
+              const newLatlng = new L.LatLng(lat, lng);
+              setUserLocation({ lat, lng });
+
+              if (myLocationMarkerRef.current) {
+                myLocationMarkerRef.current.setLatLng(newLatlng);
+              }
+
+              map.panTo(newLatlng);
+              onLocateUser({ lat, lng });
+
+              let accuracyMessage = `Precisión mejorada: ${acc.toFixed(0)}m`;
+              if (acc <= 20) {
+                accuracyMessage += ` ✓ Excelente`;
+                // Stop watching once we get very good accuracy
+                if (watchId !== undefined) {
+                  navigator.geolocation.clearWatch(watchId);
+                  watchId = undefined;
+                }
+              } else if (acc <= 50) {
+                accuracyMessage += ` ✓ Buena`;
+              }
+
+              toast({
+                title: 'Ubicación actualizada',
+                description: accuracyMessage,
+              });
+            }
+          },
+          (error) => {
+            console.log('GPS refinement failed, keeping initial location:', error.message);
+            // Don't show error - we already have a working location
+          },
+          {
+            enableHighAccuracy: true, // Use GPS for refinement
+            timeout: 45000,
+            maximumAge: 0
+          }
+        );
+
+        // Stop watching after 60 seconds to save battery
+        setTimeout(() => {
+          if (watchId !== undefined) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = undefined;
+            console.log('Stopped GPS refinement after 60s');
+          }
+        }, 60000);
       },
       (error) => {
-        console.error("Geolocation error:", error);
-        // Only show error if we haven't found any position yet
-        if (!bestPosition) {
-          let errorMessage = 'No se pudo obtener tu ubicación.';
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage = 'Permiso denegado. Verifica que el sitio tenga permisos de ubicación en tu navegador y sistema operativo.';
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = 'Ubicación no disponible. Asegúrate de tener el GPS activado.';
-              break;
-            case error.TIMEOUT:
-              errorMessage = 'Tiempo de espera agotado. Intenta de nuevo en un lugar abierto.';
-              break;
-          }
-          toast({
-            variant: 'destructive',
-            title: 'Error de ubicación',
-            description: errorMessage,
-          });
-        }
-        navigator.geolocation.clearWatch(watchId);
-      },
-      options
-    );
+        console.error("Geolocation error:", error.code, error.message);
 
-    // Stop watching after 15 seconds regardless
-    setTimeout(() => {
-      navigator.geolocation.clearWatch(watchId);
-      if (bestPosition) {
-        // Ensure we are centered on the best position found
-        const { latitude, longitude } = (bestPosition as GeolocationPosition).coords;
-        map.flyTo([latitude, longitude], 16);
+        let errorMessage = 'No se pudo obtener tu ubicación.';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Permiso denegado. Por favor habilita la ubicación en tu navegador.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Ubicación no disponible. Verifica tu conexión.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Tiempo de espera agotado. Intenta de nuevo.';
+            break;
+        }
+
+        toast({
+          variant: 'destructive',
+          title: 'Error de ubicación',
+          description: errorMessage,
+        });
+      },
+      {
+        enableHighAccuracy: false, // Fast WiFi/IP location first
+        timeout: 20000, // 20 seconds for initial location
+        maximumAge: 300000 // Accept cached position up to 5 minutes old for instant response
       }
-    }, 15000);
+    );
   };
 
   const drawRoute = async (destination: { lat: number, lng: number }) => {
@@ -263,7 +303,16 @@ export default function PizzaMap({
         "Relieve": terrainLayer,
       };
 
-      L.control.layers(baseMaps).addTo(map);
+      trafficLayerRef.current = L.tileLayer('https://mt0.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}', {
+        attribution: 'Map data &copy; Google',
+        maxZoom: 20
+      });
+
+      const overlayMaps = {
+        "Tráfico (Google)": trafficLayerRef.current
+      };
+
+      L.control.layers(baseMaps, overlayMaps).addTo(map);
     }
 
     return () => {
@@ -272,6 +321,19 @@ export default function PizzaMap({
         mapInstanceRef.current = null;
       }
     };
+  }, []);
+
+  // Effect to update traffic layer periodically
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (trafficLayerRef.current) {
+        // Force refresh by updating URL with timestamp
+        const timestamp = Date.now();
+        trafficLayerRef.current.setUrl(`https://mt0.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}&ts=${timestamp}`);
+      }
+    }, 60000); // Update every 60 seconds
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const [showAll, setShowAll] = useState(false);

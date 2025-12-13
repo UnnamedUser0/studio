@@ -91,6 +91,7 @@ model MenuItem {
 model FooterConfig {
   id            String   @id @default(cuid())
   copyrightText String
+  footerSize    String   @default("medium")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

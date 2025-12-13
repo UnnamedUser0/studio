@@ -26,6 +26,8 @@ import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
 
 // Types (should match Prisma models roughly)
 type FooterLink = {
@@ -85,11 +87,13 @@ const FooterLinkItem = ({ href, children }: { href: string; children: React.Reac
 export default function FooterClient({
     initialSections,
     initialSocialLinks,
-    initialCopyright
+    initialCopyright,
+    initialFooterSize
 }: {
     initialSections: FooterSection[],
     initialSocialLinks: SocialLink[],
-    initialCopyright?: string
+    initialCopyright?: string,
+    initialFooterSize?: string
 }) {
     const { data: session } = useSession()
     const isAdmin = session?.user?.email === SUPER_ADMIN_EMAIL
@@ -103,20 +107,25 @@ export default function FooterClient({
     const [isSectionDialogOpen, setIsSectionDialogOpen] = useState(false)
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
     const [isSocialDialogOpen, setIsSocialDialogOpen] = useState(false)
-    const [isCopyrightDialogOpen, setIsCopyrightDialogOpen] = useState(false)
+    const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false)
 
     // Form states
     const [sectionForm, setSectionForm] = useState({ title: '', order: 0 })
     const [linkForm, setLinkForm] = useState({ label: '', href: '', sectionId: '', order: 0 })
     const [socialForm, setSocialForm] = useState({ platform: '', iconName: '', href: '', order: 0 })
     const [copyrightText, setCopyrightText] = useState(initialCopyright || `© ${new Date().getFullYear()} Pizzapp. Todos los derechos reservados.`)
-    const [copyrightForm, setCopyrightForm] = useState('')
+    const [footerSize, setFooterSize] = useState(parseFloat(initialFooterSize || '1'))
+
+    const [configForm, setConfigForm] = useState({ copyright: '', size: 1 })
 
     useEffect(() => {
         if (initialCopyright) {
             setCopyrightText(initialCopyright)
         }
-    }, [initialCopyright])
+        if (initialFooterSize) {
+            setFooterSize(parseFloat(initialFooterSize))
+        }
+    }, [initialCopyright, initialFooterSize])
 
     // ... (Handlers for Section and Link remain the same)
 
@@ -235,15 +244,16 @@ export default function FooterClient({
         }
     }
 
-    const handleUpdateCopyright = async () => {
+    const handleUpdateConfig = async () => {
         try {
-            await updateFooterConfig(copyrightForm)
-            toast({ title: "Copyright actualizado" })
-            setCopyrightText(copyrightForm)
-            setIsCopyrightDialogOpen(false)
+            await updateFooterConfig(configForm.copyright, configForm.size.toString())
+            toast({ title: "Configuración actualizada" })
+            setCopyrightText(configForm.copyright)
+            setFooterSize(configForm.size)
+            setIsConfigDialogOpen(false)
             router.refresh()
         } catch (error) {
-            toast({ title: "Error al actualizar copyright", variant: "destructive" })
+            toast({ title: "Error al actualizar configuración", variant: "destructive" })
         }
     }
 
@@ -280,9 +290,19 @@ export default function FooterClient({
         setIsSocialDialogOpen(true)
     }
 
-    const openCopyrightDialog = () => {
-        setCopyrightForm(copyrightText)
-        setIsCopyrightDialogOpen(true)
+    const openConfigDialog = () => {
+        setConfigForm({ copyright: copyrightText, size: footerSize })
+        setIsConfigDialogOpen(true)
+    }
+
+    // Dynamic size calculation based on multiplier (0.7 to 1.3)
+    const getSizeStyles = (multiplier: number) => {
+        const basePadding = 48; // 12 * 4 (base py-12 in pixels)
+        const baseTextSize = 0.875; // text-sm in rem
+        return {
+            padding: `${basePadding * multiplier}px 0`,
+            fontSize: `${baseTextSize * multiplier}rem`
+        }
     }
 
     return (
@@ -301,7 +321,7 @@ export default function FooterClient({
                 </div>
             )}
 
-            <div className="container py-12">
+            <div className="container transition-all duration-300" style={getSizeStyles(footerSize)}>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {/* Column 1: Logo and Description */}
                     <div className="space-y-4">
@@ -392,7 +412,7 @@ export default function FooterClient({
                             variant="ghost"
                             size="icon"
                             className="absolute top-8 right-0 opacity-0 group-hover/copyright:opacity-100 transition-opacity"
-                            onClick={openCopyrightDialog}
+                            onClick={openConfigDialog}
                         >
                             <Edit2 className="h-4 w-4" />
                         </Button>
@@ -493,17 +513,35 @@ export default function FooterClient({
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isCopyrightDialogOpen} onOpenChange={setIsCopyrightDialogOpen}>
+            <Dialog open={isConfigDialogOpen} onOpenChange={setIsConfigDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Editar Copyright</DialogTitle>
+                        <DialogTitle>Configuración del Pie de Página</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <Label>Tamaño del Footer</Label>
+                                <span className="text-sm text-muted-foreground">{configForm.size.toFixed(1)}x</span>
+                            </div>
+                            <Slider
+                                value={[configForm.size]}
+                                min={0.7}
+                                max={1.3}
+                                step={0.1}
+                                onValueChange={([val]) => setConfigForm({ ...configForm, size: val })}
+                            />
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                                <span>Pequeño</span>
+                                <span>Normal</span>
+                                <span>Grande</span>
+                            </div>
+                        </div>
                         <div>
                             <Label>Texto del Copyright</Label>
                             <Textarea
-                                value={copyrightForm}
-                                onChange={e => setCopyrightForm(e.target.value)}
+                                value={configForm.copyright}
+                                onChange={e => setConfigForm({ ...configForm, copyright: e.target.value })}
                                 className="min-h-[100px]"
                             />
                             <p className="text-xs text-muted-foreground mt-1">
@@ -512,7 +550,7 @@ export default function FooterClient({
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button onClick={handleUpdateCopyright}>Guardar</Button>
+                        <Button onClick={handleUpdateConfig}>Guardar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

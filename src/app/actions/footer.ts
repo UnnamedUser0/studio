@@ -167,16 +167,16 @@ export async function getFooterConfig() {
     return await prisma.footerConfig.findFirst()
 }
 
-export async function updateFooterConfig(copyrightText: string) {
+export async function updateFooterConfig(copyrightText: string, footerSize?: string) {
     const config = await prisma.footerConfig.findFirst()
     if (config) {
         await prisma.footerConfig.update({
             where: { id: config.id },
-            data: { copyrightText }
+            data: { copyrightText, footerSize }
         })
     } else {
         await prisma.footerConfig.create({
-            data: { copyrightText }
+            data: { copyrightText, footerSize: footerSize || 'medium' }
         })
     }
     revalidatePath('/')
