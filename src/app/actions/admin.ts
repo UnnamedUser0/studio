@@ -59,10 +59,16 @@ export async function updateHeartbeat() {
     const session = await auth()
     if (!session?.user?.id) return
 
-    await prisma.user.update({
-        where: { id: session.user.id },
-        data: { lastActiveAt: new Date() }
-    })
+    try {
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { lastActiveAt: new Date() }
+        })
+    } catch (err: any) {
+        if (err.code !== 'P2025') {
+            console.log("Error updating heartbeat:", err)
+        }
+    }
 }
 
 export async function markUserOffline() {
@@ -72,10 +78,16 @@ export async function markUserOffline() {
     // Set lastActiveAt to 5 minutes ago to ensure they appear offline immediately
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
 
-    await prisma.user.update({
-        where: { id: session.user.id },
-        data: { lastActiveAt: fiveMinutesAgo }
-    })
+    try {
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { lastActiveAt: fiveMinutesAgo }
+        })
+    } catch (err: any) {
+        if (err.code !== 'P2025') {
+            console.log("Error marking user offline:", err)
+        }
+    }
 }
 
 export async function deleteUser(userId: string) {

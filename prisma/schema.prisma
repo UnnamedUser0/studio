@@ -199,3 +199,17 @@ model FooterLink {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 }
+
+model AboutContent {
+  id                 String   @id @default(cuid())
+  termsTitle         String   @default("Términos de Uso")
+  termsDescription   String   @default("Bienvenido a PizzApp. Al usar nuestra aplicación, aceptas respetar a la comunidad y compartir información verídica.")
+  termsPoints        String   @default("No publicar contenido ofensivo.|Respetar las opiniones de otros usuarios.|El uso indebido de la plataforma resultará en la suspensión de la cuenta.")
+  privacyTitle       String   @default("Política de Privacidad")
+  privacyDescription String   @default("En PizzApp nos tomamos tu privacidad en serio.")
+  privacyPoints      String   @default("Solo recopilamos la información necesaria para mejorar tu experiencia.|No compartimos tus datos personales con terceros sin tu consentimiento.|Puedes solicitar la eliminación de tus datos en cualquier momento.")
+  appVersion         String   @default("PizzApp v1.0.0")
+  copyrightText      String   @default("© 2024 PizzApp Inc.")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

@@ -12,7 +12,7 @@ import { Pizzeria, Testimonial, User, Geocode } from '@/lib/types';
 import PizzeriaCard from '@/components/pizzeria/pizzeria-card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetTrigger, SheetContent, SheetContentNoOverlay } from '@/components/ui/sheet';
 import PizzeriaList from '@/components/pizzeria/pizzeria-list';
 import { pizzeriasData } from '@/lib/pizzerias-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -312,6 +312,15 @@ function HomeContent() {
 
   const pizzeriasToShowInList = isSearching ? visiblePizzerias : (pizzeriasForRanking || []);
 
+  // Calculate map height styles
+  const mapHeightStyle = useMemo(() => {
+    if (!layoutSettings) return {};
+    return {
+      '--map-height-mobile': `${layoutSettings.mapHeightMobile || 55}vh`,
+      '--map-height-desktop': `${layoutSettings.mapHeight || 70}vh`,
+    } as React.CSSProperties;
+  }, [layoutSettings]);
+
   if (!hasMounted || isCheckingWelcome) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -328,7 +337,7 @@ function HomeContent() {
     <>
       <div className="relative w-full h-full flex-grow flex flex-col">
         <main className="flex-grow flex flex-col">
-          <div className="h-[55vh] md:h-[70vh] w-full">
+          <div className="w-full h-[var(--map-height-mobile,_55vh)] md:h-[var(--map-height-desktop,_70vh)] transition-[height] duration-300" style={mapHeightStyle}>
             <MapView
               visiblePizzerias={isSearching ? visiblePizzerias : allPizzerias}
               onSelectPizzeria={handleSelectPizzeria}
@@ -342,6 +351,7 @@ function HomeContent() {
               routeDestination={routeDestination}
               onViewMenu={handleSelectPizzeria}
               onRate={handleRatePizzeria}
+              isAdmin={canManagePizzerias || canManageContent} // Pass admin status (allow access if has pizzerias OR content permissions, or basically is admin)
             />
           </div>
 
@@ -572,10 +582,10 @@ function HomeContent() {
       </Sheet>
 
       {/* New Reviews Sheet */}
-      <Sheet open={!!selectedPizzeriaForReviews} onOpenChange={() => setSelectedPizzeriaForReviews(null)}>
-        <SheetContent className="w-full sm:max-w-md p-0 overflow-hidden flex flex-col">
+      <Sheet modal={false} open={!!selectedPizzeriaForReviews} onOpenChange={() => setSelectedPizzeriaForReviews(null)}>
+        <SheetContentNoOverlay className="w-full sm:max-w-md p-0 overflow-hidden flex flex-col">
           {selectedPizzeriaForReviews && <PizzeriaReviews pizzeria={selectedPizzeriaForReviews} />}
-        </SheetContent>
+        </SheetContentNoOverlay>
       </Sheet>
 
       {selectedPizzeriaForMenu && (

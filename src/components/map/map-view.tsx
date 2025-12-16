@@ -30,6 +30,7 @@ type MapViewProps = {
   routeDestination?: { lat: number, lng: number } | null;
   onViewMenu?: (pizzeria: Pizzeria) => void;
   onRate?: (pizzeria: Pizzeria) => void;
+  isAdmin?: boolean;
 };
 
 export default function MapView({
@@ -45,6 +46,7 @@ export default function MapView({
   routeDestination,
   onViewMenu,
   onRate,
+  isAdmin = false // Default to false
 }: MapViewProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -76,6 +78,7 @@ export default function MapView({
         }}
         onRate={onRate || onSelectPizzeria}
         routeDestination={routeDestination}
+        isAdmin={isAdmin}
       />
 
       {/* Smart Search Bar */}

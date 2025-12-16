@@ -70,7 +70,7 @@ export default function LoginPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email-login">Correo Electrónico</Label>
-                  <Input id="email-login" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@correo.com" required />
+                  <Input id="email-login" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@correo.com" required suppressHydrationWarning />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password-login">Contraseña</Label>
@@ -93,7 +93,7 @@ export default function LoginPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email-signup">Correo Electrónico</Label>
-                  <Input id="email-signup" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@correo.com" required />
+                  <Input id="email-signup" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@correo.com" required suppressHydrationWarning />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password-signup">Contraseña</Label>

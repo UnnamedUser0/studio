@@ -11,6 +11,9 @@ import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star } from 'lucide-r
 import { useToast } from '@/hooks/use-toast';
 import { createRoot } from 'react-dom/client';
 import getDistance from 'geolib/es/getDistance';
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import LayoutSettingsManager from '@/components/admin/layout-settings-manager';
+import { Settings } from 'lucide-react';
 
 const HERMOSILLO_CENTER: L.LatLngTuple = [29.085, -110.977];
 
@@ -61,8 +64,9 @@ export default function PizzaMap({
   onViewMenu,
   onNavigate,
   onRate,
-  routeDestination
-}: PizzaMapProps) {
+  routeDestination,
+  isAdmin = false
+}: PizzaMapProps & { isAdmin?: boolean }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -72,6 +76,8 @@ export default function PizzaMap({
   const trafficLayerRef = useRef<L.TileLayer | null>(null);
   const { toast } = useToast();
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
+  const [showTrafficLegend, setShowTrafficLegend] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleLocateMe = () => {
     const map = mapInstanceRef.current;
@@ -289,8 +295,9 @@ export default function PizzaMap({
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map);
 
-      const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      const satelliteLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=es&x={x}&y={y}&z={z}', {
+        attribution: 'Map data &copy; Google',
+        maxZoom: 20
       });
 
       const terrainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
@@ -313,6 +320,14 @@ export default function PizzaMap({
       };
 
       L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+      // Event listeners for traffic layer
+      map.on('overlayadd', (e) => {
+        if (e.name === 'Tráfico (Google)') setShowTrafficLegend(true);
+      });
+      map.on('overlayremove', (e) => {
+        if (e.name === 'Tráfico (Google)') setShowTrafficLegend(false);
+      });
     }
 
     return () => {
@@ -351,6 +366,13 @@ export default function PizzaMap({
 
     // If user location is known, filter by distance (2.5km)
     if (userLocation && typeof pizzeria.lat === 'number' && typeof pizzeria.lng === 'number') {
+      // Always show if it is the route destination
+      if (routeDestination &&
+        Math.abs(pizzeria.lat - routeDestination.lat) < 0.0001 &&
+        Math.abs(pizzeria.lng - routeDestination.lng) < 0.0001) {
+        return true;
+      }
+
       const distance = getDistance(
         { latitude: userLocation.lat, longitude: userLocation.lng },
         { latitude: pizzeria.lat, longitude: pizzeria.lng }
@@ -501,7 +523,7 @@ export default function PizzaMap({
       <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />
 
       {/* Map Controls Container */}
-      <div className="absolute top-24 right-4 z-[1001] flex flex-col gap-2">
+      <div className="absolute top-40 right-4 z-[1001] flex flex-col gap-2">
         <Button
           variant="secondary"
           size="icon"
@@ -537,6 +559,56 @@ export default function PizzaMap({
           </Button>
         )}
       </div>
+
+      {/* Traffic Legend */}
+      {showTrafficLegend && (
+        <div className="absolute bottom-6 left-6 z-[1000] bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border dark:border-slate-700 text-xs transition-colors duration-300">
+          <h4 className="font-bold mb-2 text-gray-800 dark:text-gray-100">Tráfico</h4>
+          <div className="space-y-1.5 font-medium text-gray-600 dark:text-gray-300">
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-1.5 bg-[#63d668] rounded-full"></span>
+              <span>Rápido</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-1.5 bg-[#ff974d] rounded-full"></span>
+              <span>Moderado</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-1.5 bg-[#f23c32] rounded-full"></span>
+              <span>Lento</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-1.5 bg-[#811f1f] rounded-full"></span>
+              <span>Pesado</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Map Settings Button */}
+      {isAdmin && (
+        <div className="absolute top-28 left-4 z-[1001]">
+          <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="destructive"
+                size="icon"
+                className="shadow-lg rounded-full h-10 w-10 border-2 border-white/20"
+                title="Configuración del Mapa"
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Configuración del Mapa</DialogTitle>
+              </DialogHeader>
+              <LayoutSettingsManager />
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
+
 
       <style jsx global>{`
         .leaflet-popup-content-wrapper {

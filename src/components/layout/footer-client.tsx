@@ -88,15 +88,18 @@ export default function FooterClient({
     initialSections,
     initialSocialLinks,
     initialCopyright,
-    initialFooterSize
+    initialFooterSize,
+    canManageContent = false
 }: {
     initialSections: FooterSection[],
     initialSocialLinks: SocialLink[],
     initialCopyright?: string,
-    initialFooterSize?: string
+    initialFooterSize?: string,
+    canManageContent?: boolean
 }) {
     const { data: session } = useSession()
-    const isAdmin = session?.user?.email === SUPER_ADMIN_EMAIL
+    // Use passed permission (or fallback to session check if needed, but prop is preferred)
+    const isAdmin = canManageContent || session?.user?.email === SUPER_ADMIN_EMAIL
     const router = useRouter()
     const { toast } = useToast()
 
@@ -526,15 +529,15 @@ export default function FooterClient({
                             </div>
                             <Slider
                                 value={[configForm.size]}
-                                min={0.7}
-                                max={1.3}
+                                min={0.5}
+                                max={2.0}
                                 step={0.1}
                                 onValueChange={([val]) => setConfigForm({ ...configForm, size: val })}
                             />
                             <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>Pequeño</span>
-                                <span>Normal</span>
-                                <span>Grande</span>
+                                <span>Muy Pequeño (0.5x)</span>
+                                <span>Normal (1.0x)</span>
+                                <span>Muy Grande (2.0x)</span>
                             </div>
                         </div>
                         <div>

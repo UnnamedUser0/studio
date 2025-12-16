@@ -70,9 +70,18 @@ export async function addPizzeria(data: { name: string, address: string, lat: nu
 }
 
 export async function updatePizzeria(id: string, data: { name: string, address: string, lat: number, lng: number, imageUrl?: string, category?: string, source?: string }) {
-    return await prisma.pizzeria.update({
+    return await prisma.pizzeria.upsert({
         where: { id },
-        data: {
+        update: {
+            name: data.name,
+            address: data.address,
+            lat: data.lat,
+            lng: data.lng,
+            imageUrl: data.imageUrl,
+            // Preserve existing relationship/fields if any, but currently schema has none critical here other than items/reviews handled separately
+        },
+        create: {
+            id,
             name: data.name,
             address: data.address,
             lat: data.lat,
@@ -219,6 +228,24 @@ export async function updateUserProfile(userId: string, name: string, imageUrl?:
 export async function deleteUserAccount(userId: string) {
     return await prisma.user.delete({
         where: { id: userId }
+    })
+}
+
+export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user || !user.password) {
+        throw new Error('User not found or password not set')
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password)
+    if (!isValid) {
+        throw new Error('Contraseña actual incorrecta')
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    return await prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedPassword }
     })
 }
 
