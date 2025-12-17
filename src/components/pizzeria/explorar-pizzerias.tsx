@@ -163,11 +163,11 @@ export default function ExplorarPizzerias({
                         </SheetTrigger>
                         <SheetContent
                             side="left"
-                            className="p-0 flex flex-col transition-all duration-300"
+                            className="p-0 flex flex-col transition-all duration-300 !w-[var(--sheet-width-mobile)] md:!w-[var(--sheet-width)] !max-w-[100vw]"
                             style={{
-                                width: `${layoutSettings.sheetWidth}vw`,
-                                maxWidth: '100vw'
-                            }}
+                                '--sheet-width': `${layoutSettings.sheetWidth}vw`,
+                                '--sheet-width-mobile': `${layoutSettings.sheetWidthMobile ?? 100}vw`
+                            } as React.CSSProperties}
                         >
                             <PizzeriaList
                                 pizzerias={pizzerias}

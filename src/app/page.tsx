@@ -39,17 +39,30 @@ function HomeContent() {
   // Fetch Ranking Styles
   const [rankingStyles, setRankingStyles] = useState<RankingStyles>({
     cardScale: 1,
-    cardScale1st: 1,
+    cardScale1st: 1.1,
     cardScale2nd: 1,
     cardScale3rd: 1,
     cardWidth: 320,
-    cardWidth2nd: 320,
-    cardWidth3rd: 320,
+    cardWidth2nd: 300,
+    cardWidth3rd: 300,
     imageHeight: 112,
     imageWidth: 112,
     textSize: 1,
     buttonScale: 1,
     showSideActions: true,
+
+    podiumHeight1st: 256,
+    podiumHeight2nd: 128,
+    podiumHeight3rd: 96,
+
+    mobilePodiumHeight1st: 160,
+    mobilePodiumHeight2nd: 80,
+    mobilePodiumHeight3rd: 60,
+    mobileCardScale1st: 0.5,
+    mobileCardScale2nd: 0.45,
+    mobileCardScale3rd: 0.45,
+    mobileCardWidth: 280,
+    mobileImageHeight: 90,
   });
 
   useEffect(() => {
@@ -321,6 +334,22 @@ function HomeContent() {
     } as React.CSSProperties;
   }, [layoutSettings]);
 
+  const mobileRankingStyles = useMemo<RankingStyles>(() => ({
+    ...rankingStyles,
+    cardScale1st: rankingStyles.mobileCardScale1st ?? 1,
+    cardScale2nd: rankingStyles.mobileCardScale2nd ?? 0.95,
+    cardScale3rd: rankingStyles.mobileCardScale3rd ?? 0.95,
+    cardWidth: rankingStyles.mobileCardWidth ?? 280,
+    cardWidth2nd: rankingStyles.mobileCardWidth ?? 280,
+    cardWidth3rd: rankingStyles.mobileCardWidth ?? 280,
+    imageHeight: rankingStyles.mobileImageHeight ?? 96,
+    textSize: rankingStyles.mobileTextSize ?? 0.9,
+    buttonScale: rankingStyles.mobileButtonScale ?? 0.9,
+    // Mobile specific overrides
+    cardScale: 1,
+    imageWidth: rankingStyles.mobileCardWidth ? rankingStyles.mobileCardWidth - 32 : 248, // Approximate width minus padding
+  }), [rankingStyles]);
+
   if (!hasMounted || isCheckingWelcome) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -377,7 +406,17 @@ function HomeContent() {
                   <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
                 ) : (
                   pizzeriasForRanking && pizzeriasForRanking.length >= 3 && (
-                    <div className="relative w-[calc(100%+4rem)] -ml-8 md:w-full md:ml-auto md:mx-auto max-w-5xl h-[450px] scale-100 origin-bottom mt-12">
+                    <div
+                      className="relative w-full md:ml-auto md:mx-auto max-w-5xl h-[450px] scale-100 origin-bottom mt-12"
+                      style={{
+                        '--ph-1': `${rankingStyles.podiumHeight1st ?? 256}px`,
+                        '--ph-1-m': `${rankingStyles.mobilePodiumHeight1st ?? 160}px`,
+                        '--ph-2': `${rankingStyles.podiumHeight2nd ?? 128}px`,
+                        '--ph-2-m': `${rankingStyles.mobilePodiumHeight2nd ?? 80}px`,
+                        '--ph-3': `${rankingStyles.podiumHeight3rd ?? 96}px`,
+                        '--ph-3-m': `${rankingStyles.mobilePodiumHeight3rd ?? 60}px`,
+                      } as React.CSSProperties}
+                    >
                       {/* Base Platform - Wider and brighter highlights */}
                       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[98%] h-6 bg-primary/30 rounded-full blur-md"></div>
                       <div className="absolute bottom-0 left-[1%] w-[40%] h-3 bg-gradient-to-r from-primary to-transparent rounded-full blur-[3px] opacity-80"></div>
@@ -387,18 +426,23 @@ function HomeContent() {
                         {/* 2nd Place (Left) */}
                         <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end group">
                           {/* Card Container - Expands to Left */}
+                          {/* Card Container - Expands to Left */}
                           <div
-                            className="absolute bottom-[110px] md:bottom-[140px] right-1/2 translate-x-1/2 md:translate-x-0 md:right-0 z-20 transition-all duration-300 hover:-translate-y-2"
+                            className="absolute right-1/2 translate-x-1/2 md:translate-x-0 md:right-0 z-20 transition-all duration-300 hover:-translate-y-2 bottom-[calc(var(--ph-2-m)-10px)] md:bottom-[calc(var(--ph-2)+12px)]"
                             style={{ width: `${rankingStyles.cardWidth2nd}px` }}
                           >
                             <div className="relative">
                               <div className="absolute -inset-1 bg-gradient-to-r from-gray-300 to-gray-100 rounded-lg blur opacity-40"></div>
-                              <div className="md:hidden">
+                              {/* Mobile Card: Centered and Scaled */}
+                              <div className="md:hidden absolute bottom-0 left-1/2 -translate-x-1/2 origin-bottom transition-transform duration-300"
+                                style={{ width: `${rankingStyles.mobileCardWidth ?? 280}px` }}> {/* Fixed width canvas for mobile card */}
                                 <PizzeriaCard
                                   pizzeria={pizzeriasForRanking[1]!}
                                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}
                                   rankingPlace={2}
                                   compact
+                                  rankingStyles={mobileRankingStyles}
+                                  customScale={mobileRankingStyles.cardScale2nd} /* This applies the scaling transformation */
                                 />
                               </div>
                               <div className="hidden md:block relative">
@@ -422,7 +466,7 @@ function HomeContent() {
                             </div>
                           </div>
                           {/* Podium Block */}
-                          <div className="h-24 md:h-32 w-full bg-gradient-to-b from-slate-300 to-slate-400 dark:from-slate-700 dark:to-slate-800 rounded-t-lg relative shadow-lg border-t-4 border-slate-300 flex items-center justify-center mx-auto max-w-full">
+                          <div className="w-full bg-gradient-to-b from-slate-300 to-slate-400 dark:from-slate-700 dark:to-slate-800 rounded-t-lg relative shadow-lg border-t-4 border-slate-300 flex items-center justify-center mx-auto max-w-full transition-all duration-300 h-[var(--ph-2-m)] md:h-[var(--ph-2)]">
                             <span className="font-bold text-5xl md:text-6xl text-slate-100/50 drop-shadow-md">2</span>
                           </div>
                         </div>
@@ -430,18 +474,23 @@ function HomeContent() {
                         {/* 1st Place (Center) - Adjusted Height */}
                         <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end z-10 group">
                           {/* Card Container - Centered */}
+                          {/* Card Container - Centered */}
                           <div
-                            className="absolute bottom-[280px] left-1/2 -translate-x-1/2 z-30 transition-transform duration-300 hover:-translate-y-2"
+                            className="absolute left-1/2 -translate-x-1/2 z-30 transition-transform duration-300 hover:-translate-y-2 bottom-[calc(var(--ph-1-m)-10px)] md:bottom-[calc(var(--ph-1)+20px)]"
                             style={{ width: `${rankingStyles.cardWidth}px` }}
                           >
                             <div className="relative">
                               <div className="absolute -inset-1 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-lg blur opacity-50 animate-pulse"></div>
-                              <div className="md:hidden">
+                              {/* Mobile Card: Centered and Scaled */}
+                              <div className="md:hidden absolute bottom-0 left-1/2 -translate-x-1/2 origin-bottom transition-transform duration-300"
+                                style={{ width: `${rankingStyles.mobileCardWidth ?? 280}px` }}>
                                 <PizzeriaCard
                                   pizzeria={pizzeriasForRanking[0]!}
                                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}
                                   rankingPlace={1}
                                   compact
+                                  rankingStyles={mobileRankingStyles}
+                                  customScale={mobileRankingStyles.cardScale1st}
                                 />
                               </div>
                               <div className="hidden md:block relative">
@@ -464,7 +513,7 @@ function HomeContent() {
                             </div>
                           </div>
                           {/* Podium Block */}
-                          <div className="h-64 w-full bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-t-lg relative shadow-xl border-t-4 border-yellow-300 flex items-center justify-center overflow-hidden mx-auto max-w-full">
+                          <div className="w-full bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-t-lg relative shadow-xl border-t-4 border-yellow-300 flex items-center justify-center overflow-hidden mx-auto max-w-full transition-all duration-300 h-[var(--ph-1-m)] md:h-[var(--ph-1)]">
                             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
                             <span className="font-bold text-6xl md:text-8xl text-white drop-shadow-lg">1</span>
                           </div>
@@ -473,18 +522,23 @@ function HomeContent() {
                         {/* 3rd Place (Right) */}
                         <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end group">
                           {/* Card Container - Expands to Right */}
+                          {/* Card Container - Expands to Right */}
                           <div
-                            className="absolute bottom-[90px] md:bottom-[110px] left-1/2 -translate-x-1/2 md:translate-x-0 md:left-0 z-20 transition-all duration-300 hover:-translate-y-2"
+                            className="absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-0 z-20 transition-all duration-300 hover:-translate-y-2 bottom-[calc(var(--ph-3-m)-10px)] md:bottom-[calc(var(--ph-3)+12px)]"
                             style={{ width: `${rankingStyles.cardWidth3rd}px` }}
                           >
                             <div className="relative">
                               <div className="absolute -inset-1 bg-gradient-to-r from-orange-300 to-orange-200 rounded-lg blur opacity-40"></div>
-                              <div className="md:hidden">
+                              {/* Mobile Card: Centered and Scaled */}
+                              <div className="md:hidden absolute bottom-0 left-1/2 -translate-x-1/2 origin-bottom transition-transform duration-300"
+                                style={{ width: `${rankingStyles.mobileCardWidth ?? 280}px` }}>
                                 <PizzeriaCard
                                   pizzeria={pizzeriasForRanking[2]!}
                                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}
                                   rankingPlace={3}
                                   compact
+                                  rankingStyles={mobileRankingStyles}
+                                  customScale={mobileRankingStyles.cardScale3rd}
                                 />
                               </div>
                               <div className="hidden md:block relative">
@@ -507,7 +561,7 @@ function HomeContent() {
                             </div>
                           </div>
                           {/* Podium Block */}
-                          <div className="h-20 md:h-24 w-full bg-gradient-to-b from-orange-400 to-orange-600 rounded-t-lg relative shadow-lg border-t-4 border-orange-300 flex items-center justify-center mx-auto max-w-full">
+                          <div className="w-full bg-gradient-to-b from-orange-400 to-orange-600 rounded-t-lg relative shadow-lg border-t-4 border-orange-300 flex items-center justify-center mx-auto max-w-full transition-all duration-300 h-[var(--ph-3-m)] md:h-[var(--ph-3)]">
                             <span className="font-bold text-4xl md:text-5xl text-orange-100/80 drop-shadow-md">3</span>
                           </div>
                         </div>

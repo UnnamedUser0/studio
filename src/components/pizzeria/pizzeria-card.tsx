@@ -59,6 +59,11 @@ export default function PizzeriaCard({
 
   // Use rankingStyles if provided, otherwise fallback to layoutSettings or defaults
   const cardScale = customScale ?? rankingStyles?.cardScale ?? layoutSettings?.cardScale ?? 1;
+  // Determine mobile scale: logic differs if we are in ranking (handled by parent props) or list (handled here)
+  // If layoutSettings is present, we likely want responsive scaling.
+  // If customScale is present (Ranking), we assume the parent handled the media query split (desktop/mobile blocks).
+  const mobileCardScale = (customScale ? cardScale : (layoutSettings?.cardScaleMobile ?? cardScale));
+
   const buttonScale = rankingStyles?.buttonScale ?? layoutSettings?.buttonScale ?? 1;
   const buttonLayout = layoutSettings?.buttonLayout || 'grid';
 
@@ -69,11 +74,12 @@ export default function PizzeriaCard({
 
   return (
     <div
-      className="relative h-full w-full origin-bottom transition-transform duration-300"
+      className="relative h-full w-full origin-bottom transition-transform duration-300 scale-[var(--card-scale-mobile)] md:scale-[var(--card-scale)]"
       style={{
-        transform: `scale(${cardScale})`,
-        fontSize: '1rem' // Reset font size to base, scaling is handled by transform
-      }}
+        '--card-scale': cardScale,
+        '--card-scale-mobile': mobileCardScale,
+        fontSize: '1rem' // Reset font size to base
+      } as React.CSSProperties}
     >
       <Card
         className={cn(

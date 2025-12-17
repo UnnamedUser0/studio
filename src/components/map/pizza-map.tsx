@@ -96,128 +96,113 @@ export default function PizzaMap({
       title: 'Obteniendo ubicación...',
     });
 
-    // Progressive accuracy: Start fast with WiFi, improve with GPS
-    let watchId: number | undefined;
-    let bestAccuracy = Infinity;
+    // Note: On some mobile devices, we might need high accuracy to trigger the prompt correctly
+    // checking for secure context first
+    if (!window.isSecureContext && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      toast({
+        variant: 'warning',
+        title: 'Advertencia de seguridad',
+        description: 'La ubicación podría fallar si no estás usando HTTPS.',
+      });
+    }
 
-    // Phase 1: Get quick initial position with WiFi/IP (low accuracy but fast)
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
-        console.log('=== INITIAL LOCATION (WiFi/IP) ===');
-        console.log(`Latitude: ${latitude}`);
-        console.log(`Longitude: ${longitude}`);
-        console.log(`Accuracy: ${accuracy} meters`);
-        console.log('==================================');
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-        bestAccuracy = accuracy;
-        const latlng = new L.LatLng(latitude, longitude);
-        setUserLocation({ lat: latitude, lng: longitude });
+    // Shared success handler to avoid code duplication across branches
+    const onLocationSuccess = (position: GeolocationPosition) => {
+      const { latitude, longitude, accuracy } = position.coords;
+      console.log(`=== LOCATION FOUND ===`);
+      console.log(`Latitude: ${latitude}`);
+      console.log(`Longitude: ${longitude}`);
+      console.log(`Accuracy: ${accuracy} meters`);
 
-        if (myLocationMarkerRef.current) {
-          myLocationMarkerRef.current.setLatLng(latlng);
-        } else {
-          myLocationMarkerRef.current = L.marker(latlng, { icon: myLocationIcon }).addTo(map);
-        }
+      let bestAccuracy = accuracy; // This will be updated by the watchPosition
+      const latlng = new L.LatLng(latitude, longitude);
+      setUserLocation({ lat: latitude, lng: longitude });
 
-        map.flyTo(latlng, 16);
-        onLocateUser({ lat: latitude, lng: longitude });
-
-        toast({
-          title: 'Ubicación encontrada',
-          description: `Precisión inicial: ${accuracy.toFixed(0)}m - Mejorando...`,
-        });
-
-        // Phase 2: Start watching for better accuracy with GPS
-        watchId = navigator.geolocation.watchPosition(
-          (betterPosition) => {
-            const { latitude: lat, longitude: lng, accuracy: acc } = betterPosition.coords;
-
-            // Only update if accuracy improved significantly
-            if (acc < bestAccuracy * 0.8) { // At least 20% improvement
-              console.log('=== IMPROVED LOCATION (GPS) ===');
-              console.log(`Latitude: ${lat}`);
-              console.log(`Longitude: ${lng}`);
-              console.log(`Accuracy: ${acc} meters (improved from ${bestAccuracy.toFixed(0)}m)`);
-              console.log('================================');
-
-              bestAccuracy = acc;
-              const newLatlng = new L.LatLng(lat, lng);
-              setUserLocation({ lat, lng });
-
-              if (myLocationMarkerRef.current) {
-                myLocationMarkerRef.current.setLatLng(newLatlng);
-              }
-
-              map.panTo(newLatlng);
-              onLocateUser({ lat, lng });
-
-              let accuracyMessage = `Precisión mejorada: ${acc.toFixed(0)}m`;
-              if (acc <= 20) {
-                accuracyMessage += ` ✓ Excelente`;
-                // Stop watching once we get very good accuracy
-                if (watchId !== undefined) {
-                  navigator.geolocation.clearWatch(watchId);
-                  watchId = undefined;
-                }
-              } else if (acc <= 50) {
-                accuracyMessage += ` ✓ Buena`;
-              }
-
-              toast({
-                title: 'Ubicación actualizada',
-                description: accuracyMessage,
-              });
-            }
-          },
-          (error) => {
-            console.log('GPS refinement failed, keeping initial location:', error.message);
-            // Don't show error - we already have a working location
-          },
-          {
-            enableHighAccuracy: true, // Use GPS for refinement
-            timeout: 45000,
-            maximumAge: 0
-          }
-        );
-
-        // Stop watching after 60 seconds to save battery
-        setTimeout(() => {
-          if (watchId !== undefined) {
-            navigator.geolocation.clearWatch(watchId);
-            watchId = undefined;
-            console.log('Stopped GPS refinement after 60s');
-          }
-        }, 60000);
-      },
-      (error) => {
-        console.error("Geolocation error:", error.code, error.message);
-
-        let errorMessage = 'No se pudo obtener tu ubicación.';
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Permiso denegado. Por favor habilita la ubicación en tu navegador.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Ubicación no disponible. Verifica tu conexión.';
-            break;
-          case error.TIMEOUT:
-            errorMessage = 'Tiempo de espera agotado. Intenta de nuevo.';
-            break;
-        }
-
-        toast({
-          variant: 'destructive',
-          title: 'Error de ubicación',
-          description: errorMessage,
-        });
-      },
-      {
-        enableHighAccuracy: false, // Fast WiFi/IP location first
-        timeout: 20000, // 20 seconds for initial location
-        maximumAge: 300000 // Accept cached position up to 5 minutes old for instant response
+      if (myLocationMarkerRef.current) {
+        myLocationMarkerRef.current.setLatLng(latlng);
+      } else {
+        myLocationMarkerRef.current = L.marker(latlng, { icon: myLocationIcon }).addTo(map);
       }
-    );
+
+      map.flyTo(latlng, 16);
+      onLocateUser({ lat: latitude, lng: longitude });
+
+      toast({
+        title: 'Ubicación encontrada',
+        description: `Precisión: ${accuracy.toFixed(0)}m`,
+      });
+
+      // Phase 2: Start watching for better accuracy with GPS (Original Logic)
+      const watchId = navigator.geolocation.watchPosition(
+        (betterPosition) => {
+          const { latitude: lat, longitude: lng, accuracy: acc } = betterPosition.coords;
+          if (acc < bestAccuracy * 0.8) { // Only update if accuracy improved significantly
+            console.log('=== IMPROVED LOCATION (GPS) ===');
+            bestAccuracy = acc;
+            const newLatlng = new L.LatLng(lat, lng);
+            setUserLocation({ lat, lng });
+            if (myLocationMarkerRef.current) myLocationMarkerRef.current.setLatLng(newLatlng);
+            onLocateUser({ lat, lng });
+          }
+        },
+        (error) => console.log('GPS refinement failed:', error.message),
+        { enableHighAccuracy: true, timeout: 45000, maximumAge: 0 }
+      );
+
+      // Stop watching after 60 seconds
+      setTimeout(() => navigator.geolocation.clearWatch(watchId), 60000);
+    };
+
+    const onLocationError = (error: GeolocationPositionError) => {
+      console.error("Geolocation error:", error.code, error.message);
+      let errorMessage = 'No se pudo obtener tu ubicación.';
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage = 'Permiso denegado. Revisa la configuración de ubicación.';
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage = 'Ubicación no disponible. Verifica tu GPS y conexión.';
+          break;
+        case error.TIMEOUT:
+          errorMessage = 'Tiempo de espera agotado. Intenta de nuevo.';
+          break;
+      }
+      toast({
+        variant: 'destructive',
+        title: 'Error de ubicación',
+        description: errorMessage,
+      });
+    };
+
+    if (isMobile) {
+      // MOBILE STRATEGY: High Accuracy First -> Fallback
+      navigator.geolocation.getCurrentPosition(
+        onLocationSuccess,
+        (error) => {
+          if (error.code === error.TIMEOUT) {
+            console.log('Mobile timeout, trying low accuracy fallback...');
+            toast({ title: 'Reintentando...', description: 'Buscando ubicación con menor precisión.' });
+            navigator.geolocation.getCurrentPosition(
+              onLocationSuccess,
+              onLocationError,
+              { enableHighAccuracy: false, timeout: 20000, maximumAge: Infinity }
+            );
+          } else {
+            onLocationError(error);
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      // DESKTOP STRATEGY: Low Accuracy First (RESTORED ORIGINAL MECHANISM)
+      navigator.geolocation.getCurrentPosition(
+        onLocationSuccess,
+        onLocationError,
+        { enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 }
+      );
+    }
   };
 
   const drawRoute = async (destination: { lat: number, lng: number }) => {
@@ -346,7 +331,7 @@ export default function PizzaMap({
         const timestamp = Date.now();
         trafficLayerRef.current.setUrl(`https://mt0.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}&ts=${timestamp}`);
       }
-    }, 60000); // Update every 60 seconds
+    }, 10000); // Update every 10 seconds
 
     return () => clearInterval(intervalId);
   }, []);
@@ -442,6 +427,18 @@ export default function PizzaMap({
 
       root.render(
         <div className="w-[280px] p-1 font-sans">
+          {pizzeria.imageUrl && (
+            <div className="mb-3 rounded-lg overflow-hidden h-36 w-full bg-gray-100 relative shadow-sm">
+              <img
+                src={pizzeria.imageUrl}
+                alt={pizzeria.name}
+                className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
+                onError={(e) => {
+                  (e.target as HTMLElement).parentElement!.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-lg font-bold text-red-600 leading-tight">{pizzeria.name}</h3>
           </div>

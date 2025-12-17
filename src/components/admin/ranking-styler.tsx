@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { updateRankingStyles } from '@/app/actions';
 
 export type RankingStyles = {
-    cardScale: number; // Base/Fallback
+    cardScale: number; // Base/Fallback (Desktop)
     cardScale1st: number;
     cardScale2nd: number;
     cardScale3rd: number;
@@ -33,21 +33,57 @@ export type RankingStyles = {
     textSize: number;
     buttonScale: number;
     showSideActions: boolean;
+
+    // Podium Heights (Desktop)
+    podiumHeight1st?: number;
+    podiumHeight2nd?: number;
+    podiumHeight3rd?: number;
+
+    // Mobile Counterparts
+    mobileCardScale1st?: number;
+    mobileCardScale2nd?: number;
+    mobileCardScale3rd?: number;
+    mobileCardWidth?: number; // One width for all in mobile Usually mostly standard
+    mobileImageHeight?: number;
+    mobileTextSize?: number;
+    mobileButtonScale?: number;
+
+    // Podium Heights (Mobile)
+    mobilePodiumHeight1st?: number;
+    mobilePodiumHeight2nd?: number;
+    mobilePodiumHeight3rd?: number;
 };
 
 const DEFAULT_STYLES: RankingStyles = {
     cardScale: 1,
-    cardScale1st: 1,
+    cardScale1st: 1.1,
     cardScale2nd: 1,
     cardScale3rd: 1,
     cardWidth: 320,
-    cardWidth2nd: 320,
-    cardWidth3rd: 320,
+    cardWidth2nd: 300,
+    cardWidth3rd: 300,
     imageHeight: 112,
     imageWidth: 112,
     textSize: 1,
     buttonScale: 1,
     showSideActions: true,
+
+    podiumHeight1st: 256, // h-64
+    podiumHeight2nd: 128, // h-32
+    podiumHeight3rd: 96,  // h-24
+
+    // Optimized defaults for Mobile Podium (w-full / 3 columns)
+    mobileCardScale1st: 0.5,
+    mobileCardScale2nd: 0.45,
+    mobileCardScale3rd: 0.45,
+    mobileCardWidth: 280, // Base width, handled by scaling
+    mobileImageHeight: 90,
+    mobileTextSize: 0.9,
+    mobileButtonScale: 0.9,
+
+    mobilePodiumHeight1st: 160,
+    mobilePodiumHeight2nd: 80,
+    mobilePodiumHeight3rd: 60,
 };
 
 type RankingStylerProps = {
@@ -58,22 +94,32 @@ type RankingStylerProps = {
 export function RankingStyler({ styles, onStylesChange }: RankingStylerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [localStyles, setLocalStyles] = useState<RankingStyles>(styles);
+    const [activeTab, setActiveTab] = useState<'desktop' | 'mobile'>('desktop');
     const { toast } = useToast();
 
+    // Check for unsaved changes by comparing localStyles with the styles prop
+    const hasChanges = JSON.stringify(localStyles) !== JSON.stringify(styles);
+
     useEffect(() => {
-        setLocalStyles({
-            ...DEFAULT_STYLES,
-            ...styles
-        });
-    }, [styles]);
+        // Only update local if menu is closed to prevent jumping, 
+        // OR if it's the first load
+        if (!isOpen) {
+            setLocalStyles({
+                ...DEFAULT_STYLES,
+                ...styles
+            });
+        }
+    }, [styles, isOpen]);
 
     const handleChange = (key: keyof RankingStyles, value: number | boolean) => {
         const newStyles = { ...localStyles, [key]: value };
         setLocalStyles(newStyles);
-        onStylesChange(newStyles);
+        onStylesChange(newStyles); // Live preview
     };
 
     const handleSave = async () => {
+        if (!hasChanges) return;
+
         try {
             await updateRankingStyles(localStyles);
             toast({
@@ -91,8 +137,45 @@ export function RankingStyler({ styles, onStylesChange }: RankingStylerProps) {
     };
 
     const handleReset = () => {
-        setLocalStyles(DEFAULT_STYLES);
-        onStylesChange(DEFAULT_STYLES);
+        let newStyles = { ...localStyles };
+
+        if (activeTab === 'desktop') {
+            // Reset only desktop keys
+            newStyles.cardScale = DEFAULT_STYLES.cardScale;
+            newStyles.cardScale1st = DEFAULT_STYLES.cardScale1st;
+            newStyles.cardScale2nd = DEFAULT_STYLES.cardScale2nd;
+            newStyles.cardScale3rd = DEFAULT_STYLES.cardScale3rd;
+            newStyles.cardWidth = DEFAULT_STYLES.cardWidth;
+            newStyles.cardWidth2nd = DEFAULT_STYLES.cardWidth2nd;
+            newStyles.cardWidth3rd = DEFAULT_STYLES.cardWidth3rd;
+            newStyles.imageHeight = DEFAULT_STYLES.imageHeight;
+            newStyles.imageWidth = DEFAULT_STYLES.imageWidth;
+            newStyles.textSize = DEFAULT_STYLES.textSize;
+            newStyles.buttonScale = DEFAULT_STYLES.buttonScale;
+            newStyles.showSideActions = DEFAULT_STYLES.showSideActions;
+            newStyles.podiumHeight1st = DEFAULT_STYLES.podiumHeight1st;
+            newStyles.podiumHeight2nd = DEFAULT_STYLES.podiumHeight2nd;
+            newStyles.podiumHeight3rd = DEFAULT_STYLES.podiumHeight3rd;
+        } else {
+            // Reset only mobile keys
+            newStyles.mobileCardScale1st = DEFAULT_STYLES.mobileCardScale1st;
+            newStyles.mobileCardScale2nd = DEFAULT_STYLES.mobileCardScale2nd;
+            newStyles.mobileCardScale3rd = DEFAULT_STYLES.mobileCardScale3rd;
+            newStyles.mobileCardWidth = DEFAULT_STYLES.mobileCardWidth;
+            newStyles.mobileImageHeight = DEFAULT_STYLES.mobileImageHeight;
+            newStyles.mobileTextSize = DEFAULT_STYLES.mobileTextSize;
+            newStyles.mobileButtonScale = DEFAULT_STYLES.mobileButtonScale;
+            newStyles.mobilePodiumHeight1st = DEFAULT_STYLES.mobilePodiumHeight1st;
+            newStyles.mobilePodiumHeight2nd = DEFAULT_STYLES.mobilePodiumHeight2nd;
+            newStyles.mobilePodiumHeight3rd = DEFAULT_STYLES.mobilePodiumHeight3rd;
+        }
+
+        setLocalStyles(newStyles);
+        onStylesChange(newStyles);
+        toast({
+            title: "Reestablecido",
+            description: `Se han reestablecido los valores de ${activeTab === 'desktop' ? 'Escritorio' : 'Móvil'}.`,
+        });
     };
 
     return (
@@ -103,175 +186,168 @@ export function RankingStyler({ styles, onStylesChange }: RankingStylerProps) {
                     Editar Estilo Ranking
                 </Button>
             </SheetTrigger>
-            <SheetContent className="overflow-y-auto sm:max-w-md">
+            <SheetContent className="overflow-y-auto sm:max-w-md flex flex-col h-full ring-offset-background focus:outline-none">
                 <SheetHeader>
                     <SheetTitle>Personalizar Ranking</SheetTitle>
                     <SheetDescription>
-                        Ajusta el tamaño y diseño de las tarjetas del ranking.
+                        Ajusta el tamaño y diseño de las tarjetas y podio.
                     </SheetDescription>
+                    <div className="flex w-full rounded-md bg-muted p-1 mt-4">
+                        <button
+                            onClick={() => setActiveTab('desktop')}
+                            className={`flex-1 text-sm font-medium py-1.5 rounded-sm transition-all ${activeTab === 'desktop' ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            Escritorio
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('mobile')}
+                            className={`flex-1 text-sm font-medium py-1.5 rounded-sm transition-all ${activeTab === 'mobile' ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            Móvil
+                        </button>
+                    </div>
                 </SheetHeader>
 
-                <div className="grid gap-6 py-6">
-                    <div className="space-y-4 border-b pb-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">Escala de Tarjetas</h4>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <Label>1er Lugar ({localStyles.cardScale1st}x)</Label>
+                <div className="flex-1 overflow-y-auto py-6">
+                    {activeTab === 'desktop' ? (
+                        <div className="grid gap-6">
+                            <div className="space-y-4 border-b pb-4">
+                                <h4 className="font-medium text-sm text-muted-foreground">Podio (Escritorio)</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Altura 1er ({localStyles.podiumHeight1st ?? 256}px)</Label></div>
+                                    <Slider value={[localStyles.podiumHeight1st ?? 256]} min={100} max={500} step={10} onValueChange={([val]) => handleChange('podiumHeight1st', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Altura 2do ({localStyles.podiumHeight2nd ?? 128}px)</Label></div>
+                                    <Slider value={[localStyles.podiumHeight2nd ?? 128]} min={50} max={400} step={10} onValueChange={([val]) => handleChange('podiumHeight2nd', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Altura 3er ({localStyles.podiumHeight3rd ?? 96}px)</Label></div>
+                                    <Slider value={[localStyles.podiumHeight3rd ?? 96]} min={50} max={400} step={10} onValueChange={([val]) => handleChange('podiumHeight3rd', val)} />
+                                </div>
                             </div>
-                            <Slider
-                                value={[localStyles.cardScale1st]}
-                                min={0.5}
-                                max={1.5}
-                                step={0.05}
-                                onValueChange={([val]) => handleChange('cardScale1st', val)}
-                            />
-                        </div>
 
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <Label>2do Lugar ({localStyles.cardScale2nd}x)</Label>
+                            <div className="space-y-4 border-b pb-4">
+                                <h4 className="font-medium text-sm text-muted-foreground">Escala Estándar</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>1er Lugar ({localStyles.cardScale1st}x)</Label></div>
+                                    <Slider value={[localStyles.cardScale1st]} min={0.5} max={1.5} step={0.05} onValueChange={([val]) => handleChange('cardScale1st', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>2do Lugar ({localStyles.cardScale2nd}x)</Label></div>
+                                    <Slider value={[localStyles.cardScale2nd]} min={0.5} max={1.5} step={0.05} onValueChange={([val]) => handleChange('cardScale2nd', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>3er Lugar ({localStyles.cardScale3rd}x)</Label></div>
+                                    <Slider value={[localStyles.cardScale3rd]} min={0.5} max={1.5} step={0.05} onValueChange={([val]) => handleChange('cardScale3rd', val)} />
+                                </div>
                             </div>
-                            <Slider
-                                value={[localStyles.cardScale2nd]}
-                                min={0.5}
-                                max={1.5}
-                                step={0.05}
-                                onValueChange={([val]) => handleChange('cardScale2nd', val)}
-                            />
-                        </div>
 
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <Label>3er Lugar ({localStyles.cardScale3rd}x)</Label>
+                            <div className="space-y-4 border-b pb-4">
+                                <h4 className="font-medium text-sm text-muted-foreground">Dimensiones</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Ancho 1er ({localStyles.cardWidth}px)</Label></div>
+                                    <Slider value={[localStyles.cardWidth]} min={150} max={500} step={10} onValueChange={([val]) => handleChange('cardWidth', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Ancho 2do ({localStyles.cardWidth2nd}px)</Label></div>
+                                    <Slider value={[localStyles.cardWidth2nd]} min={150} max={500} step={10} onValueChange={([val]) => handleChange('cardWidth2nd', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Ancho 3er ({localStyles.cardWidth3rd}px)</Label></div>
+                                    <Slider value={[localStyles.cardWidth3rd]} min={150} max={500} step={10} onValueChange={([val]) => handleChange('cardWidth3rd', val)} />
+                                </div>
                             </div>
-                            <Slider
-                                value={[localStyles.cardScale3rd]}
-                                min={0.5}
-                                max={1.5}
-                                step={0.05}
-                                onValueChange={([val]) => handleChange('cardScale3rd', val)}
-                            />
-                        </div>
-                    </div>
 
-                    <div className="space-y-4 border-b pb-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">Ancho de Contenedor</h4>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <Label>1er Lugar ({localStyles.cardWidth}px)</Label>
+                            <div className="space-y-4 border-b pb-4">
+                                <h4 className="font-medium text-sm text-muted-foreground">Detalles</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Img Alto ({localStyles.imageHeight}px)</Label></div>
+                                    <Slider value={[localStyles.imageHeight]} min={50} max={300} step={10} onValueChange={([val]) => handleChange('imageHeight', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Img Ancho ({localStyles.imageWidth}px)</Label></div>
+                                    <Slider value={[localStyles.imageWidth]} min={50} max={300} step={10} onValueChange={([val]) => handleChange('imageWidth', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Texto ({localStyles.textSize}rem)</Label></div>
+                                    <Slider value={[localStyles.textSize]} min={0.5} max={2} step={0.1} onValueChange={([val]) => handleChange('textSize', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Botones ({localStyles.buttonScale}x)</Label></div>
+                                    <Slider value={[localStyles.buttonScale]} min={0.5} max={1.5} step={0.05} onValueChange={([val]) => handleChange('buttonScale', val)} />
+                                </div>
+                                <div className="flex items-center justify-between pt-2">
+                                    <Label htmlFor="show-actions">Botones Laterales</Label>
+                                    <Switch id="show-actions" checked={localStyles.showSideActions} onCheckedChange={(val) => handleChange('showSideActions', val)} />
+                                </div>
                             </div>
-                            <Slider
-                                value={[localStyles.cardWidth]}
-                                min={150}
-                                max={500}
-                                step={10}
-                                onValueChange={([val]) => handleChange('cardWidth', val)}
-                            />
                         </div>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <Label>2do Lugar ({localStyles.cardWidth2nd}px)</Label>
+                    ) : (
+                        <div className="grid gap-6">
+                            <div className="space-y-4 border-b pb-4">
+                                <h4 className="font-medium text-sm text-muted-foreground">Podio (Móvil)</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Altura 1er ({localStyles.mobilePodiumHeight1st ?? 160}px)</Label></div>
+                                    <Slider value={[localStyles.mobilePodiumHeight1st ?? 160]} min={50} max={300} step={10} onValueChange={([val]) => handleChange('mobilePodiumHeight1st', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Altura 2do ({localStyles.mobilePodiumHeight2nd ?? 80}px)</Label></div>
+                                    <Slider value={[localStyles.mobilePodiumHeight2nd ?? 80]} min={30} max={250} step={10} onValueChange={([val]) => handleChange('mobilePodiumHeight2nd', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Altura 3er ({localStyles.mobilePodiumHeight3rd ?? 60}px)</Label></div>
+                                    <Slider value={[localStyles.mobilePodiumHeight3rd ?? 60]} min={30} max={250} step={10} onValueChange={([val]) => handleChange('mobilePodiumHeight3rd', val)} />
+                                </div>
                             </div>
-                            <Slider
-                                value={[localStyles.cardWidth2nd]}
-                                min={150}
-                                max={500}
-                                step={10}
-                                onValueChange={([val]) => handleChange('cardWidth2nd', val)}
-                            />
-                        </div>
 
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <Label>3er Lugar ({localStyles.cardWidth3rd}px)</Label>
+                            <div className="space-y-4 border-b pb-4">
+                                <h4 className="font-medium text-sm text-muted-foreground">Escala Móvil</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>1er Lugar ({localStyles.mobileCardScale1st ?? 1}x)</Label></div>
+                                    <Slider value={[localStyles.mobileCardScale1st ?? 1]} min={0.2} max={1.2} step={0.05} onValueChange={([val]) => handleChange('mobileCardScale1st', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>2do Lugar ({localStyles.mobileCardScale2nd ?? 0.95}x)</Label></div>
+                                    <Slider value={[localStyles.mobileCardScale2nd ?? 0.95]} min={0.2} max={1.2} step={0.05} onValueChange={([val]) => handleChange('mobileCardScale2nd', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>3er Lugar ({localStyles.mobileCardScale3rd ?? 0.95}x)</Label></div>
+                                    <Slider value={[localStyles.mobileCardScale3rd ?? 0.95]} min={0.2} max={1.2} step={0.05} onValueChange={([val]) => handleChange('mobileCardScale3rd', val)} />
+                                </div>
                             </div>
-                            <Slider
-                                value={[localStyles.cardWidth3rd]}
-                                min={150}
-                                max={500}
-                                step={10}
-                                onValueChange={([val]) => handleChange('cardWidth3rd', val)}
-                            />
-                        </div>
-                    </div>
 
-                    <div className="space-y-4 border-b pb-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">Imagen y Contenido</h4>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <Label>Ancho de Imagen ({localStyles.imageWidth}px)</Label>
+                            <div className="space-y-4 border-b pb-4">
+                                <h4 className="font-medium text-sm text-muted-foreground">Dimensiones Móvil</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Ancho Base ({localStyles.mobileCardWidth ?? 280}px)</Label></div>
+                                    <Slider value={[localStyles.mobileCardWidth ?? 280]} min={150} max={400} step={10} onValueChange={([val]) => handleChange('mobileCardWidth', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Img Alto ({localStyles.mobileImageHeight ?? 96}px)</Label></div>
+                                    <Slider value={[localStyles.mobileImageHeight ?? 96]} min={50} max={200} step={5} onValueChange={([val]) => handleChange('mobileImageHeight', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Texto ({localStyles.mobileTextSize ?? 0.9}rem)</Label></div>
+                                    <Slider value={[localStyles.mobileTextSize ?? 0.9]} min={0.5} max={1.5} step={0.1} onValueChange={([val]) => handleChange('mobileTextSize', val)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between"><Label>Botones ({localStyles.mobileButtonScale ?? 0.9}x)</Label></div>
+                                    <Slider value={[localStyles.mobileButtonScale ?? 0.9]} min={0.5} max={1.5} step={0.05} onValueChange={([val]) => handleChange('mobileButtonScale', val)} />
+                                </div>
                             </div>
-                            <Slider
-                                value={[localStyles.imageWidth]}
-                                min={50}
-                                max={300}
-                                step={10}
-                                onValueChange={([val]) => handleChange('imageWidth', val)}
-                            />
                         </div>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <Label>Altura de Imagen ({localStyles.imageHeight}px)</Label>
-                            </div>
-                            <Slider
-                                value={[localStyles.imageHeight]}
-                                min={50}
-                                max={300}
-                                step={10}
-                                onValueChange={([val]) => handleChange('imageHeight', val)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <Label>Tamaño de Texto ({localStyles.textSize}rem)</Label>
-                            </div>
-                            <Slider
-                                value={[localStyles.textSize]}
-                                min={0.5}
-                                max={2}
-                                step={0.1}
-                                onValueChange={([val]) => handleChange('textSize', val)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <Label>Escala de Botones ({localStyles.buttonScale}x)</Label>
-                            </div>
-                            <Slider
-                                value={[localStyles.buttonScale]}
-                                min={0.5}
-                                max={1.5}
-                                step={0.05}
-                                onValueChange={([val]) => handleChange('buttonScale', val)}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="show-actions">Mostrar Botones Laterales</Label>
-                        <Switch
-                            id="show-actions"
-                            checked={localStyles.showSideActions}
-                            onCheckedChange={(val) => handleChange('showSideActions', val)}
-                        />
-                    </div>
+                    )}
                 </div>
 
-                <SheetFooter className="flex-col gap-2 sm:flex-col">
-                    <Button variant="outline" onClick={handleReset} className="w-full">
+                <SheetFooter className="mt-auto pt-4">
+                    <Button variant="outline" onClick={handleReset} className="flex-1">
                         <RotateCcw className="mr-2 h-4 w-4" />
-                        Restablecer Valores
+                        Reset {activeTab === 'desktop' ? 'Escritorio' : 'Móvil'}
                     </Button>
-                    <Button onClick={handleSave} className="w-full">
+                    <Button onClick={handleSave} disabled={!hasChanges} className="flex-1">
                         <Save className="mr-2 h-4 w-4" />
-                        Guardar Cambios
+                        {hasChanges ? 'Guardar Cambios' : 'Sin cambios'}
                     </Button>
                 </SheetFooter>
             </SheetContent>

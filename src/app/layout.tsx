@@ -27,7 +27,7 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body
         className={cn(
-          "font-body antialiased bg-background text-foreground",
+          "font-body antialiased bg-background text-foreground overflow-x-hidden",
           fontHeadline.variable,
           fontBody.variable
         )}

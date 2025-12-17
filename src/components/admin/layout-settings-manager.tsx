@@ -13,9 +13,12 @@ import { Switch } from '@/components/ui/switch'
 export default function LayoutSettingsManager() {
     const { toast } = useToast()
     const [loading, setLoading] = useState(false)
+    const [activeTab, setActiveTab] = useState<'desktop' | 'mobile'>('desktop')
     const [settings, setSettings] = useState<any>({
         sheetWidth: 75,
+        sheetWidthMobile: 100,
         cardScale: 1,
+        cardScaleMobile: 1,
         buttonScale: 1,
         buttonLayout: 'grid',
         mapHeight: 70,
@@ -64,18 +67,33 @@ export default function LayoutSettingsManager() {
                     Configuración de Mapa y Diseño
                 </CardTitle>
                 <CardDescription>Ajusta el tamaño del panel lateral y la visualización del mapa.</CardDescription>
+
+                <div className="flex w-full rounded-md bg-muted p-1 mt-4">
+                    <button
+                        onClick={() => setActiveTab('desktop')}
+                        className={`flex-1 text-sm font-medium py-1.5 rounded-sm transition-all ${activeTab === 'desktop' ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                        Escritorio
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('mobile')}
+                        className={`flex-1 text-sm font-medium py-1.5 rounded-sm transition-all ${activeTab === 'mobile' ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                        Móvil
+                    </button>
+                </div>
             </CardHeader>
             <CardContent className="space-y-6">
 
-                <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                    <div className="space-y-2">
-                        <div className="flex justify-between">
-                            <Label>Altura del Mapa (% de Pantalla)</Label>
-                            <span className="text-sm text-muted-foreground">{settings.mapHeight || 70}% - {settings.mapHeightMobile || 55}% (Móvil)</span>
-                        </div>
-                        <div className="space-y-4 pt-2">
-                            <div>
-                                <Label className="text-xs text-muted-foreground mb-1 block">Escritorio</Label>
+                {activeTab === 'desktop' ? (
+                    <div className="space-y-6 animate-in fade-in duration-300">
+                        {/* Desktop Settings */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Altura del Mapa (% de Pantalla)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.mapHeight || 70}%</span>
+                                </div>
                                 <Slider
                                     value={[settings.mapHeight || 70]}
                                     min={40}
@@ -84,8 +102,53 @@ export default function LayoutSettingsManager() {
                                     onValueChange={([val]) => setSettings({ ...settings, mapHeight: val })}
                                 />
                             </div>
-                            <div>
-                                <Label className="text-xs text-muted-foreground mb-1 block">Móvil</Label>
+                        </div>
+
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Ancho del Panel Lateral</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.sheetWidth}%</span>
+                                </div>
+                                <Slider
+                                    value={[settings.sheetWidth]}
+                                    min={30}
+                                    max={100}
+                                    step={5}
+                                    onValueChange={([val]) => setSettings({ ...settings, sheetWidth: val })}
+                                />
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>Más Mapa</span>
+                                    <span>Más Panel</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Escala de Tarjetas</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.cardScale}x</span>
+                                </div>
+                                <Slider
+                                    value={[settings.cardScale]}
+                                    min={0.8}
+                                    max={1.2}
+                                    step={0.05}
+                                    onValueChange={([val]) => setSettings({ ...settings, cardScale: val })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="space-y-6 animate-in fade-in duration-300">
+                        {/* Mobile Settings */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Altura del Mapa (Móvil)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.mapHeightMobile || 55}%</span>
+                                </div>
                                 <Slider
                                     value={[settings.mapHeightMobile || 55]}
                                     min={30}
@@ -95,47 +158,41 @@ export default function LayoutSettingsManager() {
                                 />
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                    <div className="space-y-2">
-                        <div className="flex justify-between">
-                            <Label>Ancho del Panel Lateral (Visible sobre el Mapa)</Label>
-                            <span className="text-sm text-muted-foreground">{settings.sheetWidth}%</span>
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Ancho del Panel (Móvil)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.sheetWidthMobile ?? 100}%</span>
+                                </div>
+                                <Slider
+                                    value={[settings.sheetWidthMobile ?? 100]}
+                                    min={50}
+                                    max={100}
+                                    step={5}
+                                    onValueChange={([val]) => setSettings({ ...settings, sheetWidthMobile: val })}
+                                />
+                            </div>
                         </div>
-                        <Slider
-                            value={[settings.sheetWidth]}
-                            min={30}
-                            max={100}
-                            step={5}
-                            onValueChange={([val]) => setSettings({ ...settings, sheetWidth: val })}
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>Más Mapa Visible</span>
-                            <span>Más Panel Visible</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground pt-1">
-                            Controla qué porcentaje de la pantalla ocupa el panel de información, dejando el resto para el mapa.
-                        </p>
-                    </div>
-                </div>
 
-                <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                    <div className="space-y-2">
-                        <div className="flex justify-between">
-                            <Label>Escala de Tarjetas</Label>
-                            <span className="text-sm text-muted-foreground">{settings.cardScale}x</span>
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Escala de Tarjetas (Móvil)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.cardScaleMobile ?? 1}x</span>
+                                </div>
+                                <Slider
+                                    value={[settings.cardScaleMobile ?? 1]}
+                                    min={0.5}
+                                    max={1.2}
+                                    step={0.05}
+                                    onValueChange={([val]) => setSettings({ ...settings, cardScaleMobile: val })}
+                                />
+                            </div>
                         </div>
-                        <Slider
-                            value={[settings.cardScale]}
-                            min={0.8}
-                            max={1.2}
-                            step={0.05}
-                            onValueChange={([val]) => setSettings({ ...settings, cardScale: val })}
-                        />
                     </div>
-                </div>
+                )}
+
 
                 <Button
                     onClick={handleSave}
