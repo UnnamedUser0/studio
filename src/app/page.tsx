@@ -54,14 +54,24 @@ function HomeContent() {
     podiumHeight1st: 256,
     podiumHeight2nd: 128,
     podiumHeight3rd: 96,
+    cardElevation1st: 20,
+    cardElevation2nd: 12,
+    cardElevation3rd: 12,
 
     mobilePodiumHeight1st: 160,
     mobilePodiumHeight2nd: 80,
     mobilePodiumHeight3rd: 60,
+
+    mobileCardElevation1st: 20,
+    mobileCardElevation2nd: 10,
+    mobileCardElevation3rd: 10,
+
     mobileCardScale1st: 0.5,
     mobileCardScale2nd: 0.45,
     mobileCardScale3rd: 0.45,
     mobileCardWidth: 280,
+    mobileCardWidth2nd: 280,
+    mobileCardWidth3rd: 280,
     mobileImageHeight: 90,
   });
 
@@ -340,14 +350,14 @@ function HomeContent() {
     cardScale2nd: rankingStyles.mobileCardScale2nd ?? 0.95,
     cardScale3rd: rankingStyles.mobileCardScale3rd ?? 0.95,
     cardWidth: rankingStyles.mobileCardWidth ?? 280,
-    cardWidth2nd: rankingStyles.mobileCardWidth ?? 280,
-    cardWidth3rd: rankingStyles.mobileCardWidth ?? 280,
+    cardWidth2nd: rankingStyles.mobileCardWidth2nd ?? rankingStyles.mobileCardWidth ?? 280,
+    cardWidth3rd: rankingStyles.mobileCardWidth3rd ?? rankingStyles.mobileCardWidth ?? 280,
     imageHeight: rankingStyles.mobileImageHeight ?? 96,
     textSize: rankingStyles.mobileTextSize ?? 0.9,
     buttonScale: rankingStyles.mobileButtonScale ?? 0.9,
     // Mobile specific overrides
     cardScale: 1,
-    imageWidth: rankingStyles.mobileCardWidth ? rankingStyles.mobileCardWidth - 32 : 248, // Approximate width minus padding
+    imageWidth: 96, // Fixed smaller image width for mobile row layout
   }), [rankingStyles]);
 
   if (!hasMounted || isCheckingWelcome) {
@@ -385,7 +395,7 @@ function HomeContent() {
           </div>
 
           <div className="bg-background relative">
-            <div id="ranking" className="container py-12">
+            <div id="ranking" className="container py-12 overflow-x-clip">
               <ScrollReveal>
                 <div className="flex flex-col items-center justify-center mb-24">
                   <h2 className="text-3xl font-headline text-center">Ranking de las 3 Mejores Pizzerías de Hermosillo</h2>
@@ -407,14 +417,22 @@ function HomeContent() {
                 ) : (
                   pizzeriasForRanking && pizzeriasForRanking.length >= 3 && (
                     <div
-                      className="relative w-full md:ml-auto md:mx-auto max-w-5xl h-[450px] scale-100 origin-bottom mt-12"
+                      className="relative w-full md:ml-auto md:mx-auto max-w-5xl h-[var(--rh-m)] md:h-[var(--rh)] scale-100 origin-bottom mt-12 transition-[height] duration-300"
                       style={{
+                        '--rh': `${rankingStyles.containerHeight ?? 600}px`,
+                        '--rh-m': `${rankingStyles.mobileContainerHeight ?? 600}px`,
                         '--ph-1': `${rankingStyles.podiumHeight1st ?? 256}px`,
                         '--ph-1-m': `${rankingStyles.mobilePodiumHeight1st ?? 160}px`,
                         '--ph-2': `${rankingStyles.podiumHeight2nd ?? 128}px`,
                         '--ph-2-m': `${rankingStyles.mobilePodiumHeight2nd ?? 80}px`,
                         '--ph-3': `${rankingStyles.podiumHeight3rd ?? 96}px`,
                         '--ph-3-m': `${rankingStyles.mobilePodiumHeight3rd ?? 60}px`,
+                        '--ce-1': `${rankingStyles.cardElevation1st ?? 20}px`,
+                        '--ce-1-m': `${rankingStyles.mobileCardElevation1st ?? 20}px`,
+                        '--ce-2': `${rankingStyles.cardElevation2nd ?? 12}px`,
+                        '--ce-2-m': `${rankingStyles.mobileCardElevation2nd ?? 10}px`,
+                        '--ce-3': `${rankingStyles.cardElevation3rd ?? 12}px`,
+                        '--ce-3-m': `${rankingStyles.mobileCardElevation3rd ?? 10}px`,
                       } as React.CSSProperties}
                     >
                       {/* Base Platform - Wider and brighter highlights */}
@@ -428,21 +446,29 @@ function HomeContent() {
                           {/* Card Container - Expands to Left */}
                           {/* Card Container - Expands to Left */}
                           <div
-                            className="absolute right-1/2 translate-x-1/2 md:translate-x-0 md:right-0 z-20 transition-all duration-300 hover:-translate-y-2 bottom-[calc(var(--ph-2-m)-10px)] md:bottom-[calc(var(--ph-2)+12px)]"
+                            className="absolute right-1/2 translate-x-1/2 md:translate-x-0 md:right-0 z-50 transition-all duration-300 hover:-translate-y-2 bottom-[calc(var(--ph-2-m)+var(--ce-2-m))] md:bottom-[calc(var(--ph-2)+var(--ce-2))]"
                             style={{ width: `${rankingStyles.cardWidth2nd}px` }}
                           >
                             <div className="relative">
-                              <div className="absolute -inset-1 bg-gradient-to-r from-gray-300 to-gray-100 rounded-lg blur opacity-40"></div>
+                              <div className="hidden md:block absolute -inset-1 bg-gradient-to-r from-gray-300 to-gray-100 rounded-lg blur opacity-40"></div>
                               {/* Mobile Card: Centered and Scaled */}
                               <div className="md:hidden absolute bottom-0 left-1/2 -translate-x-1/2 origin-bottom transition-transform duration-300"
-                                style={{ width: `${rankingStyles.mobileCardWidth ?? 280}px` }}> {/* Fixed width canvas for mobile card */}
+                                style={{ width: `${rankingStyles.mobileCardWidth2nd ?? rankingStyles.mobileCardWidth ?? 280}px`, maxWidth: '90vw' }}> {/* Fixed width canvas for mobile card */}
                                 <PizzeriaCard
                                   pizzeria={pizzeriasForRanking[1]!}
                                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[1]!)}
                                   rankingPlace={2}
-                                  compact
+                                  inverted
+                                  sideActionsPosition="left"
                                   rankingStyles={mobileRankingStyles}
                                   customScale={mobileRankingStyles.cardScale2nd} /* This applies the scaling transformation */
+                                  sideActions={rankingStyles.showSideActions ? (
+                                    <div className="flex flex-col gap-2 w-24">
+                                      <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={(e) => { e.stopPropagation(); setSelectedPizzeriaForMenu(pizzeriasForRanking[1]!); }} style={{ transform: `scale(${rankingStyles.mobileButtonScale ?? 0.9})`, transformOrigin: 'center' }}>Ver menú</Button>
+                                      <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={(e) => { e.stopPropagation(); handleNavigate(pizzeriasForRanking[1]!); }} style={{ transform: `scale(${rankingStyles.mobileButtonScale ?? 0.9})`, transformOrigin: 'center' }}>Cómo llegar</Button>
+                                      <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={(e) => { e.stopPropagation(); handleRatePizzeria(pizzeriasForRanking[1]!); }} style={{ transform: `scale(${rankingStyles.mobileButtonScale ?? 0.9})`, transformOrigin: 'center' }}>Calificar</Button>
+                                    </div>
+                                  ) : undefined}
                                 />
                               </div>
                               <div className="hidden md:block relative">
@@ -456,9 +482,9 @@ function HomeContent() {
                                   customScale={rankingStyles.cardScale2nd}
                                   sideActions={rankingStyles.showSideActions ? (
                                     <div className="flex flex-col gap-2 w-28">
-                                      <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => setSelectedPizzeriaForMenu(pizzeriasForRanking[1]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Ver menú</Button>
-                                      <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[1]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Cómo llegar</Button>
-                                      <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleRatePizzeria(pizzeriasForRanking[1]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Calificar</Button>
+                                      <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={(e) => { e.stopPropagation(); setSelectedPizzeriaForMenu(pizzeriasForRanking[1]!); }} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Ver menú</Button>
+                                      <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={(e) => { e.stopPropagation(); handleNavigate(pizzeriasForRanking[1]!); }} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Cómo llegar</Button>
+                                      <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={(e) => { e.stopPropagation(); handleRatePizzeria(pizzeriasForRanking[1]!); }} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Calificar</Button>
                                     </div>
                                   ) : undefined}
                                 />
@@ -472,25 +498,32 @@ function HomeContent() {
                         </div>
 
                         {/* 1st Place (Center) - Adjusted Height */}
-                        <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end z-10 group">
+                        <div className="relative w-1/3 max-w-[200px] flex flex-col justify-end group">
                           {/* Card Container - Centered */}
                           {/* Card Container - Centered */}
                           <div
-                            className="absolute left-1/2 -translate-x-1/2 z-30 transition-transform duration-300 hover:-translate-y-2 bottom-[calc(var(--ph-1-m)-10px)] md:bottom-[calc(var(--ph-1)+20px)]"
+                            className="absolute left-1/2 -translate-x-1/2 z-[60] transition-transform duration-300 hover:-translate-y-2 bottom-[calc(var(--ph-1-m)+var(--ce-1-m))] md:bottom-[calc(var(--ph-1)+var(--ce-1))]"
                             style={{ width: `${rankingStyles.cardWidth}px` }}
                           >
                             <div className="relative">
-                              <div className="absolute -inset-1 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-lg blur opacity-50 animate-pulse"></div>
+                              <div className="hidden md:block absolute -inset-1 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-lg blur opacity-50 animate-pulse"></div>
                               {/* Mobile Card: Centered and Scaled */}
                               <div className="md:hidden absolute bottom-0 left-1/2 -translate-x-1/2 origin-bottom transition-transform duration-300"
-                                style={{ width: `${rankingStyles.mobileCardWidth ?? 280}px` }}>
+                                style={{ width: `${rankingStyles.mobileCardWidth ?? 280}px`, maxWidth: '90vw' }}>
                                 <PizzeriaCard
                                   pizzeria={pizzeriasForRanking[0]!}
                                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[0]!)}
                                   rankingPlace={1}
-                                  compact
+                                  sideActionsPosition="right"
                                   rankingStyles={mobileRankingStyles}
                                   customScale={mobileRankingStyles.cardScale1st}
+                                  sideActions={rankingStyles.showSideActions ? (
+                                    <div className="flex flex-col gap-2 w-24">
+                                      <Button size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={(e) => { e.stopPropagation(); setSelectedPizzeriaForMenu(pizzeriasForRanking[0]!); }} style={{ transform: `scale(${rankingStyles.mobileButtonScale ?? 0.9})`, transformOrigin: 'center' }}>Ver menú</Button>
+                                      <Button size="sm" variant="secondary" className="bg-black text-white hover:bg-gray-800 shadow-sm" onClick={(e) => { e.stopPropagation(); handleNavigate(pizzeriasForRanking[0]!); }} style={{ transform: `scale(${rankingStyles.mobileButtonScale ?? 0.9})`, transformOrigin: 'center' }}>Cómo llegar</Button>
+                                      <Button size="sm" variant="outline" className="border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={(e) => { e.stopPropagation(); handleRatePizzeria(pizzeriasForRanking[0]!); }} style={{ transform: `scale(${rankingStyles.mobileButtonScale ?? 0.9})`, transformOrigin: 'center' }}>Calificar</Button>
+                                    </div>
+                                  ) : undefined}
                                 />
                               </div>
                               <div className="hidden md:block relative">
@@ -503,9 +536,9 @@ function HomeContent() {
                                   customScale={rankingStyles.cardScale1st}
                                   sideActions={rankingStyles.showSideActions ? (
                                     <div className="flex flex-col gap-2 w-28">
-                                      <Button size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => setSelectedPizzeriaForMenu(pizzeriasForRanking[0]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Ver menú</Button>
-                                      <Button size="sm" variant="secondary" className="bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[0]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Cómo llegar</Button>
-                                      <Button size="sm" variant="outline" className="border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleRatePizzeria(pizzeriasForRanking[0]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Calificar</Button>
+                                      <Button size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={(e) => { e.stopPropagation(); setSelectedPizzeriaForMenu(pizzeriasForRanking[0]!); }} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Ver menú</Button>
+                                      <Button size="sm" variant="secondary" className="bg-black text-white hover:bg-gray-800 shadow-sm" onClick={(e) => { e.stopPropagation(); handleNavigate(pizzeriasForRanking[0]!); }} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Cómo llegar</Button>
+                                      <Button size="sm" variant="outline" className="border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={(e) => { e.stopPropagation(); handleRatePizzeria(pizzeriasForRanking[0]!); }} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Calificar</Button>
                                     </div>
                                   ) : undefined}
                                 />
@@ -524,21 +557,28 @@ function HomeContent() {
                           {/* Card Container - Expands to Right */}
                           {/* Card Container - Expands to Right */}
                           <div
-                            className="absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-0 z-20 transition-all duration-300 hover:-translate-y-2 bottom-[calc(var(--ph-3-m)-10px)] md:bottom-[calc(var(--ph-3)+12px)]"
+                            className="absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-0 z-50 transition-all duration-300 hover:-translate-y-2 bottom-[calc(var(--ph-3-m)+var(--ce-3-m))] md:bottom-[calc(var(--ph-3)+var(--ce-3))]"
                             style={{ width: `${rankingStyles.cardWidth3rd}px` }}
                           >
                             <div className="relative">
-                              <div className="absolute -inset-1 bg-gradient-to-r from-orange-300 to-orange-200 rounded-lg blur opacity-40"></div>
+                              <div className="hidden md:block absolute -inset-1 bg-gradient-to-r from-orange-300 to-orange-200 rounded-lg blur opacity-40"></div>
                               {/* Mobile Card: Centered and Scaled */}
                               <div className="md:hidden absolute bottom-0 left-1/2 -translate-x-1/2 origin-bottom transition-transform duration-300"
-                                style={{ width: `${rankingStyles.mobileCardWidth ?? 280}px` }}>
+                                style={{ width: `${rankingStyles.mobileCardWidth3rd ?? rankingStyles.mobileCardWidth ?? 280}px`, maxWidth: '90vw' }}>
                                 <PizzeriaCard
                                   pizzeria={pizzeriasForRanking[2]!}
                                   onClick={() => handleSelectPizzeria(pizzeriasForRanking[2]!)}
                                   rankingPlace={3}
-                                  compact
+                                  sideActionsPosition="right"
                                   rankingStyles={mobileRankingStyles}
                                   customScale={mobileRankingStyles.cardScale3rd}
+                                  sideActions={rankingStyles.showSideActions ? (
+                                    <div className="flex flex-col gap-2 w-24">
+                                      <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={(e) => { e.stopPropagation(); setSelectedPizzeriaForMenu(pizzeriasForRanking[2]!); }} style={{ transform: `scale(${rankingStyles.mobileButtonScale ?? 0.9})`, transformOrigin: 'center' }}>Ver menú</Button>
+                                      <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={(e) => { e.stopPropagation(); handleNavigate(pizzeriasForRanking[2]!); }} style={{ transform: `scale(${rankingStyles.mobileButtonScale ?? 0.9})`, transformOrigin: 'center' }}>Cómo llegar</Button>
+                                      <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={(e) => { e.stopPropagation(); handleRatePizzeria(pizzeriasForRanking[2]!); }} style={{ transform: `scale(${rankingStyles.mobileButtonScale ?? 0.9})`, transformOrigin: 'center' }}>Calificar</Button>
+                                    </div>
+                                  ) : undefined}
                                 />
                               </div>
                               <div className="hidden md:block relative">
@@ -551,9 +591,9 @@ function HomeContent() {
                                   customScale={rankingStyles.cardScale3rd}
                                   sideActions={rankingStyles.showSideActions ? (
                                     <div className="flex flex-col gap-2 w-28">
-                                      <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={() => setSelectedPizzeriaForMenu(pizzeriasForRanking[2]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Ver menú</Button>
-                                      <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={() => handleNavigate(pizzeriasForRanking[2]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Cómo llegar</Button>
-                                      <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={() => handleRatePizzeria(pizzeriasForRanking[2]!)} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Calificar</Button>
+                                      <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white shadow-sm" onClick={(e) => { e.stopPropagation(); setSelectedPizzeriaForMenu(pizzeriasForRanking[2]!); }} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Ver menú</Button>
+                                      <Button size="sm" variant="secondary" className="w-full bg-black text-white hover:bg-gray-800 shadow-sm" onClick={(e) => { e.stopPropagation(); handleNavigate(pizzeriasForRanking[2]!); }} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Cómo llegar</Button>
+                                      <Button size="sm" variant="outline" className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20" onClick={(e) => { e.stopPropagation(); handleRatePizzeria(pizzeriasForRanking[2]!); }} style={{ transform: `scale(${rankingStyles.buttonScale})` }}>Calificar</Button>
                                     </div>
                                   ) : undefined}
                                 />
@@ -562,8 +602,10 @@ function HomeContent() {
                           </div>
                           {/* Podium Block */}
                           <div className="w-full bg-gradient-to-b from-orange-400 to-orange-600 rounded-t-lg relative shadow-lg border-t-4 border-orange-300 flex items-center justify-center mx-auto max-w-full transition-all duration-300 h-[var(--ph-3-m)] md:h-[var(--ph-3)]">
-                            <span className="font-bold text-4xl md:text-5xl text-orange-100/80 drop-shadow-md">3</span>
+                            <span className="font-bold text-5xl md:text-6xl text-orange-100/50 drop-shadow-md">3</span>
                           </div>
+
+
                         </div>
                       </div>
                     </div>
@@ -624,6 +666,9 @@ function HomeContent() {
             </div>
 
             <WhyChoosePizzapp isAdmin={canManageContent} />
+
+            {/* Mobile Spacer to avoid content being hidden by fixed bottom elements */}
+            <div className="h-24 md:hidden"></div>
           </div>
         </main>
       </div>

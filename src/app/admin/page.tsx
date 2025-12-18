@@ -23,8 +23,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { getAllPizzerias, getTestimonials, getUserProfile } from '@/app/actions';
-import AboutContentManager from '@/components/admin/about-content-manager';
-import LayoutSettingsManager from '@/components/admin/layout-settings-manager';
+
 
 const Footer = dynamic(() => import('@/components/layout/footer'), {
   loading: () => <div />,
@@ -237,24 +236,7 @@ function AdminDashboard({ permissions, userEmail }: { permissions: string | null
           </Card>
         )}
 
-        {/* About Content - Protected by permission */}
-        {hasPermission('manage_content') && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Gestionar Contenido "Acerca de"</CardTitle>
-              <CardDescription>Edita el contenido de Términos de Uso, Política de Privacidad y pie de página.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AboutContentManager />
-            </CardContent>
-          </Card>
-        )}
 
-        {hasPermission('manage_content') && (
-          <div className="mt-8">
-            <LayoutSettingsManager />
-          </div>
-        )}
       </div>
     </div>
   );

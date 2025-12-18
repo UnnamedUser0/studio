@@ -50,3 +50,8 @@ export type User = {
   isAdmin: boolean;
   permissions?: string | null;
 }
+
+export type Geocode = {
+  lat: number;
+  lng: number;
+};
