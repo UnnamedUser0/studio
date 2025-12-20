@@ -21,8 +21,23 @@ export default function LayoutSettingsManager() {
         cardScaleMobile: 1,
         buttonScale: 1,
         buttonLayout: 'grid',
-        mapHeight: 70,
-        mapHeightMobile: 55
+        searchWidth: 50, // %
+        searchWidthMobile: 90, // %
+        searchHeight: 12, // unit
+        searchHeightMobile: 10, // unit
+        // Map Buttons Position
+        buttonsTop: 160, // px (default top-40 = 160px)
+        buttonsTopMobile: 160,
+        // Layer Control Position
+        layerControlTop: 10, // px
+        layerControlTopMobile: 10,
+        // Popup Settings
+        popupWidth: 280, // px
+        popupWidthMobile: 260, // px
+        popupScale: 1, // scale
+        popupScaleMobile: 1, // scale
+        popupFontSize: 14, // px
+        popupFontSizeMobile: 12, // px
     })
 
     useEffect(() => {
@@ -139,6 +154,114 @@ export default function LayoutSettingsManager() {
                                 />
                             </div>
                         </div>
+
+                        {/* Search Bar Settings (Desktop) */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <h4 className="font-semibold text-sm">Barra de Búsqueda</h4>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label>Ancho (% de Pantalla)</Label>
+                                        <span className="text-sm text-muted-foreground">{settings.searchWidth || 50}%</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.searchWidth || 50]}
+                                        min={20}
+                                        max={100}
+                                        step={5}
+                                        onValueChange={([val]) => setSettings({ ...settings, searchWidth: val })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label>Altura (Escala)</Label>
+                                        <span className="text-sm text-muted-foreground">{settings.searchHeight || 12}</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.searchHeight || 12]}
+                                        min={8}
+                                        max={20}
+                                        step={1}
+                                        onValueChange={([val]) => setSettings({ ...settings, searchHeight: val })}
+                                    />
+                                    <p className="text-xs text-muted-foreground">Controla el alto y tamaño de texto.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Posición Vertical Botones (px)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.buttonsTop || 160}px</span>
+                                </div>
+                                <Slider
+                                    value={[settings.buttonsTop || 160]}
+                                    min={50}
+                                    max={500}
+                                    step={10}
+                                    onValueChange={([val]) => setSettings({ ...settings, buttonsTop: val })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Posición Vertical Tipos de Mapa (px)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.layerControlTop || 10}px</span>
+                                </div>
+                                <Slider
+                                    value={[settings.layerControlTop || 10]}
+                                    min={0}
+                                    max={300}
+                                    step={5}
+                                    onValueChange={([val]) => setSettings({ ...settings, layerControlTop: val })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Ancho de Mini Paneles (Popup px)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.popupWidth || 280}px</span>
+                                </div>
+                                <Slider
+                                    value={[settings.popupWidth || 280]}
+                                    min={200}
+                                    max={500}
+                                    step={10}
+                                    onValueChange={([val]) => setSettings({ ...settings, popupWidth: val })}
+                                />
+                            </div>
+                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
+                                <div className="flex justify-between">
+                                    <Label>Escala Global del Popup</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.popupScale || 1}x</span>
+                                </div>
+                                <Slider
+                                    value={[settings.popupScale || 1]}
+                                    min={0.5}
+                                    max={1.5}
+                                    step={0.05}
+                                    onValueChange={([val]) => setSettings({ ...settings, popupScale: val })}
+                                />
+                            </div>
+                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
+                                <div className="flex justify-between">
+                                    <Label>Tamaño de Fuente del Contenido (px)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.popupFontSize || 14}px</span>
+                                </div>
+                                <Slider
+                                    value={[settings.popupFontSize || 14]}
+                                    min={10}
+                                    max={24}
+                                    step={1}
+                                    onValueChange={([val]) => setSettings({ ...settings, popupFontSize: val })}
+                                />
+                            </div>
+                        </div>
                     </div>
                 ) : (
                     <div className="space-y-6 animate-in fade-in duration-300">
@@ -190,6 +313,111 @@ export default function LayoutSettingsManager() {
                                 />
                             </div>
                         </div>
+
+                        {/* Search Bar Settings (Mobile) */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <h4 className="font-semibold text-sm">Barra de Búsqueda (Móvil)</h4>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label>Ancho (% de Pantalla)</Label>
+                                        <span className="text-sm text-muted-foreground">{settings.searchWidthMobile || 90}%</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.searchWidthMobile || 90]}
+                                        min={50}
+                                        max={100}
+                                        step={5}
+                                        onValueChange={([val]) => setSettings({ ...settings, searchWidthMobile: val })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label>Altura (Escala)</Label>
+                                        <span className="text-sm text-muted-foreground">{settings.searchHeightMobile || 10}</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.searchHeightMobile || 10]}
+                                        min={8}
+                                        max={16}
+                                        step={1}
+                                        onValueChange={([val]) => setSettings({ ...settings, searchHeightMobile: val })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Posición Vertical Botones (Móvil px)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.buttonsTopMobile || 160}px</span>
+                                </div>
+                                <Slider
+                                    value={[settings.buttonsTopMobile || 160]}
+                                    min={50}
+                                    max={500}
+                                    onValueChange={([val]) => setSettings({ ...settings, buttonsTopMobile: val })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Posición Vertical Tipos de Mapa (Móvil px)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.layerControlTopMobile || 10}px</span>
+                                </div>
+                                <Slider
+                                    value={[settings.layerControlTopMobile || 10]}
+                                    min={0}
+                                    max={300}
+                                    onValueChange={([val]) => setSettings({ ...settings, layerControlTopMobile: val })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Ancho de Mini Paneles (Popup Móvil px)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.popupWidthMobile || 260}px</span>
+                                </div>
+                                <Slider
+                                    value={[settings.popupWidthMobile || 260]}
+                                    min={150}
+                                    max={350}
+                                    step={10}
+                                    onValueChange={([val]) => setSettings({ ...settings, popupWidthMobile: val })}
+                                />
+                            </div>
+                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
+                                <div className="flex justify-between">
+                                    <Label>Escala Global del Popup (Móvil)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.popupScaleMobile || 1}x</span>
+                                </div>
+                                <Slider
+                                    value={[settings.popupScaleMobile || 1]}
+                                    min={0.5}
+                                    max={1.5}
+                                    step={0.05}
+                                    onValueChange={([val]) => setSettings({ ...settings, popupScaleMobile: val })}
+                                />
+                            </div>
+                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
+                                <div className="flex justify-between">
+                                    <Label>Tamaño de Fuente del Contenido (Móvil px)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.popupFontSizeMobile || 12}px</span>
+                                </div>
+                                <Slider
+                                    value={[settings.popupFontSizeMobile || 12]}
+                                    min={10}
+                                    max={24}
+                                    step={1}
+                                    onValueChange={([val]) => setSettings({ ...settings, popupFontSizeMobile: val })}
+                                />
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -203,6 +431,6 @@ export default function LayoutSettingsManager() {
                     {loading ? 'Guardando...' : 'Guardar Cambios'}
                 </Button>
             </CardContent>
-        </Card>
+        </Card >
     )
 }

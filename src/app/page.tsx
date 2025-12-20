@@ -341,6 +341,20 @@ function HomeContent() {
     return {
       '--map-height-mobile': `${layoutSettings.mapHeightMobile || 55}vh`,
       '--map-height-desktop': `${layoutSettings.mapHeight || 70}vh`,
+      '--search-width-desktop': `${layoutSettings.searchWidth || 50}%`,
+      '--search-width-mobile': `${layoutSettings.searchWidthMobile || 90}%`,
+      '--search-height-desktop': `${(layoutSettings.searchHeight || 12) * 0.25}rem`,
+      '--search-height-mobile': `${(layoutSettings.searchHeightMobile || 10) * 0.25}rem`,
+      '--buttons-top-desktop': `${layoutSettings.buttonsTop || 160}px`,
+      '--buttons-top-mobile': `${layoutSettings.buttonsTopMobile || 160}px`,
+      '--layer-control-top-desktop': `${layoutSettings.layerControlTop || 10}px`,
+      '--layer-control-top-mobile': `${layoutSettings.layerControlTopMobile || 10}px`,
+      '--popup-width-desktop': `${layoutSettings.popupWidth || 280}px`,
+      '--popup-width-mobile': `${layoutSettings.popupWidthMobile || 260}px`,
+      '--popup-scale-desktop': `${layoutSettings.popupScale || 1}`,
+      '--popup-scale-mobile': `${layoutSettings.popupScaleMobile || 1}`,
+      '--popup-font-size-desktop': `${layoutSettings.popupFontSize || 14}px`,
+      '--popup-font-size-mobile': `${layoutSettings.popupFontSizeMobile || 12}px`,
     } as React.CSSProperties;
   }, [layoutSettings]);
 

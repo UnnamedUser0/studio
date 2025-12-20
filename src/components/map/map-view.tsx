@@ -82,11 +82,26 @@ export default function MapView({
       />
 
       {/* Smart Search Bar */}
-      <div className={cn(
-        "absolute left-1/2 -translate-x-1/2 w-[90%] max-w-[300px] md:w-full md:max-w-md lg:max-w-lg z-[1001] transition-all duration-300",
-        isFullscreen ? "top-4" : "top-4"
-      )}>
-        <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias || []} onClear={onClearSearch} />
+      <div
+        className={cn(
+          "absolute left-1/2 -translate-x-1/2 z-[1001] transition-all duration-300",
+          isFullscreen ? "top-4" : "top-4"
+        )}
+        style={{
+          width: 'var(--search-width-mobile, 90%)',
+          height: 'var(--search-height-mobile, 2.5rem)',
+          // We use media queries in CSS or Javascript logic if we want truly distinct variables via style prop, 
+          // but since we are in a React component, we can use a simpler approach if we had window size.
+          // However, since we defined CSS variables in parent Page, we can use them directly if we set them up correctly with media queries THERE.
+          // Wait, CSS variables defined in inline-style don't behave like media queries. 
+          // We need to use CSS classes that reference the variables, OR standard media queries.
+          // The page.tsx defines --search-width-mobile and --search-width-desktop globally in the wrapper.
+          // use classes:
+        } as React.CSSProperties}
+      >
+        <div className="w-[var(--search-width-mobile,_90%)] md:w-[var(--search-width-desktop,_50%)] mx-auto h-[var(--search-height-mobile,_2.5rem)] md:h-[var(--search-height-desktop,_3rem)]">
+          <SmartSearch onSearch={onSearch} allPizzerias={allPizzerias || []} onClear={onClearSearch} />
+        </div>
       </div>
 
       {/* Pizzeria Detail Sheet */}

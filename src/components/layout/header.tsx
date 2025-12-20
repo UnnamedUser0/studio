@@ -152,9 +152,11 @@ export default function Header() {
           </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
-          <div className="hidden md:flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <OnlineUsersIndicator />
-            <CursorSwitcher />
+            <div className="hidden md:block">
+              <CursorSwitcher />
+            </div>
           </div>
           <ThemeSwitcher />
           {isUserLoading || (user && isProfileLoading) ? (
@@ -254,6 +256,6 @@ export default function Header() {
           )}
         </div>
       </div>
-    </header>
+    </header >
   );
 }

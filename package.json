@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "concurrently \"npm run next:dev\" \"npm run mobile\"",
     "mobile": "npx expo start",
-    "next:dev": "next dev",
+    "next:dev": "next dev --experimental-https",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "build": "next build",
     "start": "next start",

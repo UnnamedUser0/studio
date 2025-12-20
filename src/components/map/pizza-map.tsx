@@ -93,22 +93,9 @@ export default function PizzaMap({
     }
 
     toast({
-      title: 'Obteniendo ubicación...',
+      title: 'Obteniendo ubicación precisa...',
     });
 
-    // Note: On some mobile devices, we might need high accuracy to trigger the prompt correctly
-    // checking for secure context first
-    if (!window.isSecureContext && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      toast({
-        variant: 'warning',
-        title: 'Advertencia de seguridad',
-        description: 'La ubicación podría fallar si no estás usando HTTPS.',
-      });
-    }
-
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    // Shared success handler to avoid code duplication across branches
     const onLocationSuccess = (position: GeolocationPosition) => {
       const { latitude, longitude, accuracy } = position.coords;
       console.log(`=== LOCATION FOUND ===`);
@@ -116,7 +103,7 @@ export default function PizzaMap({
       console.log(`Longitude: ${longitude}`);
       console.log(`Accuracy: ${accuracy} meters`);
 
-      let bestAccuracy = accuracy; // This will be updated by the watchPosition
+      let bestAccuracy = accuracy;
       const latlng = new L.LatLng(latitude, longitude);
       setUserLocation({ lat: latitude, lng: longitude });
 
@@ -134,11 +121,11 @@ export default function PizzaMap({
         description: `Precisión: ${accuracy.toFixed(0)}m`,
       });
 
-      // Phase 2: Start watching for better accuracy with GPS (Original Logic)
+      // Refine with watchPosition
       const watchId = navigator.geolocation.watchPosition(
         (betterPosition) => {
           const { latitude: lat, longitude: lng, accuracy: acc } = betterPosition.coords;
-          if (acc < bestAccuracy * 0.8) { // Only update if accuracy improved significantly
+          if (acc < bestAccuracy * 0.8) {
             console.log('=== IMPROVED LOCATION (GPS) ===');
             bestAccuracy = acc;
             const newLatlng = new L.LatLng(lat, lng);
@@ -147,12 +134,12 @@ export default function PizzaMap({
             onLocateUser({ lat, lng });
           }
         },
-        (error) => console.log('GPS refinement failed:', error.message),
+        (error) => console.log('High accuracy refinement failed:', error.message),
         { enableHighAccuracy: true, timeout: 45000, maximumAge: 0 }
       );
 
-      // Stop watching after 60 seconds
-      setTimeout(() => navigator.geolocation.clearWatch(watchId), 60000);
+      // Stop watching after 2 minutes
+      setTimeout(() => navigator.geolocation.clearWatch(watchId), 120000);
     };
 
     const onLocationError = (error: GeolocationPositionError) => {
@@ -176,27 +163,26 @@ export default function PizzaMap({
       });
     };
 
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
     if (isMobile) {
-      // MOBILE STRATEGY: High Accuracy First -> Fallback
+      // MOBILE STRATEGY: High Accuracy ONLY (User requested ignore security/force GPS)
+      // Browsers may still block it if unsafe context, but we request it directly.
       navigator.geolocation.getCurrentPosition(
         onLocationSuccess,
         (error) => {
+          console.error("Mobile High Accuracy Error:", error);
+          // Try one fallback to low accuracy just in case high accuracy timed out but permissions exist
           if (error.code === error.TIMEOUT) {
-            console.log('Mobile timeout, trying low accuracy fallback...');
-            toast({ title: 'Reintentando...', description: 'Buscando ubicación con menor precisión.' });
-            navigator.geolocation.getCurrentPosition(
-              onLocationSuccess,
-              onLocationError,
-              { enableHighAccuracy: false, timeout: 20000, maximumAge: Infinity }
-            );
+            navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError, { enableHighAccuracy: false, timeout: 10000 });
           } else {
             onLocationError(error);
           }
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     } else {
-      // DESKTOP STRATEGY: Low Accuracy First (RESTORED ORIGINAL MECHANISM)
+      // DESKTOP STRATEGY: Standard/Low Accuracy first (Restored)
       navigator.geolocation.getCurrentPosition(
         onLocationSuccess,
         onLocationError,
@@ -520,7 +506,9 @@ export default function PizzaMap({
       <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />
 
       {/* Map Controls Container */}
-      <div className="absolute top-40 right-4 z-[1001] flex flex-col gap-2">
+      <div
+        className="absolute right-4 z-[1001] flex flex-col gap-2 transition-all duration-300 top-[var(--buttons-top-mobile,_160px)] md:top-[var(--buttons-top-desktop,_160px)]"
+      >
         <Button
           variant="secondary"
           size="icon"
@@ -555,6 +543,28 @@ export default function PizzaMap({
             {showAll ? "Ver cercanas" : "Ver todas"}
           </Button>
         )}
+
+        {isAdmin && (
+          <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="destructive"
+                size="icon"
+                className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 border-2 border-white/20"
+                title="Configuración del Mapa"
+                aria-label="Configuración"
+              >
+                <Settings className="h-4 w-4 md:h-5 md:w-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Configuración del Mapa</DialogTitle>
+              </DialogHeader>
+              <LayoutSettingsManager />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Traffic Legend */}
@@ -582,29 +592,7 @@ export default function PizzaMap({
         </div>
       )}
 
-      {/* Admin Map Settings Button */}
-      {isAdmin && (
-        <div className="absolute top-28 left-4 z-[1001]">
-          <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="destructive"
-                size="icon"
-                className="shadow-lg rounded-full h-10 w-10 border-2 border-white/20"
-                title="Configuración del Mapa"
-              >
-                <Settings className="h-5 w-5" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Configuración del Mapa</DialogTitle>
-              </DialogHeader>
-              <LayoutSettingsManager />
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
+
 
 
       <style jsx global>{`
@@ -613,14 +601,52 @@ export default function PizzaMap({
           padding: 0;
           overflow: hidden;
         }
+        /* Global Popup Scale - Applied to wrapper to avoid breaking Leaflet positioning */
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip-container {
+           transform-origin: bottom center;
+           transform: scale(var(--popup-scale-mobile, 1));
+           transition: transform 0.2s ease;
+        }
+        @media (min-width: 768px) {
+           .leaflet-popup-content-wrapper, .leaflet-popup-tip-container {
+              transform: scale(var(--popup-scale-desktop, 1));
+           }
+        }
+
+        /* Content Font Size & Layout */
         .leaflet-popup-content {
           margin: 12px;
-          width: 280px !important;
+          min-width: 200px;
+          width: var(--popup-width-mobile, 260px) !important;
+          font-size: var(--popup-font-size-mobile, 12px) !important;
+          line-height: 1.5;
+        }
+        /* Force font size inheritance for inner elements */
+        .leaflet-popup-content * {
+            font-size: inherit !important;
+        }
+        
+        @media (min-width: 768px) {
+          .leaflet-popup-content {
+            width: var(--popup-width-desktop, 280px) !important;
+            font-size: var(--popup-font-size-desktop, 14px) !important;
+          }
         }
         .leaflet-popup-close-button {
           top: 8px !important;
           right: 8px !important;
           color: #9ca3af !important;
+        }
+
+        /* Independent Layer Control Positioning */
+        .leaflet-top.leaflet-right {
+          top: var(--layer-control-top-mobile, 10px);
+          transition: top 0.3s ease;
+        }
+        @media (min-width: 768px) {
+          .leaflet-top.leaflet-right {
+            top: var(--layer-control-top-desktop, 10px);
+          }
         }
       `}</style>
     </div>

@@ -138,14 +138,14 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
   }, [query, fetchSuggestions]);
 
   return (
-    <div className="relative">
-      <div className="relative">
+    <div className="relative h-full">
+      <div className="relative h-full">
         <div className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none">
           {isPending ? <Loader2 className="animate-spin" /> : <Search />}
         </div>
         <Input
           placeholder="Busca por nombre, dirección o colonia..."
-          className="pl-11 h-10 text-sm md:h-12 md:text-base shadow-lg rounded-full pr-12"
+          className="pl-11 h-full text-sm md:text-base shadow-lg rounded-full pr-12"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => fetchSuggestions(query)}
