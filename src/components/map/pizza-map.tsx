@@ -7,13 +7,13 @@ import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 import type { Pizzeria } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star } from 'lucide-react';
+import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star, Settings, Navigation, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createRoot } from 'react-dom/client';
 import getDistance from 'geolib/es/getDistance';
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import LayoutSettingsManager from '@/components/admin/layout-settings-manager';
-import { Settings } from 'lucide-react';
+
 
 const HERMOSILLO_CENTER: L.LatLngTuple = [29.085, -110.977];
 
@@ -78,6 +78,9 @@ export default function PizzaMap({
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [showTrafficLegend, setShowTrafficLegend] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeRoute, setActiveRoute] = useState<{ lat: number, lng: number } | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [routeDetails, setRouteDetails] = useState<{ distance: number, duration: number } | null>(null);
 
   const handleLocateMe = () => {
     const map = mapInstanceRef.current;
@@ -113,7 +116,11 @@ export default function PizzaMap({
         myLocationMarkerRef.current = L.marker(latlng, { icon: myLocationIcon }).addTo(map);
       }
 
-      map.flyTo(latlng, 16);
+      // Only fly to location if NOT navigating (navigating handles its own view)
+      if (!isNavigating) {
+        map.flyTo(latlng, 16);
+      }
+
       onLocateUser({ lat: latitude, lng: longitude });
 
       toast({
@@ -125,7 +132,7 @@ export default function PizzaMap({
       const watchId = navigator.geolocation.watchPosition(
         (betterPosition) => {
           const { latitude: lat, longitude: lng, accuracy: acc } = betterPosition.coords;
-          if (acc < bestAccuracy * 0.8) {
+          if (acc < bestAccuracy * 0.8 || isNavigating) { // Always update if navigating
             console.log('=== IMPROVED LOCATION (GPS) ===');
             bestAccuracy = acc;
             const newLatlng = new L.LatLng(lat, lng);
@@ -138,8 +145,10 @@ export default function PizzaMap({
         { enableHighAccuracy: true, timeout: 45000, maximumAge: 0 }
       );
 
-      // Stop watching after 2 minutes
-      setTimeout(() => navigator.geolocation.clearWatch(watchId), 120000);
+      // Stop watching after 2 minutes ONLY if not navigating
+      if (!isNavigating) {
+        setTimeout(() => navigator.geolocation.clearWatch(watchId), 120000);
+      }
     };
 
     const onLocationError = (error: GeolocationPositionError) => {
@@ -166,13 +175,10 @@ export default function PizzaMap({
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     if (isMobile) {
-      // MOBILE STRATEGY: High Accuracy ONLY (User requested ignore security/force GPS)
-      // Browsers may still block it if unsafe context, but we request it directly.
       navigator.geolocation.getCurrentPosition(
         onLocationSuccess,
         (error) => {
           console.error("Mobile High Accuracy Error:", error);
-          // Try one fallback to low accuracy just in case high accuracy timed out but permissions exist
           if (error.code === error.TIMEOUT) {
             navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError, { enableHighAccuracy: false, timeout: 10000 });
           } else {
@@ -182,7 +188,6 @@ export default function PizzaMap({
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     } else {
-      // DESKTOP STRATEGY: Standard/Low Accuracy first (Restored)
       navigator.geolocation.getCurrentPosition(
         onLocationSuccess,
         onLocationError,
@@ -225,14 +230,21 @@ export default function PizzaMap({
         }
 
         const polyline = L.polyline(coordinates, {
-          color: '#ef4444', // Primary red color
-          weight: 5,
-          opacity: 0.8,
-          lineCap: 'round'
+          color: '#4285F4', // Google Maps Blue
+          weight: 6,
+          opacity: 0.9,
+          lineCap: 'round',
+          lineJoin: 'round'
         }).addTo(map);
 
         routeLayerRef.current = polyline;
         map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+
+        setActiveRoute(destination);
+        setRouteDetails({
+          distance: route.distance,
+          duration: route.duration
+        });
 
         toast({
           title: 'Ruta trazada',
@@ -248,6 +260,46 @@ export default function PizzaMap({
       });
     }
   };
+
+  const clearRoute = () => {
+    if (routeLayerRef.current) {
+      routeLayerRef.current.remove();
+      routeLayerRef.current = null;
+    }
+    setActiveRoute(null);
+    setIsNavigating(false);
+    setRouteDetails(null);
+    const map = mapInstanceRef.current;
+    if (map) {
+      map.flyTo(HERMOSILLO_CENTER, 12);
+    }
+  };
+
+  const startNavigation = () => {
+    if (!activeRoute) return;
+    setIsNavigating(true);
+    const map = mapInstanceRef.current;
+    if (map && userLocation) {
+      map.flyTo([userLocation.lat, userLocation.lng], 18, {
+        animate: true,
+        duration: 1
+      });
+    }
+    toast({
+      title: "Iniciando navegación",
+      description: "Sigue la ruta en el mapa."
+    });
+  };
+
+  // Follow user location when navigating
+  useEffect(() => {
+    if (isNavigating && userLocation && mapInstanceRef.current) {
+      mapInstanceRef.current.panTo([userLocation.lat, userLocation.lng], {
+        animate: true,
+        duration: 1
+      });
+    }
+  }, [userLocation, isNavigating]);
 
   // Effect to handle routeDestination prop
   useEffect(() => {
@@ -344,6 +396,13 @@ export default function PizzaMap({
         return true;
       }
 
+      // Also show if it is the active route destination
+      if (activeRoute &&
+        Math.abs(pizzeria.lat - activeRoute.lat) < 0.0001 &&
+        Math.abs(pizzeria.lng - activeRoute.lng) < 0.0001) {
+        return true;
+      }
+
       const distance = getDistance(
         { latitude: userLocation.lat, longitude: userLocation.lng },
         { latitude: pizzeria.lat, longitude: pizzeria.lng }
@@ -359,6 +418,9 @@ export default function PizzaMap({
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
+
+    // Skip auto-centering if navigating
+    if (isNavigating) return;
 
     if (selectedPizzeria) {
       map.flyTo([selectedPizzeria.lat, selectedPizzeria.lng], 16, {
@@ -379,7 +441,7 @@ export default function PizzaMap({
         });
       }
     }
-  }, [selectedPizzeria, searchCenter, routeLayerRef, userLocation]);
+  }, [selectedPizzeria, searchCenter, routeLayerRef, userLocation, isNavigating]);
 
   // Update markers based on visiblePizzerias
   useEffect(() => {
@@ -499,76 +561,139 @@ export default function PizzaMap({
 
       markersRef.current.push(marker);
     });
-  }, [visiblePizzerias, selectedPizzeria, onMarkerClick, userLocation]);
+  }, [visiblePizzerias, selectedPizzeria, onMarkerClick, userLocation, activeRoute]);
 
   return (
     <div className="relative h-full w-full z-0">
       <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />
 
-      {/* Map Controls Container */}
-      <div
-        className="absolute right-4 z-[1001] flex flex-col gap-2 transition-all duration-300 top-[var(--buttons-top-mobile,_160px)] md:top-[var(--buttons-top-desktop,_160px)]"
-      >
-        <Button
-          variant="secondary"
-          size="icon"
-          onClick={handleLocateMe}
-          className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
-          aria-label="Find my location"
+      {/* Map Controls Container - Hide when navigating */}
+      {!isNavigating && (
+        <div
+          className="absolute right-4 z-[1001] flex flex-col gap-2 transition-all duration-300 top-[var(--buttons-top-mobile,_160px)] md:top-[var(--buttons-top-desktop,_160px)]"
         >
-          <LocateFixed className="h-4 w-4 md:h-5 md:w-5" />
-        </Button>
-
-        <Button
-          variant="secondary"
-          size="icon"
-          onClick={onToggleFullscreen}
-          className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
-          aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-        >
-          {isFullscreen ? (
-            <Minimize2 className="h-4 w-4 md:h-5 md:w-5" />
-          ) : (
-            <Maximize2 className="h-4 w-4 md:h-5 md:w-5" />
-          )}
-        </Button>
-
-        {userLocation && (
           <Button
-            variant={showAll ? "default" : "secondary"}
-            size="sm"
-            onClick={() => setShowAll(!showAll)}
-            className="shadow-lg rounded-full h-8 md:h-10 px-3 text-xs md:text-sm font-medium"
+            variant="secondary"
+            size="icon"
+            onClick={handleLocateMe}
+            className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
+            aria-label="Find my location"
           >
-            {showAll ? "Ver cercanas" : "Ver todas"}
+            <LocateFixed className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
-        )}
 
-        {isAdmin && (
-          <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-            <DialogTrigger asChild>
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={onToggleFullscreen}
+            className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
+            aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+          >
+            {isFullscreen ? (
+              <Minimize2 className="h-4 w-4 md:h-5 md:w-5" />
+            ) : (
+              <Maximize2 className="h-4 w-4 md:h-5 md:w-5" />
+            )}
+          </Button>
+
+          {userLocation && (
+            <Button
+              variant={showAll ? "default" : "secondary"}
+              size="sm"
+              onClick={() => setShowAll(!showAll)}
+              className="shadow-lg rounded-full h-8 md:h-10 px-3 text-xs md:text-sm font-medium"
+            >
+              {showAll ? "Ver cercanas" : "Ver todas"}
+            </Button>
+          )}
+
+          {isAdmin && (
+            <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 border-2 border-white/20"
+                  title="Configuración del Mapa"
+                  aria-label="Configuración"
+                >
+                  <Settings className="h-4 w-4 md:h-5 md:w-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Configuración del Mapa</DialogTitle>
+                </DialogHeader>
+                <LayoutSettingsManager />
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+      )}
+
+      {/* Start Trip / Navigation Controls */}
+      {activeRoute && !isNavigating && (
+        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-[1002] flex items-center gap-3 animate-in slide-in-from-bottom-4 duration-300">
+          <Button
+            onClick={startNavigation}
+            className="bg-[#4285F4] hover:bg-[#3367d6] text-white shadow-xl rounded-full px-6 h-12 text-base font-semibold border-2 border-white/20"
+          >
+            <Navigation className="mr-2 h-5 w-5 fill-current" />
+            Iniciar viaje
+          </Button>
+          <Button
+            onClick={clearRoute}
+            variant="secondary"
+            size="icon"
+            className="h-12 w-12 rounded-full shadow-xl bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-100"
+            aria-label="Cancelar ruta"
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
+      )}
+
+      {/* Navigation Dashboard (Active Mode) */}
+      {isNavigating && routeDetails && (
+        <>
+          {/* Top Instruction Bar */}
+          <div className="absolute top-4 left-4 right-4 z-[1002] bg-[#4285F4] text-white p-4 rounded-xl shadow-lg animate-in slide-in-from-top-4">
+            <div className="flex items-start gap-4">
+              <Navigation className="w-8 h-8 mt-1 fill-white/20" />
+              <div>
+                <p className="text-white/80 text-sm font-medium uppercase tracking-wide">En ruta a</p>
+                <h3 className="text-xl font-bold leading-tight">
+                  {pizzerias.find(p => activeRoute && Math.abs(p.lat - activeRoute.lat) < 0.0001)?.name || 'Destino seleccionado'}
+                </h3>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Status Bar */}
+          <div className="absolute bottom-0 left-0 right-0 z-[1002] bg-white p-6 rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] animate-in slide-in-from-bottom-10">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-3xl font-bold text-green-600">
+                  {(routeDetails.duration / 60).toFixed(0)} <span className="text-lg font-medium text-gray-500">min</span>
+                </div>
+                <div className="text-gray-500 font-medium">
+                  {(routeDetails.distance / 1000).toFixed(1)} km • {new Date(Date.now() + routeDetails.duration * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
               <Button
+                onClick={clearRoute}
                 variant="destructive"
-                size="icon"
-                className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 border-2 border-white/20"
-                title="Configuración del Mapa"
-                aria-label="Configuración"
+                className="rounded-full h-12 px-6 font-bold text-base shadow-md"
               >
-                <Settings className="h-4 w-4 md:h-5 md:w-5" />
+                Terminar
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[85vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Configuración del Mapa</DialogTitle>
-              </DialogHeader>
-              <LayoutSettingsManager />
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Traffic Legend */}
-      {showTrafficLegend && (
+      {showTrafficLegend && !isNavigating && (
         <div className="absolute bottom-6 left-6 z-[1000] bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border dark:border-slate-700 text-xs transition-colors duration-300">
           <h4 className="font-bold mb-2 text-gray-800 dark:text-gray-100">Tráfico</h4>
           <div className="space-y-1.5 font-medium text-gray-600 dark:text-gray-300">
