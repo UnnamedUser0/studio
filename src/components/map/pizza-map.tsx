@@ -7,11 +7,12 @@ import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 import type { Pizzeria } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star, Settings, Navigation, X } from 'lucide-react';
+import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star, Settings, Navigation, X, ArrowLeft, MoreVertical, Volume2, Compass, AlertTriangle, Search, Leaf, CornerUpLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createRoot } from 'react-dom/client';
 import getDistance from 'geolib/es/getDistance';
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import LayoutSettingsManager from '@/components/admin/layout-settings-manager';
 
 
@@ -37,6 +38,26 @@ const myLocationIcon = new L.Icon({
   iconSize: [40, 40],
   iconAnchor: [20, 20],
   className: 'drop-shadow-md rounded-full' // Added rounded-full in case it's square
+});
+
+const navigationIcon = new L.DivIcon({
+  className: 'navigation-arrow',
+  html: `<div style="
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        transform: translate(-50%, -50%);
+      ">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="18" fill="white" fill-opacity="0.2"/>
+          <path d="M20 5L32 35L20 27L8 35L20 5Z" fill="#4285F4" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+        </svg>
+      </div>`,
+  iconSize: [40, 40],
+  iconAnchor: [20, 20]
 });
 
 type PizzaMapProps = {
@@ -81,6 +102,68 @@ export default function PizzaMap({
   const [activeRoute, setActiveRoute] = useState<{ lat: number, lng: number } | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const [routeDetails, setRouteDetails] = useState<{ distance: number, duration: number } | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentSpeed, setCurrentSpeed] = useState(0);
+  const [mapRotation, setMapRotation] = useState(0);
+
+  // Helper: Calculate bearing between two points
+  const calculateBearing = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const toRad = (deg: number) => deg * Math.PI / 180;
+    const toDeg = (rad: number) => rad * 180 / Math.PI;
+
+    const y = Math.sin(toRad(lng2 - lng1)) * Math.cos(toRad(lat2));
+    const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+      Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lng2 - lng1));
+    const bearing = (toDeg(Math.atan2(y, x)) + 360) % 360;
+    return bearing;
+  };
+
+  // Helper: Get target bearing based on route
+  const getRouteBearing = (userLat: number, userLng: number) => {
+    // If we have a route layer, try to find the heading along the path
+    if (!routeLayerRef.current) return 0;
+
+    const latlngs = routeLayerRef.current.getLatLngs() as L.LatLng[];
+    if (!latlngs || latlngs.length < 2) return 0;
+
+    // Find closest point index (simple Euclidean approx for speed)
+    let minDist = Infinity;
+    let closestIdx = 0;
+    for (let i = 0; i < latlngs.length; i++) {
+      const d = Math.sqrt(Math.pow(latlngs[i].lat - userLat, 2) + Math.pow(latlngs[i].lng - userLng, 2));
+      if (d < minDist) {
+        minDist = d;
+        closestIdx = i;
+      }
+    }
+
+    // Look ahead a few points to determine general direction (e.g., 20-30 meters ahead)
+    // Assuming route points are dense. If end of route, use last segment.
+    const lookAheadIdx = Math.min(closestIdx + 3, latlngs.length - 1);
+
+    if (lookAheadIdx > closestIdx) {
+      return calculateBearing(latlngs[closestIdx].lat, latlngs[closestIdx].lng, latlngs[lookAheadIdx].lat, latlngs[lookAheadIdx].lng);
+    } else if (closestIdx > 0) {
+      // End of route, look back
+      return calculateBearing(latlngs[closestIdx - 1].lat, latlngs[closestIdx - 1].lng, latlngs[closestIdx].lat, latlngs[closestIdx].lng);
+    }
+
+    return 0;
+  };
+
+  const speak = (text: string) => {
+    if (isMuted || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel(); // Cancel previous
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'es-ES';
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const offsetMapCenter = (lat: number, lng: number, map: L.Map) => {
+    // Standard centering for 2D Navigation (User in center)
+    // If you want user slightly at bottom, add small offset, but for now Center is safest
+    map.panTo([lat, lng], { animate: true, duration: 0.5 });
+  };
 
   const handleLocateMe = () => {
     const map = mapInstanceRef.current;
@@ -96,28 +179,35 @@ export default function PizzaMap({
     }
 
     toast({
-      title: 'Obteniendo ubicación precisa...',
+      title: 'Obteniendo ubicación...',
     });
 
     const onLocationSuccess = (position: GeolocationPosition) => {
-      const { latitude, longitude, accuracy } = position.coords;
+      const { latitude, longitude, accuracy, speed } = position.coords;
       console.log(`=== LOCATION FOUND ===`);
-      console.log(`Latitude: ${latitude}`);
-      console.log(`Longitude: ${longitude}`);
-      console.log(`Accuracy: ${accuracy} meters`);
+
+      // Update speed
+      const speedKmh = speed ? Math.round(speed * 3.6) : 0;
+      setCurrentSpeed(speedKmh);
 
       let bestAccuracy = accuracy;
       const latlng = new L.LatLng(latitude, longitude);
       setUserLocation({ lat: latitude, lng: longitude });
 
       if (myLocationMarkerRef.current) {
+        myLocationMarkerRef.current.setIcon(isNavigating ? navigationIcon : myLocationIcon);
         myLocationMarkerRef.current.setLatLng(latlng);
       } else {
-        myLocationMarkerRef.current = L.marker(latlng, { icon: myLocationIcon }).addTo(map);
+        myLocationMarkerRef.current = L.marker(latlng, { icon: isNavigating ? navigationIcon : myLocationIcon }).addTo(map);
       }
 
-      // Only fly to location if NOT navigating (navigating handles its own view)
-      if (!isNavigating) {
+      // If navigating, use the offset center
+      if (isNavigating) {
+        if (mapContainerRef.current && !mapContainerRef.current.classList.contains('navigation-3d-view')) {
+          mapContainerRef.current.classList.add('navigation-3d-view');
+        }
+        offsetMapCenter(latitude, longitude, map);
+      } else {
         map.flyTo(latlng, 16);
       }
 
@@ -125,75 +215,60 @@ export default function PizzaMap({
 
       toast({
         title: 'Ubicación encontrada',
-        description: `Precisión: ${accuracy.toFixed(0)}m`,
+        description: `Precisión: ~${accuracy.toFixed(0)}m`,
       });
 
-      // Refine with watchPosition
+      // Start watching for better accuracy immediately after initial lock
       const watchId = navigator.geolocation.watchPosition(
         (betterPosition) => {
-          const { latitude: lat, longitude: lng, accuracy: acc } = betterPosition.coords;
-          if (acc < bestAccuracy * 0.8 || isNavigating) { // Always update if navigating
-            console.log('=== IMPROVED LOCATION (GPS) ===');
+          const { latitude: lat, longitude: lng, accuracy: acc, speed: newSpeed } = betterPosition.coords;
+
+          if (newSpeed !== null) setCurrentSpeed(Math.round(newSpeed * 3.6));
+
+          // Update if accurate enough or navigating
+          // We accept any update if navigating to keep movement smooth
+          if (acc < bestAccuracy || isNavigating) {
             bestAccuracy = acc;
             const newLatlng = new L.LatLng(lat, lng);
             setUserLocation({ lat, lng });
-            if (myLocationMarkerRef.current) myLocationMarkerRef.current.setLatLng(newLatlng);
+
+            if (myLocationMarkerRef.current) {
+              myLocationMarkerRef.current.setIcon(isNavigating ? navigationIcon : myLocationIcon);
+              myLocationMarkerRef.current.setLatLng(newLatlng);
+            }
             onLocateUser({ lat, lng });
+
+            if (isNavigating && mapInstanceRef.current) {
+              offsetMapCenter(lat, lng, mapInstanceRef.current);
+            }
           }
         },
-        (error) => console.log('High accuracy refinement failed:', error.message),
-        { enableHighAccuracy: true, timeout: 45000, maximumAge: 0 }
+        (error) => console.log('GPS Watch ignored:', error.message),
+        { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
       );
 
-      // Stop watching after 2 minutes ONLY if not navigating
+      // Stop watching after 5 minutes if NOT navigating
       if (!isNavigating) {
-        setTimeout(() => navigator.geolocation.clearWatch(watchId), 120000);
+        setTimeout(() => navigator.geolocation.clearWatch(watchId), 300000);
       }
     };
 
     const onLocationError = (error: GeolocationPositionError) => {
       console.error("Geolocation error:", error.code, error.message);
-      let errorMessage = 'No se pudo obtener tu ubicación.';
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          errorMessage = 'Permiso denegado. Revisa la configuración de ubicación.';
-          break;
-        case error.POSITION_UNAVAILABLE:
-          errorMessage = 'Ubicación no disponible. Verifica tu GPS y conexión.';
-          break;
-        case error.TIMEOUT:
-          errorMessage = 'Tiempo de espera agotado. Intenta de nuevo.';
-          break;
-      }
       toast({
         variant: 'destructive',
-        title: 'Error de ubicación',
-        description: errorMessage,
+        title: 'No se pudo obtener ubicación',
+        description: 'Verifique los permisos de ubicación de su dispositivo.',
       });
     };
 
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    if (isMobile) {
-      navigator.geolocation.getCurrentPosition(
-        onLocationSuccess,
-        (error) => {
-          console.error("Mobile High Accuracy Error:", error);
-          if (error.code === error.TIMEOUT) {
-            navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError, { enableHighAccuracy: false, timeout: 10000 });
-          } else {
-            onLocationError(error);
-          }
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-      );
-    } else {
-      navigator.geolocation.getCurrentPosition(
-        onLocationSuccess,
-        onLocationError,
-        { enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 }
-      );
-    }
+    // FORCE LOW ACCURACY FOR INITIAL FETCH
+    // This is the fastest method and rarely timeouts (uses WiFi/IP)
+    navigator.geolocation.getCurrentPosition(
+      onLocationSuccess,
+      onLocationError,
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
+    );
   };
 
   const drawRoute = async (destination: { lat: number, lng: number }) => {
@@ -261,7 +336,72 @@ export default function PizzaMap({
     }
   };
 
+  /* Camera Transition Routine for Navigation Mode */
+  const enterNavigationMode = (lat: number, lng: number) => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // 1. Calculate Target Center for "Look Ahead" (User at bottom 75%)
+    // At Zoom 18, ~0.0015 lat offset moves the center north, placing user south (bottom)
+    const LOOK_AHEAD_OFFSET = 0.0015;
+    const targetCenter = new L.LatLng(lat + LOOK_AHEAD_OFFSET, lng);
+
+    // 2. Animate Camera (flyTo) - Interpolating Zoom and Center
+    map.flyTo(targetCenter, 18, {
+      animate: true,
+      duration: 1.5, // Smooth transition
+      easeLinearity: 0.25
+    });
+
+    // 3. Apply 3D Tilt (Pitch) via CSS
+    // We add a class that applies transform: perspective(...) rotateX(60deg)
+    // Note: Leaflet is 2D, so this is a visual hack and might have artifacts
+    if (mapContainerRef.current) {
+      mapContainerRef.current.classList.add('navigation-3d-view');
+    }
+
+    // 4. Force invalidateSize after transition to ensure tiles render
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 1600);
+  };
+
+  // Start Navigation Wrapper to set initial bearing
+  const startNavigation = () => {
+    if (!activeRoute) return;
+    setIsNavigating(true);
+    const map = mapInstanceRef.current;
+    if (map && userLocation) {
+      map.setZoom(18);
+
+      // Initial Bearing
+      const bearing = getRouteBearing(userLocation.lat, userLocation.lng);
+      setMapRotation(bearing);
+
+      if (mapContainerRef.current) {
+        mapContainerRef.current.classList.add('navigation-3d-view');
+      }
+
+      offsetMapCenter(userLocation.lat, userLocation.lng, map);
+      setTimeout(() => map.invalidateSize(), 300);
+    }
+
+    // Announce start
+    const destinationName = pizzerias.find(p => Math.abs(p.lat - activeRoute.lat) < 0.0001)?.name || 'el destino';
+    speak(`Iniciando ruta hacia ${destinationName}.`);
+
+    toast({
+      title: "Iniciando navegación",
+      description: "Sigue la ruta en el mapa."
+    });
+  };
+
+  // Also fix clearRoute to remove 3D class
   const clearRoute = () => {
+    if (mapContainerRef.current) {
+      mapContainerRef.current.classList.remove('navigation-3d-view');
+    }
+    // ... existing clear logic
     if (routeLayerRef.current) {
       routeLayerRef.current.remove();
       routeLayerRef.current = null;
@@ -269,35 +409,19 @@ export default function PizzaMap({
     setActiveRoute(null);
     setIsNavigating(false);
     setRouteDetails(null);
+    window.speechSynthesis.cancel();
     const map = mapInstanceRef.current;
     if (map) {
       map.flyTo(HERMOSILLO_CENTER, 12);
     }
   };
 
-  const startNavigation = () => {
-    if (!activeRoute) return;
-    setIsNavigating(true);
-    const map = mapInstanceRef.current;
-    if (map && userLocation) {
-      map.flyTo([userLocation.lat, userLocation.lng], 18, {
-        animate: true,
-        duration: 1
-      });
-    }
-    toast({
-      title: "Iniciando navegación",
-      description: "Sigue la ruta en el mapa."
-    });
-  };
+
 
   // Follow user location when navigating
   useEffect(() => {
     if (isNavigating && userLocation && mapInstanceRef.current) {
-      mapInstanceRef.current.panTo([userLocation.lat, userLocation.lng], {
-        animate: true,
-        duration: 1
-      });
+      offsetMapCenter(userLocation.lat, userLocation.lng, mapInstanceRef.current);
     }
   }, [userLocation, isNavigating]);
 
@@ -565,7 +689,10 @@ export default function PizzaMap({
 
   return (
     <div className="relative h-full w-full z-0">
-      <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />
+      <div
+        ref={mapContainerRef}
+        style={{ height: '100%', width: '100%' }}
+      />
 
       {/* Map Controls Container - Hide when navigating */}
       {!isNavigating && (
@@ -654,68 +781,146 @@ export default function PizzaMap({
       )}
 
       {/* Navigation Dashboard (Active Mode) */}
-      {isNavigating && routeDetails && (
-        <>
-          {/* Top Instruction Bar */}
-          <div className="absolute top-4 left-4 right-4 z-[1002] bg-[#4285F4] text-white p-4 rounded-xl shadow-lg animate-in slide-in-from-top-4">
-            <div className="flex items-start gap-4">
-              <Navigation className="w-8 h-8 mt-1 fill-white/20" />
-              <div>
-                <p className="text-white/80 text-sm font-medium uppercase tracking-wide">En ruta a</p>
-                <h3 className="text-xl font-bold leading-tight">
-                  {pizzerias.find(p => activeRoute && Math.abs(p.lat - activeRoute.lat) < 0.0001)?.name || 'Destino seleccionado'}
-                </h3>
-              </div>
-            </div>
-          </div>
+      {/* Navigation Dashboard (Active Mode - Google Maps Style) */}
+      <TooltipProvider>
+        {isNavigating && routeDetails && (
+          <>
+            {/* Top Instruction Bar - Green (Google Maps Style - Exact Match) */}
+            <div className="absolute top-4 left-4 right-4 z-[1002] animate-in slide-in-from-top-4">
+              {/* Primary Instruction Card */}
+              <div className="bg-[#00695C] text-white p-4 rounded-xl shadow-lg flex items-center min-h-[80px]">
+                {/* Left Arrow Icon */}
+                <div className="flex-shrink-0 mr-4">
+                  <CornerUpLeft className="w-12 h-12 text-white stroke-[3px]" />
+                </div>
 
-          {/* Bottom Status Bar */}
-          <div className="absolute bottom-0 left-0 right-0 z-[1002] bg-white p-6 rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] animate-in slide-in-from-bottom-10">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <div className="text-3xl font-bold text-green-600">
-                  {(routeDetails.duration / 60).toFixed(0)} <span className="text-lg font-medium text-gray-500">min</span>
-                </div>
-                <div className="text-gray-500 font-medium">
-                  {(routeDetails.distance / 1000).toFixed(1)} km • {new Date(Date.now() + routeDetails.duration * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {/* Text Content */}
+                <div className="flex flex-col justify-center overflow-hidden">
+                  <span className="text-2xl font-bold leading-none mb-1">50 m</span>
+                  <h3 className="text-3xl font-bold leading-tight truncate">
+                    {pizzerias.find(p => activeRoute && Math.abs(p.lat - activeRoute.lat) < 0.0001)?.address?.split(',')[0] || 'Calle Sahuaro'}
+                  </h3>
                 </div>
               </div>
-              <Button
-                onClick={clearRoute}
-                variant="destructive"
-                className="rounded-full h-12 px-6 font-bold text-base shadow-md"
-              >
-                Terminar
-              </Button>
             </div>
-          </div>
-        </>
-      )}
+
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-3 z-[1001]">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-12 w-12 rounded-full shadow-xl bg-black/80 text-white hover:bg-black/90 border-0 overflow-hidden p-0"
+                    onClick={() => {
+                      const map = mapInstanceRef.current;
+                      if (map && userLocation) {
+                        speak("Recentrando mapa");
+                        map.setZoom(18);
+                        offsetMapCenter(userLocation.lat, userLocation.lng, map);
+                      }
+                    }}
+                  >
+                    <div className="relative w-full h-full bg-[#222] flex items-center justify-center">
+                      <div className="w-1.5 h-4 bg-red-500 rounded-t-sm absolute top-2 left-1/2 -translate-x-1/2 z-10 shadow-sm"></div>
+                      <div className="w-1.5 h-4 bg-gray-300 rounded-b-sm absolute bottom-2 left-1/2 -translate-x-1/2 z-10 shadow-sm"></div>
+                      <div className="w-8 h-8 rounded-full border-[3px] border-gray-600/60"></div>
+                    </div>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p>Norte / Recentrar</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-12 w-12 rounded-full shadow-xl bg-black/80 text-white hover:bg-black/90 border-0"
+                    onClick={() => {
+                      setIsMuted(!isMuted);
+                      speak(!isMuted ? "Audio silenciado" : "Audio activado");
+                    }}
+                  >
+                    {isMuted ? <Volume2 className="h-6 w-6 text-gray-500" /> : <Volume2 className="h-6 w-6" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p>{isMuted ? "Activar voz" : "Silenciar voz"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+
+            {/* Floating Speed Bubble */}
+            <div className="absolute bottom-28 left-4 z-[1001] w-16 h-16 bg-black/80 rounded-full flex flex-col items-center justify-center border-2 border-white/10 shadow-xl backdrop-blur-sm">
+              <span className="text-white font-bold text-xl leading-none">{currentSpeed}</span>
+              <span className="text-white/70 text-[10px] uppercase font-bold">km/h</span>
+            </div>
+
+            {/* Bottom Status Bar - Black */}
+            <div className="absolute bottom-0 left-0 right-0 z-[1002] bg-[#111111] p-4 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 text-white pb-8">
+              <div className="flex items-center justify-between">
+                <Button
+                  onClick={clearRoute}
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-12 w-12 hover:bg-white/10 text-white"
+                >
+                  <X className="w-8 h-8" />
+                </Button>
+
+                <div className="flex flex-col items-center">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-[#4ade80] leading-none">
+                      {(routeDetails.duration / 60).toFixed(0)} <span className="text-xl">min</span>
+                    </span>
+                    <Leaf className="w-4 h-4 text-[#4ade80] fill-[#4ade80]" />
+                  </div>
+                  <div className="text-gray-400 font-medium text-sm mt-1">
+                    {(routeDetails.distance / 1000).toFixed(1)} km • {new Date(Date.now() + routeDetails.duration * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-12 w-12 hover:bg-white/10 text-white"
+                >
+                  <MoreVertical className="w-6 h-6" />
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </TooltipProvider>
 
       {/* Traffic Legend */}
-      {showTrafficLegend && !isNavigating && (
-        <div className="absolute bottom-6 left-6 z-[1000] bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border dark:border-slate-700 text-xs transition-colors duration-300">
-          <h4 className="font-bold mb-2 text-gray-800 dark:text-gray-100">Tráfico</h4>
-          <div className="space-y-1.5 font-medium text-gray-600 dark:text-gray-300">
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-1.5 bg-[#63d668] rounded-full"></span>
-              <span>Rápido</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-1.5 bg-[#ff974d] rounded-full"></span>
-              <span>Moderado</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-1.5 bg-[#f23c32] rounded-full"></span>
-              <span>Lento</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-1.5 bg-[#811f1f] rounded-full"></span>
-              <span>Pesado</span>
+      {
+        showTrafficLegend && !isNavigating && (
+          <div className="absolute bottom-6 left-6 z-[1000] bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border dark:border-slate-700 text-xs transition-colors duration-300">
+            <h4 className="font-bold mb-2 text-gray-800 dark:text-gray-100">Tráfico</h4>
+            <div className="space-y-1.5 font-medium text-gray-600 dark:text-gray-300">
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-1.5 bg-[#63d668] rounded-full"></span>
+                <span>Rápido</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-1.5 bg-[#ff974d] rounded-full"></span>
+                <span>Moderado</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-1.5 bg-[#f23c32] rounded-full"></span>
+                <span>Lento</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-1.5 bg-[#811f1f] rounded-full"></span>
+                <span>Pesado</span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
 
 
@@ -773,7 +978,22 @@ export default function PizzaMap({
             top: var(--layer-control-top-desktop, 10px);
           }
         }
+        
+        /* Navigation Mode - 2D Rotation (Course Up) */
+        .navigation-3d-view .leaflet-map-pane {
+           /* No perspective/tilt, just rotate the flat map */
+           transform: rotateZ(var(--map-rotation, 0deg));
+           transform-origin: center center;
+           transition: transform 0.5s ease-out;
+        }
+        
+        /* Counter-rotate markers/popups so they stay upright relative to screen */
+        .navigation-3d-view .leaflet-marker-icon,
+        .navigation-3d-view .leaflet-popup,
+        .navigation-3d-view .leaflet-tooltip {
+           transform: rotateZ(calc(var(--map-rotation, 0deg) * -1)) !important;
+        }
       `}</style>
     </div>
   );
-}
+};
