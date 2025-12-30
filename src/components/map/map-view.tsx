@@ -2,14 +2,13 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-
 import SmartSearch from '@/components/search/smart-search';
-import PizzeriaDetail from '@/components/pizzeria/pizzeria-detail';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Pizzeria } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
+const PizzeriaDetail = dynamic(() => import('@/components/pizzeria/pizzeria-detail'));
 const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,

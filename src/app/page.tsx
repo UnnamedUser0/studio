@@ -16,17 +16,19 @@ import { Sheet, SheetTrigger, SheetContent, SheetContentNoOverlay } from '@/comp
 import PizzeriaList from '@/components/pizzeria/pizzeria-list';
 import { pizzeriasData } from '@/lib/pizzerias-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import WhyChoosePizzapp from '@/components/layout/why-choose-pizzapp';
-import TestimonialsCarousel from '@/components/testimonial/testimonials-carousel';
-import TestimonialForm from '@/components/testimonial/testimonial-form';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import WelcomeScreen from '@/components/welcome/welcome-screen';
-import RankingManager from '@/components/admin/ranking-manager';
-import ExplorarPizzerias from '@/components/pizzeria/explorar-pizzerias';
-import { RankingStyler, RankingStyles } from '@/components/admin/ranking-styler';
-import PizzeriaReviews from '@/components/pizzeria/pizzeria-reviews';
-import PizzeriaDetail from '@/components/pizzeria/pizzeria-detail';
-import MenuModal from '@/components/pizzeria/menu-modal';
+import type { RankingStyles } from '@/components/admin/ranking-styler';
+
+const WhyChoosePizzapp = dynamic(() => import('@/components/layout/why-choose-pizzapp'));
+const TestimonialsCarousel = dynamic(() => import('@/components/testimonial/testimonials-carousel'));
+const TestimonialForm = dynamic(() => import('@/components/testimonial/testimonial-form'));
+const RankingManager = dynamic(() => import('@/components/admin/ranking-manager'));
+const ExplorarPizzerias = dynamic(() => import('@/components/pizzeria/explorar-pizzerias'));
+const RankingStyler = dynamic(() => import('@/components/admin/ranking-styler').then(mod => mod.RankingStyler));
+const PizzeriaReviews = dynamic(() => import('@/components/pizzeria/pizzeria-reviews'));
+const PizzeriaDetail = dynamic(() => import('@/components/pizzeria/pizzeria-detail'));
+const MenuModal = dynamic(() => import('@/components/pizzeria/menu-modal'));
 
 function HomeContent() {
   const [selectedPizzeria, setSelectedPizzeria] = useState<Pizzeria | null>(null); // Used for Menu Sheet (Map/Explore)

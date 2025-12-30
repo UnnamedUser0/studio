@@ -33,27 +33,52 @@ const selectedIcon = new L.Icon({
   popupAnchor: [0, -45],
 });
 
+const pizzaIcon = new L.Icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/128/1404/1404945.png', // Pizza Slice Icon
+  iconSize: [50, 50],
+  iconAnchor: [25, 25],
+  popupAnchor: [0, -25],
+  className: 'drop-shadow-lg'
+});
+
 const myLocationIcon = new L.Icon({
   iconUrl: '/icono512.jpg', // Local custom icon
   iconSize: [40, 40],
   iconAnchor: [20, 20],
-  className: 'drop-shadow-md rounded-full' // Added rounded-full in case it's square
+  className: 'drop-shadow-md rounded-full'
 });
 
 const navigationIcon = new L.DivIcon({
   className: 'navigation-arrow',
-  html: `<div style="
+  html: `<div class="nav-arrow-inner" style="
         width: 40px;
         height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
         filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-        transform: translate(-50%, -50%);
+        /* Remove translate(-50%, -50%) from here as needed, but DivIcon usually needs centering logic if not handled by Anchor. 
+           L.DivIcon with iconAnchor [20,20] centers the TopLeft of the div at the point. 
+           If the div is 40x40, [20,20] is center. 
+           So we don't need translate(-50%,-50%) inside the HTML if iconAnchor is correct.
+           However, let's keep the existing styles but mainly add the class. 
+           Wait, existing style has transform: translate(-50%, -50%). 
+           If iconAnchor is [20,20] (center), Leaflet positions the top-left of the icon element at (Point - Anchor).
+           So TopLeft is at (Px - 20, Py - 20). 
+           So the div (40x40) occupies (Px-20, Py-20) to (Px+20, Py+20). Correctly centered.
+           The inner transform translate(-50%, -50%) might shift it further? 
+           Let's inspect original: transform: translate(-50%, -50%) was there. 
+           If the container div provided by Leaflet is 0x0 (default DivIcon size if not specified, but here size IS specified).
+           Actually, DivIcon creates a div. 'html' is put INSIDE it.
+           If iconSize is [40,40], the Wrapper Div is 40x40.
+           So the inner html just needs to fill it. 
+           The existing style seems to try to center itself relative to something. 
+           I will just wrap everything in nav-arrow-inner and keep styles safe.
+        */
       ">
         <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="20" cy="20" r="18" fill="white" fill-opacity="0.2"/>
-          <path d="M20 5L32 35L20 27L8 35L20 5Z" fill="#4285F4" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M20 5L32 35L20 27L8 35L20 5Z" fill="#2563EB" stroke="white" stroke-width="3" stroke-linejoin="round"/>
         </svg>
       </div>`,
   iconSize: [40, 40],
@@ -151,19 +176,56 @@ export default function PizzaMap({
     return 0;
   };
 
-  const speak = (text: string) => {
-    if (isMuted || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel(); // Cancel previous
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-ES';
-    window.speechSynthesis.speak(utterance);
-  };
-
+  // Center exactly on user without offset (as requested)
   const offsetMapCenter = (lat: number, lng: number, map: L.Map) => {
-    // Standard centering for 2D Navigation (User in center)
-    // If you want user slightly at bottom, add small offset, but for now Center is safest
     map.panTo([lat, lng], { animate: true, duration: 0.5 });
   };
+
+  // Effect: Apply Map Rotation (Course Up)
+  const [isLocked, setIsLocked] = useState(true); // New state to track if we are locked on user
+
+  // Effect: Apply Map Rotation (Course Up)
+  useEffect(() => {
+    if (!mapContainerRef.current || !mapInstanceRef.current) return;
+
+    const map = mapInstanceRef.current;
+
+    // We rotate the entire map container
+    // We removed 3D perspective (rotateX) as requested to keep the view "encima de mi ubicación" (Top-Down).
+    // We keep rotateZ to "apuntar hacia la ruta" (Course Up).
+    // We use scale(4) to ensure the square container covers the rectangular screen when rotated - removing black corners.
+    if (isNavigating && isLocked) {
+      mapContainerRef.current.classList.add('navigation-3d-view');
+      mapContainerRef.current.style.transition = 'transform 0.5s ease-out';
+      mapContainerRef.current.style.transform = `scale(4) rotateZ(-${mapRotation}deg)`;
+      mapContainerRef.current.style.setProperty('--map-rotation', `${mapRotation}deg`);
+      map.dragging.disable();
+      map.touchZoom.disable();
+    } else {
+      mapContainerRef.current.classList.remove('navigation-3d-view');
+      mapContainerRef.current.style.transform = '';
+      mapContainerRef.current.style.transition = '';
+      mapContainerRef.current.style.removeProperty('--map-rotation');
+      map.dragging.enable();
+      map.touchZoom.enable();
+    }
+  }, [mapRotation, isNavigating, isLocked]);
+
+  // Effect: Update marker icon when mode changes
+  useEffect(() => {
+    if (myLocationMarkerRef.current) {
+      myLocationMarkerRef.current.setIcon(isNavigating ? navigationIcon : myLocationIcon);
+    }
+  }, [isNavigating]);
+
+  // Effect: Update bearing continuously when moving
+  useEffect(() => {
+    // Only update bearing/rotation if we are effectively locked/Tracking
+    if (isNavigating && userLocation && isLocked) {
+      const bearing = getRouteBearing(userLocation.lat, userLocation.lng);
+      setMapRotation(bearing);
+    }
+  }, [userLocation, isNavigating, isLocked]);
 
   const handleLocateMe = () => {
     const map = mapInstanceRef.current;
@@ -194,6 +256,7 @@ export default function PizzaMap({
       const latlng = new L.LatLng(latitude, longitude);
       setUserLocation({ lat: latitude, lng: longitude });
 
+      // Always update markers or create if works
       if (myLocationMarkerRef.current) {
         myLocationMarkerRef.current.setIcon(isNavigating ? navigationIcon : myLocationIcon);
         myLocationMarkerRef.current.setLatLng(latlng);
@@ -201,13 +264,10 @@ export default function PizzaMap({
         myLocationMarkerRef.current = L.marker(latlng, { icon: isNavigating ? navigationIcon : myLocationIcon }).addTo(map);
       }
 
-      // If navigating, use the offset center
-      if (isNavigating) {
-        if (mapContainerRef.current && !mapContainerRef.current.classList.contains('navigation-3d-view')) {
-          mapContainerRef.current.classList.add('navigation-3d-view');
-        }
+      // If navigating, force center
+      if (isNavigating && isLocked) {
         offsetMapCenter(latitude, longitude, map);
-      } else {
+      } else if (!isNavigating) {
         map.flyTo(latlng, 16);
       }
 
@@ -218,7 +278,7 @@ export default function PizzaMap({
         description: `Precisión: ~${accuracy.toFixed(0)}m`,
       });
 
-      // Start watching for better accuracy immediately after initial lock
+      // Start watching for better accuracy
       const watchId = navigator.geolocation.watchPosition(
         (betterPosition) => {
           const { latitude: lat, longitude: lng, accuracy: acc, speed: newSpeed } = betterPosition.coords;
@@ -234,11 +294,14 @@ export default function PizzaMap({
 
             if (myLocationMarkerRef.current) {
               myLocationMarkerRef.current.setIcon(isNavigating ? navigationIcon : myLocationIcon);
+              // Rotate the ARROW itself to match bearing?
+              // Usually the arrow points to the heading (compass) or course.
+              // If we rotate the map, the arrow stays pointing up relative to screen (which is correct for course-up).
               myLocationMarkerRef.current.setLatLng(newLatlng);
             }
             onLocateUser({ lat, lng });
 
-            if (isNavigating && mapInstanceRef.current) {
+            if (isNavigating && mapInstanceRef.current && isLocked) {
               offsetMapCenter(lat, lng, mapInstanceRef.current);
             }
           }
@@ -253,21 +316,55 @@ export default function PizzaMap({
       }
     };
 
-    const onLocationError = (error: GeolocationPositionError) => {
-      console.error("Geolocation error:", error.code, error.message);
+    const onLocationError = async (error: GeolocationPositionError) => {
+      console.warn("Geolocation error:", error.code, error.message);
+
+      // Fallback to IP Geolocation
+      toast({
+        title: 'Usando ubicación aproximada (IP)',
+        description: 'GPS no disponible. Buscando por red...',
+      });
+
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        if (!response.ok) throw new Error('IP Geo failed');
+        const data = await response.json();
+
+        if (data.latitude && data.longitude) {
+          // Construct a mock position object
+          const mockPosition = {
+            coords: {
+              latitude: data.latitude,
+              longitude: data.longitude,
+              accuracy: 5000, // Low accuracy for IP
+              altitude: null,
+              altitudeAccuracy: null,
+              heading: null,
+              speed: null
+            },
+            timestamp: Date.now()
+          } as unknown as GeolocationPosition;
+
+          onLocationSuccess(mockPosition);
+          return;
+        }
+      } catch (err) {
+        console.error("IP Fallback failed", err);
+      }
+
       toast({
         variant: 'destructive',
         title: 'No se pudo obtener ubicación',
-        description: 'Verifique los permisos de ubicación de su dispositivo.',
+        description: 'Se agotaron los intentos por GPS y Red.',
       });
     };
 
-    // FORCE LOW ACCURACY FOR INITIAL FETCH
-    // This is the fastest method and rarely timeouts (uses WiFi/IP)
+    // FORCE LOW ACCURACY & ALLOW CACHED
+    // We try to get "cached" location immediately (Infinity). If none, it waits 5s before failing to IP.
     navigator.geolocation.getCurrentPosition(
       onLocationSuccess,
       onLocationError,
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: Infinity }
     );
   };
 
@@ -341,54 +438,67 @@ export default function PizzaMap({
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // 1. Calculate Target Center for "Look Ahead" (User at bottom 75%)
-    // At Zoom 18, ~0.0015 lat offset moves the center north, placing user south (bottom)
-    const LOOK_AHEAD_OFFSET = 0.0015;
-    const targetCenter = new L.LatLng(lat + LOOK_AHEAD_OFFSET, lng);
-
-    // 2. Animate Camera (flyTo) - Interpolating Zoom and Center
-    map.flyTo(targetCenter, 18, {
+    // Use current location exactly as requested suitable for navigation
+    map.flyTo([lat, lng], 18, {
       animate: true,
       duration: 1.5, // Smooth transition
       easeLinearity: 0.25
     });
-
-    // 3. Apply 3D Tilt (Pitch) via CSS
-    // We add a class that applies transform: perspective(...) rotateX(60deg)
-    // Note: Leaflet is 2D, so this is a visual hack and might have artifacts
-    if (mapContainerRef.current) {
-      mapContainerRef.current.classList.add('navigation-3d-view');
-    }
-
-    // 4. Force invalidateSize after transition to ensure tiles render
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 1600);
   };
 
   // Start Navigation Wrapper to set initial bearing
   const startNavigation = () => {
     if (!activeRoute) return;
     setIsNavigating(true);
+    setIsLocked(true); // Ensure locked on start
     const map = mapInstanceRef.current;
     if (map && userLocation) {
+      // Zoom in and center on user
       map.setZoom(18);
+      // Force immediate snap without animation to ensure correct center before rotation hits
+      map.panTo([userLocation.lat, userLocation.lng], { animate: false });
 
-      // Initial Bearing
-      const bearing = getRouteBearing(userLocation.lat, userLocation.lng);
+      // Update Icon Immediately
+      if (myLocationMarkerRef.current) {
+        myLocationMarkerRef.current.setIcon(navigationIcon);
+      }
+
+      // Initial Bearing with Fallback
+      let bearing = getRouteBearing(userLocation.lat, userLocation.lng);
+      if (bearing === 0 && activeRoute) {
+        // Fallback: Calculate bearing directly to destination if route lookahead fails
+        // calculateBearing is not available in scope? It is inside PizzaMap but defined above. 
+        // Assuming calculateBearing is available (it is defined a few lines above getRouteBearing in previous view).
+        bearing = calculateBearing(userLocation.lat, userLocation.lng, activeRoute.lat, activeRoute.lng);
+      }
       setMapRotation(bearing);
 
       if (mapContainerRef.current) {
-        mapContainerRef.current.classList.add('navigation-3d-view');
+        // Apply initial transform immediately with high scale
+        mapContainerRef.current.style.transform = `scale(4) rotateZ(-${bearing}deg)`;
       }
 
-      offsetMapCenter(userLocation.lat, userLocation.lng, map);
-      setTimeout(() => map.invalidateSize(), 300);
+      setTimeout(() => {
+        map.invalidateSize();
+        // Aggressive centering loop to ensure map snaps correctly after layout shifts
+        let attempts = 0;
+        const interval = setInterval(() => {
+          map.panTo([userLocation.lat, userLocation.lng], { animate: false });
+          // Re-apply rotation style to be safe
+          if (mapContainerRef.current) {
+            // We can't access isLocked easily here inside closure if it's stale, but we set it true above.
+            // Just force it for start sequence.
+            mapContainerRef.current.style.transform = `scale(4) rotateZ(-${bearing}deg)`;
+          }
+          attempts++;
+          if (attempts > 5) clearInterval(interval);
+        }, 100);
+      }, 300);
     }
 
     // Announce start
-    const destinationName = pizzerias.find(p => Math.abs(p.lat - activeRoute.lat) < 0.0001)?.name || 'el destino';
-    speak(`Iniciando ruta hacia ${destinationName}.`);
+    // const destinationName = pizzerias.find(p => Math.abs(p.lat - activeRoute.lat) < 0.0001)?.name || 'el destino';
+    // speak(`Iniciando ruta hacia ${destinationName}.`);
 
     toast({
       title: "Iniciando navegación",
@@ -400,6 +510,7 @@ export default function PizzaMap({
   const clearRoute = () => {
     if (mapContainerRef.current) {
       mapContainerRef.current.classList.remove('navigation-3d-view');
+      mapContainerRef.current.style.transform = ''; // Reset transform
     }
     // ... existing clear logic
     if (routeLayerRef.current) {
@@ -408,22 +519,22 @@ export default function PizzaMap({
     }
     setActiveRoute(null);
     setIsNavigating(false);
+    setIsLocked(false);
     setRouteDetails(null);
-    window.speechSynthesis.cancel();
     const map = mapInstanceRef.current;
     if (map) {
+      map.dragging.enable();
+      map.touchZoom.enable();
       map.flyTo(HERMOSILLO_CENTER, 12);
     }
   };
 
-
-
   // Follow user location when navigating
   useEffect(() => {
-    if (isNavigating && userLocation && mapInstanceRef.current) {
+    if (isNavigating && userLocation && mapInstanceRef.current && isLocked) {
       offsetMapCenter(userLocation.lat, userLocation.lng, mapInstanceRef.current);
     }
-  }, [userLocation, isNavigating]);
+  }, [userLocation, isNavigating, isLocked]);
 
   // Effect to handle routeDestination prop
   useEffect(() => {
@@ -581,8 +692,15 @@ export default function PizzaMap({
       if (typeof pizzeria.lat !== 'number' || typeof pizzeria.lng !== 'number') return;
 
       const isSelected = selectedPizzeria?.id === pizzeria.id;
+      const isRouteDestination = activeRoute && Math.abs(activeRoute.lat - pizzeria.lat) < 0.0001 && Math.abs(activeRoute.lng - pizzeria.lng) < 0.0001;
+
+      // Determine Icon
+      let markerIcon = defaultIcon;
+      if (isSelected) markerIcon = selectedIcon;
+      else if (isNavigating && isRouteDestination) markerIcon = pizzaIcon;
+
       const marker = L.marker([pizzeria.lat, pizzeria.lng], {
-        icon: isSelected ? selectedIcon : defaultIcon,
+        icon: markerIcon,
       })
         .addTo(map);
 
@@ -724,14 +842,51 @@ export default function PizzaMap({
           </Button>
 
           {userLocation && (
-            <Button
-              variant={showAll ? "default" : "secondary"}
-              size="sm"
-              onClick={() => setShowAll(!showAll)}
-              className="shadow-lg rounded-full h-8 md:h-10 px-3 text-xs md:text-sm font-medium"
-            >
-              {showAll ? "Ver cercanas" : "Ver todas"}
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant={showAll ? "default" : "secondary"}
+                size="sm"
+                onClick={() => setShowAll(!showAll)}
+                className="shadow-lg rounded-full h-8 md:h-10 px-3 text-xs md:text-sm font-medium"
+              >
+                {showAll ? "Ver cercanas" : "Ver todas"}
+              </Button>
+
+              {/* Manual Location Adjustment - Available on Desktop when location is known */}
+              <div className="hidden md:block">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        onClick={() => {
+                          setIsLocked(false);
+                          if (myLocationMarkerRef.current) {
+                            const marker = myLocationMarkerRef.current;
+                            if (marker.dragging) marker.dragging.enable();
+
+                            // Re-bind dragend to ensure we catch updates
+                            marker.off('dragend');
+                            marker.on('dragend', (e) => {
+                              const newPos = e.target.getLatLng();
+                              setUserLocation({ lat: newPos.lat, lng: newPos.lng });
+                              onLocateUser({ lat: newPos.lat, lng: newPos.lng });
+                              toast({ title: 'Ubicación actualizada manualmente' });
+                            });
+                          }
+                          toast({ title: "Modo ajuste", description: "Arrastra tu icono para corregir la ubicación." });
+                        }}
+                        className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white/90 text-black hover:bg-white"
+                      >
+                        <span className="text-base">📍</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">Ajustar Ubicación</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
           )}
 
           {isAdmin && (
@@ -814,9 +969,14 @@ export default function PizzaMap({
                     onClick={() => {
                       const map = mapInstanceRef.current;
                       if (map && userLocation) {
-                        speak("Recentrando mapa");
+                        setIsLocked(true); // Re-lock
                         map.setZoom(18);
-                        offsetMapCenter(userLocation.lat, userLocation.lng, map);
+                        // Snap immediately to fix "not centering"
+                        map.panTo([userLocation.lat, userLocation.lng], { animate: false });
+
+                        // Force update rotation explicitly so camera aligns to route
+                        const bearing = getRouteBearing(userLocation.lat, userLocation.lng);
+                        setMapRotation(bearing);
                       }
                     }}
                   >
@@ -832,30 +992,44 @@ export default function PizzaMap({
                 </TooltipContent>
               </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="h-12 w-12 rounded-full shadow-xl bg-black/80 text-white hover:bg-black/90 border-0"
-                    onClick={() => {
-                      setIsMuted(!isMuted);
-                      speak(!isMuted ? "Audio silenciado" : "Audio activado");
-                    }}
-                  >
-                    {isMuted ? <Volume2 className="h-6 w-6 text-gray-500" /> : <Volume2 className="h-6 w-6" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p>{isMuted ? "Activar voz" : "Silenciar voz"}</p>
-                </TooltipContent>
-              </Tooltip>
+              {/* Mute button removed */}
             </div>
 
             {/* Floating Speed Bubble */}
             <div className="absolute bottom-28 left-4 z-[1001] w-16 h-16 bg-black/80 rounded-full flex flex-col items-center justify-center border-2 border-white/10 shadow-xl backdrop-blur-sm">
               <span className="text-white font-bold text-xl leading-none">{currentSpeed}</span>
               <span className="text-white/70 text-[10px] uppercase font-bold">km/h</span>
+            </div>
+
+            {/* Manual Location Adjustment Button (Desktop/Nav) */}
+            <div className="absolute bottom-48 right-4 z-[1001] hidden md:block">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setIsLocked(false);
+                      if (myLocationMarkerRef.current) {
+                        const marker = myLocationMarkerRef.current;
+                        if (marker.dragging) marker.dragging.enable();
+
+                        marker.off('dragend');
+                        marker.on('dragend', (e) => {
+                          const newPos = e.target.getLatLng();
+                          setUserLocation({ lat: newPos.lat, lng: newPos.lng });
+                          onLocateUser({ lat: newPos.lat, lng: newPos.lng });
+                          toast({ title: 'Ubicación actualizada manualmente' });
+                        });
+                      }
+                      toast({ title: "Modo ajuste", description: "Arrastra tu icono para corregir la ubicación." });
+                    }}
+                    className="bg-white/90 text-black hover:bg-white shadow-lg"
+                  >
+                    <span className="mr-2">📍</span> Ajustar Ubicación
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">Habilita arrastrar el marcador</TooltipContent>
+              </Tooltip>
             </div>
 
             {/* Bottom Status Bar - Black */}
@@ -878,17 +1052,11 @@ export default function PizzaMap({
                     <Leaf className="w-4 h-4 text-[#4ade80] fill-[#4ade80]" />
                   </div>
                   <div className="text-gray-400 font-medium text-sm mt-1">
-                    {(routeDetails.distance / 1000).toFixed(1)} km • {new Date(Date.now() + routeDetails.duration * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {(routeDetails.distance / 1000).toFixed(1)} km • {new Date(Date.now() + routeDetails.duration * 1000 + 180000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (hora estimada de llegada)
                   </div>
                 </div>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full h-12 w-12 hover:bg-white/10 text-white"
-                >
-                  <MoreVertical className="w-6 h-6" />
-                </Button>
+                <div className="w-12" />
               </div>
             </div>
           </>
@@ -987,11 +1155,21 @@ export default function PizzaMap({
            transition: transform 0.5s ease-out;
         }
         
-        /* Counter-rotate markers/popups so they stay upright relative to screen */
-        .navigation-3d-view .leaflet-marker-icon,
+        /* Rotate INNER CONTENT of markers to keep them upright/aligned relative to screen */
+        .navigation-3d-view .nav-arrow-inner {
+           /* Rotate POSITIVE to counteract negative map rotation */
+           transform: rotateZ(var(--map-rotation, 0deg));
+           transition: transform 0.1s linear; /* Smooth rotation */
+        }
+        
         .navigation-3d-view .leaflet-popup,
         .navigation-3d-view .leaflet-tooltip {
-           transform: rotateZ(calc(var(--map-rotation, 0deg) * -1)) !important;
+           /* Popups need to rotate too. They use translate3d, so using transform !important kills position. 
+              Leaflet popups are separate panes. 
+              We can't easily fix popups in CSS-only 3D view without breaking position. 
+              For now, let them rotate with map (users can still read them). 
+              Or we can try to target inner content of popup. 
+           */
         }
       `}</style>
     </div>
