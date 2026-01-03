@@ -27,6 +27,9 @@ export type Pizzeria = {
   imageUrl?: string;
   imageHint?: string;
   reviewCount?: number;
+  phoneNumber?: string;
+  website?: string;
+  socialMedia?: string;
 };
 
 export type Testimonial = {

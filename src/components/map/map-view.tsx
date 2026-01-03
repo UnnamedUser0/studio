@@ -45,11 +45,16 @@ export default function MapView({
   routeDestination,
   onViewMenu,
   onRate,
-  isAdmin = false // Default to false
-}: MapViewProps) {
+  isAdmin = false,
+  layoutSettings, // Receive settings
+  onSettingsChange
+}: MapViewProps & { layoutSettings?: any, onSettingsChange?: (settings: any) => void }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const toggleFullscreen = () => setIsFullscreen(!isFullscreen);
+
+  // Determine popup offset based on device width (React-side heuristic or just pass both)
+  // For simplicity, let's pass both props.
 
   return (
     <div className={cn(
@@ -78,6 +83,9 @@ export default function MapView({
         onRate={onRate || onSelectPizzeria}
         routeDestination={routeDestination}
         isAdmin={isAdmin}
+        popupOffsetY={layoutSettings?.popupOffsetY ?? -35}
+        popupOffsetYMobile={layoutSettings?.popupOffsetYMobile ?? -35}
+        onSettingsChange={onSettingsChange}
       />
 
       {/* Smart Search Bar */}

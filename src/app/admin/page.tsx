@@ -165,7 +165,7 @@ function AdminDashboard({ permissions, userEmail }: { permissions: string | null
             )}
           </div>
         </div>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-[625px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-headline text-3xl">{editingPizzeria ? 'Editar Pizzería' : 'Agregar Nueva Pizzería'}</DialogTitle>
             <DialogDescription>

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Loader2, Pizza } from 'lucide-react';
+import { Loader2, Pizza, Phone, Globe, Share2 } from 'lucide-react';
 import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
@@ -77,6 +77,26 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
                     <SheetDescription className="text-muted-foreground/80">{pizzeria.address}</SheetDescription>
                 </div>
             </SheetHeader>
+            <div className="flex flex-wrap gap-4 px-6 py-4 text-sm text-muted-foreground border-b bg-muted/20 shrink-0">
+                {pizzeria.phoneNumber && (
+                    <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4" />
+                        <a href={`tel:${pizzeria.phoneNumber}`} className="hover:underline hover:text-primary transition-colors">{pizzeria.phoneNumber}</a>
+                    </div>
+                )}
+                {pizzeria.website && (
+                    <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4" />
+                        <a href={pizzeria.website} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary transition-colors">Sitio Web</a>
+                    </div>
+                )}
+                {pizzeria.socialMedia && (
+                    <div className="flex items-center gap-2">
+                        <Share2 className="w-4 h-4" />
+                        <a href={pizzeria.socialMedia} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary transition-colors">Red Social</a>
+                    </div>
+                )}
+            </div>
             <ScrollArea className="flex-1">
                 <div className="p-6 space-y-6">
                     <div>

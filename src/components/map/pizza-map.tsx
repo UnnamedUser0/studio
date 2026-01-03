@@ -7,7 +7,7 @@ import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 import type { Pizzeria } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star, Settings, Navigation, X, ArrowLeft, MoreVertical, Volume2, Compass, AlertTriangle, Search, Leaf, CornerUpLeft } from 'lucide-react';
+import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star, Settings, Navigation, X, ArrowLeft, MoreVertical, Volume2, Compass, AlertTriangle, Search, Leaf, CornerUpLeft, Phone, Globe, Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createRoot } from 'react-dom/client';
 import getDistance from 'geolib/es/getDistance';
@@ -97,6 +97,8 @@ type PizzaMapProps = {
   onNavigate?: (pizzeria: Pizzeria) => void;
   onRate?: (pizzeria: Pizzeria) => void;
   routeDestination?: { lat: number, lng: number } | null;
+  popupOffsetY?: number;
+  popupOffsetYMobile?: number;
 };
 
 export default function PizzaMap({
@@ -111,8 +113,11 @@ export default function PizzaMap({
   onNavigate,
   onRate,
   routeDestination,
-  isAdmin = false
-}: PizzaMapProps & { isAdmin?: boolean }) {
+  isAdmin = false,
+  popupOffsetY = -35,
+  popupOffsetYMobile = -35,
+  onSettingsChange
+}: PizzaMapProps & { isAdmin?: boolean, popupOffsetY?: number, popupOffsetYMobile?: number, onSettingsChange?: (settings: any) => void }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -133,6 +138,8 @@ export default function PizzaMap({
 
   // Helper: Calculate bearing between two points
   const calculateBearing = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    // Debug Popup Offset
+    // console.log('PizzaMap Render - OffsetY:', popupOffsetY, 'OffsetYMobile:', popupOffsetYMobile, 'Width:', window.innerWidth);
     const toRad = (deg: number) => deg * Math.PI / 180;
     const toDeg = (rad: number) => rad * 180 / Math.PI;
 
@@ -245,7 +252,25 @@ export default function PizzaMap({
     });
 
     const onLocationSuccess = (position: GeolocationPosition) => {
-      const { latitude, longitude, accuracy, speed } = position.coords;
+      let { latitude, longitude, accuracy, speed } = position.coords;
+
+      // RESTRICT TO HERMOSILLO AREA (approx 30km radius from center)
+      const distFromCenter = getDistance(
+        { latitude, longitude },
+        { latitude: HERMOSILLO_CENTER[0], longitude: HERMOSILLO_CENTER[1] }
+      );
+
+      if (distFromCenter > 30000) { // 30km limit
+        console.warn("Location outside Hermosillo detected.", { latitude, longitude });
+        toast({
+          title: 'Ubicación lejana detectada',
+          description: 'Tu ubicación parece estar fuera de Hermosillo.',
+        });
+        // latitude = HERMOSILLO_CENTER[0];
+        // longitude = HERMOSILLO_CENTER[1];
+        // accuracy = 5000; // Degrading accuracy as it is forced
+      }
+
       console.log(`=== LOCATION FOUND ===`);
 
       // Update speed
@@ -253,6 +278,7 @@ export default function PizzaMap({
       setCurrentSpeed(speedKmh);
 
       let bestAccuracy = accuracy;
+      // ... rest of function remains same
       const latlng = new L.LatLng(latitude, longitude);
       setUserLocation({ lat: latitude, lng: longitude });
 
@@ -281,12 +307,23 @@ export default function PizzaMap({
       // Start watching for better accuracy
       const watchId = navigator.geolocation.watchPosition(
         (betterPosition) => {
-          const { latitude: lat, longitude: lng, accuracy: acc, speed: newSpeed } = betterPosition.coords;
+          let { latitude: lat, longitude: lng, accuracy: acc, speed: newSpeed } = betterPosition.coords;
+
+          // Check Bounds for updates too
+          const distUpdate = getDistance(
+            { latitude: lat, longitude: lng },
+            { latitude: HERMOSILLO_CENTER[0], longitude: HERMOSILLO_CENTER[1] }
+          );
+
+          /*
+          if (distUpdate > 30000) {
+            return; // Ignore updates outside city
+          }
+          */
 
           if (newSpeed !== null) setCurrentSpeed(Math.round(newSpeed * 3.6));
 
           // Update if accurate enough or navigating
-          // We accept any update if navigating to keep movement smooth
           if (acc < bestAccuracy || isNavigating) {
             bestAccuracy = acc;
             const newLatlng = new L.LatLng(lat, lng);
@@ -294,9 +331,6 @@ export default function PizzaMap({
 
             if (myLocationMarkerRef.current) {
               myLocationMarkerRef.current.setIcon(isNavigating ? navigationIcon : myLocationIcon);
-              // Rotate the ARROW itself to match bearing?
-              // Usually the arrow points to the heading (compass) or course.
-              // If we rotate the map, the arrow stays pointing up relative to screen (which is correct for course-up).
               myLocationMarkerRef.current.setLatLng(newLatlng);
             }
             onLocateUser({ lat, lng });
@@ -307,7 +341,7 @@ export default function PizzaMap({
           }
         },
         (error) => console.log('GPS Watch ignored:', error.message),
-        { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 30000 }
       );
 
       // Stop watching after 5 minutes if NOT navigating
@@ -359,12 +393,12 @@ export default function PizzaMap({
       });
     };
 
-    // FORCE LOW ACCURACY & ALLOW CACHED
-    // We try to get "cached" location immediately (Infinity). If none, it waits 5s before failing to IP.
+    // USE LOW ACCURACY FOR SPEED AND RELIABILITY (WIFI/IP)
+    // User requested low accuracy as it is faster and more reliable in their context.
     navigator.geolocation.getCurrentPosition(
       onLocationSuccess,
       onLocationError,
-      { enableHighAccuracy: false, timeout: 5000, maximumAge: Infinity }
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 30000 }
     );
   };
 
@@ -756,6 +790,28 @@ export default function PizzaMap({
                 ))}
               </div>
             </div>
+
+            {/* Contact Info - Horizontal Layout, No Top Border */}
+            <div className="flex flex-wrap items-center gap-3 pt-1 mt-2">
+              {pizzeria.phoneNumber && (
+                <div className="flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <a href={`tel:${pizzeria.phoneNumber}`} className="text-blue-600 hover:underline truncate">{pizzeria.phoneNumber}</a>
+                </div>
+              )}
+              {pizzeria.website && (
+                <div className="flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <a href={pizzeria.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">Sitio Web</a>
+                </div>
+              )}
+              {pizzeria.socialMedia && (
+                <div className="flex items-center gap-1.5">
+                  <Share2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <a href={pizzeria.socialMedia} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">Red Social</a>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 mt-2">
@@ -786,8 +842,12 @@ export default function PizzaMap({
         </div>
       );
 
+      // Determine offset based on screen width (Mobile < 768px)
+      const isMobile = window.innerWidth < 768;
+      const currentOffset = isMobile ? (popupOffsetYMobile ?? -35) : (popupOffsetY ?? -35);
+
       const popup = L.popup({
-        offset: [0, -35],
+        offset: [0, currentOffset],
         closeButton: true,
         className: 'custom-popup',
         maxWidth: 300
@@ -803,7 +863,11 @@ export default function PizzaMap({
 
       markersRef.current.push(marker);
     });
-  }, [visiblePizzerias, selectedPizzeria, onMarkerClick, userLocation, activeRoute]);
+
+    // Debug to ensure effect is running
+    // console.log("Markers rebuilt. Offset:", popupOffsetY, "MobileOffset:", popupOffsetYMobile, "Mobile?", window.innerWidth < 768);
+
+  }, [visiblePizzerias, selectedPizzeria, onMarkerClick, userLocation, activeRoute, popupOffsetY, popupOffsetYMobile]);
 
   return (
     <div className="relative h-full w-full z-0">
@@ -906,7 +970,7 @@ export default function PizzaMap({
                 <DialogHeader>
                   <DialogTitle>Configuración del Mapa</DialogTitle>
                 </DialogHeader>
-                <LayoutSettingsManager />
+                <LayoutSettingsManager onSettingsChange={onSettingsChange} />
               </DialogContent>
             </Dialog>
           )}

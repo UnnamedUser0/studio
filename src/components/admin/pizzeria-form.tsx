@@ -37,6 +37,9 @@ const formSchema = z.object({
   category: z.string().default('Pizza'),
   source: z.string().default('Admin'),
   imageUrl: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  website: z.string().optional(),
+  socialMedia: z.string().optional(),
 });
 
 type PizzeriaFormValues = z.infer<typeof formSchema>;
@@ -60,6 +63,9 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
       category: 'Pizza',
       source: 'Admin',
       imageUrl: '',
+      phoneNumber: '',
+      website: '',
+      socialMedia: '',
     }
   });
 
@@ -97,6 +103,9 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
         category: pizzeria.category,
         source: pizzeria.source,
         imageUrl: pizzeria.imageUrl || '',
+        phoneNumber: pizzeria.phoneNumber || '',
+        website: pizzeria.website || '',
+        socialMedia: pizzeria.socialMedia || '',
       });
     } else {
       reset({
@@ -107,6 +116,9 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
         category: 'Pizza',
         source: 'Admin',
         imageUrl: '',
+        phoneNumber: '',
+        website: '',
+        socialMedia: '',
       });
     }
   }, [pizzeria, reset]);
@@ -198,6 +210,21 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
             {...register('lng')}
           />
           {errors.lng && <p className="text-sm text-destructive mt-1">{errors.lng.message as string}</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <Label htmlFor="phoneNumber">Teléfono</Label>
+          <Input id="phoneNumber" placeholder="662 123 4567" {...register('phoneNumber')} />
+        </div>
+        <div>
+          <Label htmlFor="website">Página Web</Label>
+          <Input id="website" placeholder="https://..." {...register('website')} />
+        </div>
+        <div>
+          <Label htmlFor="socialMedia">Red Social</Label>
+          <Input id="socialMedia" placeholder="Facebook/Insta..." {...register('socialMedia')} />
         </div>
       </div>
 

@@ -10,7 +10,7 @@ import { Save, LayoutTemplate, Smartphone } from 'lucide-react'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 
-export default function LayoutSettingsManager() {
+export default function LayoutSettingsManager({ onSettingsChange }: { onSettingsChange?: (settings: any) => void }) {
     const { toast } = useToast()
     const [loading, setLoading] = useState(false)
     const [activeTab, setActiveTab] = useState<'desktop' | 'mobile'>('desktop')
@@ -38,6 +38,8 @@ export default function LayoutSettingsManager() {
         popupScaleMobile: 1, // scale
         popupFontSize: 14, // px
         popupFontSizeMobile: 12, // px
+        popupOffsetY: -35, // px
+        popupOffsetYMobile: -35, // px
     })
 
     useEffect(() => {
@@ -57,6 +59,12 @@ export default function LayoutSettingsManager() {
         setLoading(true)
         try {
             await updateLayoutSettings(settings)
+
+            // Notify parent if callback provided (to update UI immediately)
+            if (onSettingsChange) {
+                onSettingsChange(settings)
+            }
+
             toast({
                 title: 'Configuración guardada',
                 description: 'Los ajustes de diseño se han actualizado.',
@@ -73,6 +81,15 @@ export default function LayoutSettingsManager() {
             setLoading(false)
         }
     }
+
+    const handleSettingChange = (key: string, value: any) => {
+        const newSettings = { ...settings, [key]: value };
+        setSettings(newSettings);
+        // Live preview: notify parent immediately
+        if (onSettingsChange) {
+            onSettingsChange(newSettings);
+        }
+    };
 
     return (
         <Card>
@@ -114,7 +131,7 @@ export default function LayoutSettingsManager() {
                                     min={40}
                                     max={100}
                                     step={5}
-                                    onValueChange={([val]) => setSettings({ ...settings, mapHeight: val })}
+                                    onValueChange={([val]) => handleSettingChange('mapHeight', val)}
                                 />
                             </div>
                         </div>
@@ -130,7 +147,7 @@ export default function LayoutSettingsManager() {
                                     min={30}
                                     max={100}
                                     step={5}
-                                    onValueChange={([val]) => setSettings({ ...settings, sheetWidth: val })}
+                                    onValueChange={([val]) => handleSettingChange('sheetWidth', val)}
                                 />
                                 <div className="flex justify-between text-xs text-muted-foreground">
                                     <span>Más Mapa</span>
@@ -150,7 +167,7 @@ export default function LayoutSettingsManager() {
                                     min={0.8}
                                     max={1.2}
                                     step={0.05}
-                                    onValueChange={([val]) => setSettings({ ...settings, cardScale: val })}
+                                    onValueChange={([val]) => handleSettingChange('cardScale', val)}
                                 />
                             </div>
                         </div>
@@ -169,7 +186,7 @@ export default function LayoutSettingsManager() {
                                         min={20}
                                         max={100}
                                         step={5}
-                                        onValueChange={([val]) => setSettings({ ...settings, searchWidth: val })}
+                                        onValueChange={([val]) => handleSettingChange('searchWidth', val)}
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -182,7 +199,7 @@ export default function LayoutSettingsManager() {
                                         min={8}
                                         max={20}
                                         step={1}
-                                        onValueChange={([val]) => setSettings({ ...settings, searchHeight: val })}
+                                        onValueChange={([val]) => handleSettingChange('searchHeight', val)}
                                     />
                                     <p className="text-xs text-muted-foreground">Controla el alto y tamaño de texto.</p>
                                 </div>
@@ -200,7 +217,7 @@ export default function LayoutSettingsManager() {
                                     min={50}
                                     max={500}
                                     step={10}
-                                    onValueChange={([val]) => setSettings({ ...settings, buttonsTop: val })}
+                                    onValueChange={([val]) => handleSettingChange('buttonsTop', val)}
                                 />
                             </div>
                         </div>
@@ -216,7 +233,7 @@ export default function LayoutSettingsManager() {
                                     min={0}
                                     max={300}
                                     step={5}
-                                    onValueChange={([val]) => setSettings({ ...settings, layerControlTop: val })}
+                                    onValueChange={([val]) => handleSettingChange('layerControlTop', val)}
                                 />
                             </div>
                         </div>
@@ -232,7 +249,7 @@ export default function LayoutSettingsManager() {
                                     min={200}
                                     max={500}
                                     step={10}
-                                    onValueChange={([val]) => setSettings({ ...settings, popupWidth: val })}
+                                    onValueChange={([val]) => handleSettingChange('popupWidth', val)}
                                 />
                             </div>
                             <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
@@ -245,7 +262,7 @@ export default function LayoutSettingsManager() {
                                     min={0.5}
                                     max={1.5}
                                     step={0.05}
-                                    onValueChange={([val]) => setSettings({ ...settings, popupScale: val })}
+                                    onValueChange={([val]) => handleSettingChange('popupScale', val)}
                                 />
                             </div>
                             <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
@@ -258,7 +275,20 @@ export default function LayoutSettingsManager() {
                                     min={10}
                                     max={24}
                                     step={1}
-                                    onValueChange={([val]) => setSettings({ ...settings, popupFontSize: val })}
+                                    onValueChange={([val]) => handleSettingChange('popupFontSize', val)}
+                                />
+                            </div>
+                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
+                                <div className="flex justify-between">
+                                    <Label>Desplazamiento Vertical Popup (px)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.popupOffsetY || -35}px</span>
+                                </div>
+                                <Slider
+                                    value={[settings.popupOffsetY || -35]}
+                                    min={-100}
+                                    max={0}
+                                    step={1}
+                                    onValueChange={([val]) => handleSettingChange('popupOffsetY', val)}
                                 />
                             </div>
                         </div>
@@ -277,7 +307,7 @@ export default function LayoutSettingsManager() {
                                     min={30}
                                     max={100}
                                     step={5}
-                                    onValueChange={([val]) => setSettings({ ...settings, mapHeightMobile: val })}
+                                    onValueChange={([val]) => handleSettingChange('mapHeightMobile', val)}
                                 />
                             </div>
                         </div>
@@ -293,7 +323,7 @@ export default function LayoutSettingsManager() {
                                     min={50}
                                     max={100}
                                     step={5}
-                                    onValueChange={([val]) => setSettings({ ...settings, sheetWidthMobile: val })}
+                                    onValueChange={([val]) => handleSettingChange('sheetWidthMobile', val)}
                                 />
                             </div>
                         </div>
@@ -309,7 +339,7 @@ export default function LayoutSettingsManager() {
                                     min={0.5}
                                     max={1.2}
                                     step={0.05}
-                                    onValueChange={([val]) => setSettings({ ...settings, cardScaleMobile: val })}
+                                    onValueChange={([val]) => handleSettingChange('cardScaleMobile', val)}
                                 />
                             </div>
                         </div>
@@ -328,7 +358,7 @@ export default function LayoutSettingsManager() {
                                         min={50}
                                         max={100}
                                         step={5}
-                                        onValueChange={([val]) => setSettings({ ...settings, searchWidthMobile: val })}
+                                        onValueChange={([val]) => handleSettingChange('searchWidthMobile', val)}
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -341,7 +371,7 @@ export default function LayoutSettingsManager() {
                                         min={8}
                                         max={16}
                                         step={1}
-                                        onValueChange={([val]) => setSettings({ ...settings, searchHeightMobile: val })}
+                                        onValueChange={([val]) => handleSettingChange('searchHeightMobile', val)}
                                     />
                                 </div>
                             </div>
@@ -357,7 +387,7 @@ export default function LayoutSettingsManager() {
                                     value={[settings.buttonsTopMobile || 160]}
                                     min={50}
                                     max={500}
-                                    onValueChange={([val]) => setSettings({ ...settings, buttonsTopMobile: val })}
+                                    onValueChange={([val]) => handleSettingChange('buttonsTopMobile', val)}
                                 />
                             </div>
                         </div>
@@ -372,7 +402,7 @@ export default function LayoutSettingsManager() {
                                     value={[settings.layerControlTopMobile || 10]}
                                     min={0}
                                     max={300}
-                                    onValueChange={([val]) => setSettings({ ...settings, layerControlTopMobile: val })}
+                                    onValueChange={([val]) => handleSettingChange('layerControlTopMobile', val)}
                                 />
                             </div>
                         </div>
@@ -388,7 +418,7 @@ export default function LayoutSettingsManager() {
                                     min={150}
                                     max={350}
                                     step={10}
-                                    onValueChange={([val]) => setSettings({ ...settings, popupWidthMobile: val })}
+                                    onValueChange={([val]) => handleSettingChange('popupWidthMobile', val)}
                                 />
                             </div>
                             <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
@@ -401,7 +431,7 @@ export default function LayoutSettingsManager() {
                                     min={0.5}
                                     max={1.5}
                                     step={0.05}
-                                    onValueChange={([val]) => setSettings({ ...settings, popupScaleMobile: val })}
+                                    onValueChange={([val]) => handleSettingChange('popupScaleMobile', val)}
                                 />
                             </div>
                             <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
@@ -414,7 +444,20 @@ export default function LayoutSettingsManager() {
                                     min={10}
                                     max={24}
                                     step={1}
-                                    onValueChange={([val]) => setSettings({ ...settings, popupFontSizeMobile: val })}
+                                    onValueChange={([val]) => handleSettingChange('popupFontSizeMobile', val)}
+                                />
+                            </div>
+                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
+                                <div className="flex justify-between">
+                                    <Label>Desplazamiento Vertical Popup (Móvil px)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.popupOffsetYMobile || -35}px</span>
+                                </div>
+                                <Slider
+                                    value={[settings.popupOffsetYMobile || -35]}
+                                    min={-100}
+                                    max={0}
+                                    step={1}
+                                    onValueChange={([val]) => handleSettingChange('popupOffsetYMobile', val)}
                                 />
                             </div>
                         </div>

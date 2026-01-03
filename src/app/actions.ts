@@ -55,7 +55,7 @@ export async function getAllPizzerias() {
     })
 }
 
-export async function addPizzeria(data: { name: string, address: string, lat: number, lng: number, imageUrl?: string, category?: string, source?: string }) {
+export async function addPizzeria(data: { name: string, address: string, lat: number, lng: number, imageUrl?: string, category?: string, source?: string, phoneNumber?: string, website?: string, socialMedia?: string }) {
     const id = crypto.randomUUID()
     return await prisma.pizzeria.create({
         data: {
@@ -65,11 +65,14 @@ export async function addPizzeria(data: { name: string, address: string, lat: nu
             lat: data.lat,
             lng: data.lng,
             imageUrl: data.imageUrl,
+            phoneNumber: data.phoneNumber,
+            website: data.website,
+            socialMedia: data.socialMedia,
         }
     })
 }
 
-export async function updatePizzeria(id: string, data: { name: string, address: string, lat: number, lng: number, imageUrl?: string, category?: string, source?: string }) {
+export async function updatePizzeria(id: string, data: { name: string, address: string, lat: number, lng: number, imageUrl?: string, category?: string, source?: string, phoneNumber?: string, website?: string, socialMedia?: string }) {
     return await prisma.pizzeria.upsert({
         where: { id },
         update: {
@@ -78,6 +81,9 @@ export async function updatePizzeria(id: string, data: { name: string, address: 
             lat: data.lat,
             lng: data.lng,
             imageUrl: data.imageUrl,
+            phoneNumber: data.phoneNumber,
+            website: data.website,
+            socialMedia: data.socialMedia,
             // Preserve existing relationship/fields if any, but currently schema has none critical here other than items/reviews handled separately
         },
         create: {
@@ -87,6 +93,9 @@ export async function updatePizzeria(id: string, data: { name: string, address: 
             lat: data.lat,
             lng: data.lng,
             imageUrl: data.imageUrl,
+            phoneNumber: data.phoneNumber,
+            website: data.website,
+            socialMedia: data.socialMedia,
         }
     })
 }

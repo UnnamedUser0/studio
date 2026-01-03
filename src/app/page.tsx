@@ -407,6 +407,8 @@ function HomeContent() {
               onViewMenu={handleSelectPizzeria}
               onRate={handleRatePizzeria}
               isAdmin={canManagePizzerias || canManageContent} // Pass admin status (allow access if has pizzerias OR content permissions, or basically is admin)
+              layoutSettings={layoutSettings}
+              onSettingsChange={setLayoutSettings}
             />
           </div>
 
@@ -634,7 +636,8 @@ function HomeContent() {
               <ExplorarPizzerias
                 pizzerias={allPizzerias}
                 onLocate={handleNavigate}
-                onRate={handleRatePizzeria}
+                onRate={(p) => setSelectedPizzeriaForReviews(p)}
+                onSelect={handleSelectPizzeria}
                 isAdmin={canManagePizzerias}
                 initialLayoutSettings={layoutSettings}
               />

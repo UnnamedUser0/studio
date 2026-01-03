@@ -24,12 +24,14 @@ export default function ExplorarPizzerias({
     pizzerias,
     onLocate,
     onRate,
+    onSelect,
     isAdmin,
     initialLayoutSettings
 }: {
     pizzerias: Pizzeria[];
     onLocate: (pizzeria: Pizzeria) => void;
     onRate: (pizzeria: Pizzeria) => void;
+    onSelect: (pizzeria: Pizzeria) => void;
     isAdmin?: boolean;
     initialLayoutSettings?: LayoutSettings;
 }) {
@@ -82,7 +84,10 @@ export default function ExplorarPizzerias({
                             {pizzerias.map((pizzeria) => (
                                 <CarouselItem key={pizzeria.id} className="md:basis-1/2 lg:basis-1/3 pl-4">
                                     <div className="h-full py-2">
-                                        <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col group border-0 shadow-md">
+                                        <Card
+                                            className="overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col group border-0 shadow-md cursor-pointer"
+                                            onClick={() => onSelect(pizzeria)}
+                                        >
                                             <div className="relative h-48 overflow-hidden">
                                                 <img
                                                     src={pizzeria.imageUrl || "/placeholder-pizza.jpg"}
@@ -120,14 +125,20 @@ export default function ExplorarPizzerias({
                                                     <div className="flex gap-2">
                                                         <Button
                                                             className="flex-1 bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all"
-                                                            onClick={() => setSelectedPizzeriaForMenu(pizzeria)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedPizzeriaForMenu(pizzeria);
+                                                            }}
                                                         >
                                                             Ver menú
                                                         </Button>
                                                         <Button
                                                             variant="secondary"
                                                             className="flex-1 bg-black text-white hover:bg-gray-800 shadow-md hover:shadow-lg transition-all"
-                                                            onClick={() => onLocate(pizzeria)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onLocate(pizzeria);
+                                                            }}
                                                         >
                                                             Cómo llegar
                                                         </Button>
@@ -135,7 +146,10 @@ export default function ExplorarPizzerias({
                                                     <Button
                                                         variant="outline"
                                                         className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
-                                                        onClick={() => onRate(pizzeria)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onRate(pizzeria);
+                                                        }}
                                                     >
                                                         <Star className="w-4 h-4 mr-2 fill-current" />
                                                         Calificar
