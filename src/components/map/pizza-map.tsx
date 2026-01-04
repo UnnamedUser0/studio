@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, memo } from 'react';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css';
 import * as L from 'leaflet';
@@ -9,7 +9,7 @@ import type { Pizzeria } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star, Settings, Navigation, X, ArrowLeft, MoreVertical, Volume2, Compass, AlertTriangle, Search, Leaf, CornerUpLeft, Phone, Globe, Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { createRoot } from 'react-dom/client';
+
 import getDistance from 'geolib/es/getDistance';
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -101,7 +101,7 @@ type PizzaMapProps = {
   popupOffsetYMobile?: number;
 };
 
-export default function PizzaMap({
+function PizzaMap({
   pizzerias,
   onMarkerClick,
   selectedPizzeria,
@@ -281,6 +281,7 @@ export default function PizzaMap({
       // ... rest of function remains same
       const latlng = new L.LatLng(latitude, longitude);
       setUserLocation({ lat: latitude, lng: longitude });
+      localStorage.setItem('userLocation', JSON.stringify({ lat: latitude, lng: longitude }));
 
       // Always update markers or create if works
       if (myLocationMarkerRef.current) {
@@ -585,7 +586,7 @@ export default function PizzaMap({
 
       const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
+      });
 
       const satelliteLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=es&x={x}&y={y}&z={z}', {
         attribution: 'Map data &copy; Google',
@@ -596,7 +597,7 @@ export default function PizzaMap({
         attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
       });
 
-      const baseMaps = {
+      const baseMaps: Record<string, L.TileLayer> = {
         "Estándar": standardLayer,
         "Satélite": satelliteLayer,
         "Relieve": terrainLayer,
@@ -612,6 +613,40 @@ export default function PizzaMap({
       };
 
       L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+      // Restore Base Layer
+      const savedBaseLayerName = localStorage.getItem('mapBaseLayer');
+      if (savedBaseLayerName && baseMaps[savedBaseLayerName]) {
+        baseMaps[savedBaseLayerName].addTo(map);
+      } else {
+        standardLayer.addTo(map);
+      }
+
+      // Persist Base Layer Change
+      map.on('baselayerchange', (e) => {
+        // Only save if it's a base layer (not overlay)
+        // e.name gives the name in the control
+        if (baseMaps[e.name]) {
+          localStorage.setItem('mapBaseLayer', e.name);
+        }
+      });
+
+      // Restore user location from storage
+      const savedLoc = localStorage.getItem('userLocation');
+      if (savedLoc) {
+        try {
+          const { lat, lng } = JSON.parse(savedLoc);
+          if (typeof lat === 'number' && typeof lng === 'number') {
+            setUserLocation({ lat, lng });
+            const latlng = new L.LatLng(lat, lng);
+            myLocationMarkerRef.current = L.marker(latlng, { icon: myLocationIcon }).addTo(map);
+            // Center map on restored location so user sees nearby context
+            map.setView(latlng, 16);
+          }
+        } catch (e) {
+          console.error("Failed to parse saved location", e);
+        }
+      }
 
       // Event listeners for traffic layer
       map.on('overlayadd', (e) => {
@@ -692,7 +727,19 @@ export default function PizzaMap({
     if (isNavigating) return;
 
     if (selectedPizzeria) {
-      map.flyTo([selectedPizzeria.lat, selectedPizzeria.lng], 16, {
+      // SMART CENTERING: Center properly considering the popup offset
+      const targetLat = selectedPizzeria.lat;
+      const targetLng = selectedPizzeria.lng;
+
+      // Calculate offset in pixels to center "Marker + Popup" at TARGET ZOOM (16)
+
+      // Fixed offset estimate: half of popup height + anchor at ZOOM 16
+      const projectPoint = map.project([targetLat, targetLng], 16);
+      // Shift point UP (negative Y) by ~150px (approx center of popup+marker composition)
+      const pointTarget = projectPoint.subtract([0, 150]);
+      const latlngTarget = map.unproject(pointTarget, 16);
+
+      map.flyTo(latlngTarget, 16, {
         animate: true,
         duration: 1.5,
       });
@@ -712,160 +759,230 @@ export default function PizzaMap({
     }
   }, [selectedPizzeria, searchCenter, routeLayerRef, userLocation, isNavigating]);
 
+  // Ref to track existing markers by ID to avoid constant rebuilds
+  const markersMapRef = useRef<Map<string, L.Marker>>(new Map());
+
   // Update markers based on visiblePizzerias
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
+    const currentIds = new Set<string>();
 
-    // Use visiblePizzerias instead of prop pizzerias
     visiblePizzerias.forEach(pizzeria => {
       if (typeof pizzeria.lat !== 'number' || typeof pizzeria.lng !== 'number') return;
+      currentIds.add(pizzeria.id);
 
       const isSelected = selectedPizzeria?.id === pizzeria.id;
       const isRouteDestination = activeRoute && Math.abs(activeRoute.lat - pizzeria.lat) < 0.0001 && Math.abs(activeRoute.lng - pizzeria.lng) < 0.0001;
 
-      // Determine Icon
       let markerIcon = defaultIcon;
       if (isSelected) markerIcon = selectedIcon;
       else if (isNavigating && isRouteDestination) markerIcon = pizzaIcon;
 
-      const marker = L.marker([pizzeria.lat, pizzeria.lng], {
-        icon: markerIcon,
-      })
-        .addTo(map);
+      let marker = markersMapRef.current.get(pizzeria.id);
 
-      // Create Popup Content for ALL markers
-      const popupContent = document.createElement('div');
-      const root = createRoot(popupContent);
+      if (marker) {
+        // Update existing marker
+        if (marker.getIcon() !== markerIcon) {
+          marker.setIcon(markerIcon);
+        }
+        if (isSelected) {
+          marker.setZIndexOffset(1000);
+          // Only open if not already open to avoid disruption? 
+          // Leaflet handles openPopup gracefully usually.
+          if (!marker.isPopupOpen()) marker.openPopup();
+        } else {
+          marker.setZIndexOffset(0);
+        }
+      } else {
+        // Create new marker
+        marker = L.marker([pizzeria.lat, pizzeria.lng], {
+          icon: markerIcon,
+        }).addTo(map);
 
-      const distance = userLocation
+        // Bind click event - HANDLE ITERNALY TO AVOID PAGE RELOAD / SHEET OPEN
+        marker.on('click', (e) => {
+          L.DomEvent.preventDefault(e as any);
+          L.DomEvent.stopPropagation(e as any);
+
+          // SMART CENTERING (Local)
+          const targetLat = pizzeria.lat!;
+          const targetLng = pizzeria.lng!;
+          const projectPoint = map.project([targetLat, targetLng], 16); // Target Zoom 16!
+          const pointTarget = projectPoint.subtract([0, 150]);
+          const latlngTarget = map.unproject(pointTarget, 16);
+
+          map.flyTo(latlngTarget, 16, {
+            animate: true,
+            duration: 1.5,
+          });
+
+          // Force open popup after a small delay to ensure flyTo start doesn't conflict or DOM is ready
+          // Sometimes Leaflet cancels popup on map move if not careful, but usually it binds it to location.
+          // Explicitly opening it is safer.
+          setTimeout(() => {
+            marker!.openPopup();
+          }, 100);
+        });
+
+        markersMapRef.current.set(pizzeria.id, marker);
+      }
+
+      // Use Native DOM for Popup to avoid React Root complexity/leaks/event issues
+      const container = document.createElement('div');
+      container.className = "w-[280px] p-1 font-sans";
+
+      // Image
+      if (pizzeria.imageUrl) {
+        const imgContainer = document.createElement('div');
+        imgContainer.className = "mb-3 rounded-lg overflow-hidden h-36 w-full bg-gray-100 relative shadow-sm";
+        const img = document.createElement('img');
+        img.src = pizzeria.imageUrl;
+        img.alt = pizzeria.name;
+        img.className = "w-full h-full object-cover transform hover:scale-105 transition-transform duration-500";
+        img.onerror = () => { imgContainer.style.display = 'none'; };
+        imgContainer.appendChild(img);
+        container.appendChild(imgContainer);
+      }
+
+      // Title
+      const titleContainer = document.createElement('div');
+      titleContainer.className = "flex justify-between items-start mb-2";
+      const title = document.createElement('h3');
+      title.className = "text-lg font-bold text-red-600 leading-tight";
+      title.textContent = pizzeria.name;
+      titleContainer.appendChild(title);
+      container.appendChild(titleContainer);
+
+      // Info
+      const infoContainer = document.createElement('div');
+      infoContainer.className = "space-y-2 mb-4 text-sm text-gray-600";
+
+      // Address
+      const addressRow = document.createElement('div');
+      addressRow.className = "flex items-start gap-2";
+      addressRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-pink-500 mt-0.5 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
+      const addressText = document.createElement('span');
+      addressText.className = "leading-tight";
+      addressText.textContent = pizzeria.address || 'Dirección no disponible';
+      addressRow.appendChild(addressText);
+      infoContainer.appendChild(addressRow);
+
+      // Distance
+      const dist = userLocation
         ? (getDistance(
           { latitude: userLocation.lat, longitude: userLocation.lng },
           { latitude: pizzeria.lat, longitude: pizzeria.lng }
         ) / 1000).toFixed(1) + ' km'
         : 'Calculando...';
 
-      root.render(
-        <div className="w-[280px] p-1 font-sans">
-          {pizzeria.imageUrl && (
-            <div className="mb-3 rounded-lg overflow-hidden h-36 w-full bg-gray-100 relative shadow-sm">
-              <img
-                src={pizzeria.imageUrl}
-                alt={pizzeria.name}
-                className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
-                onError={(e) => {
-                  (e.target as HTMLElement).parentElement!.style.display = 'none';
-                }}
-              />
-            </div>
-          )}
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-lg font-bold text-red-600 leading-tight">{pizzeria.name}</h3>
-          </div>
+      const distRow = document.createElement('div');
+      distRow.className = "flex items-center gap-2";
+      distRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-gray-400 shrink-0"><path d="M6 18h12"/><path d="M6 10h12"/><path d="M6 6h12"/><path d="M6 14h12"/></svg>`;
+      const distText = document.createElement('span');
+      distText.textContent = `Distancia: ${dist}`;
+      distRow.appendChild(distText);
+      infoContainer.appendChild(distRow);
 
-          <div className="space-y-2 mb-4 text-sm text-gray-600">
-            <div className="flex items-start gap-2">
-              <MapPin className="w-4 h-4 text-pink-500 mt-0.5 shrink-0" />
-              <span className="leading-tight">{pizzeria.address || 'Dirección no disponible'}</span>
-            </div>
+      // Rating visualization would be complex to DOM-build manually for all stars, simplifying for robustness
+      if (pizzeria.rating) {
+        const ratingRow = document.createElement('div');
+        ratingRow.className = "flex items-center gap-1";
+        ratingRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-yellow-400 fill-yellow-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+        const ratingText = document.createElement('span');
+        ratingText.className = "font-medium text-gray-900";
+        ratingText.textContent = `Rating: ${pizzeria.rating.toFixed(1)}`;
+        ratingRow.appendChild(ratingText);
+        infoContainer.appendChild(ratingRow);
+      }
 
-            <div className="flex items-center gap-2">
-              <Ruler className="w-4 h-4 text-gray-400 shrink-0" />
-              <span>Distancia: {distance}</span>
-            </div>
+      container.appendChild(infoContainer);
 
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span className="font-medium text-gray-900">Rating: {pizzeria.rating?.toFixed(1) || 'N/A'}</span>
-              <div className="flex ml-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-3 h-3 ${i < Math.round(pizzeria.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
-                  />
-                ))}
-              </div>
-            </div>
+      // Buttons
+      const btnGrid = document.createElement('div');
+      btnGrid.className = "grid grid-cols-2 gap-2 mt-2";
 
-            {/* Contact Info - Horizontal Layout, No Top Border */}
-            <div className="flex flex-wrap items-center gap-3 pt-1 mt-2">
-              {pizzeria.phoneNumber && (
-                <div className="flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  <a href={`tel:${pizzeria.phoneNumber}`} className="text-blue-600 hover:underline truncate">{pizzeria.phoneNumber}</a>
-                </div>
-              )}
-              {pizzeria.website && (
-                <div className="flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  <a href={pizzeria.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">Sitio Web</a>
-                </div>
-              )}
-              {pizzeria.socialMedia && (
-                <div className="flex items-center gap-1.5">
-                  <Share2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  <a href={pizzeria.socialMedia} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">Red Social</a>
-                </div>
-              )}
-            </div>
-          </div>
+      // View Menu Button
+      const btnMenu = document.createElement('button');
+      btnMenu.type = 'button';
+      btnMenu.className = "bg-red-600 hover:bg-red-700 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors";
+      btnMenu.textContent = "Ver menú";
 
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            <Button
-              className="bg-red-600 hover:bg-red-700 text-white h-9 text-sm font-medium"
-              onClick={() => {
-                if (onViewMenu) onViewMenu(pizzeria);
-              }}
-            >
-              Ver menú
-            </Button>
-            <Button
-              className="bg-red-600 hover:bg-red-700 text-white h-9 text-sm font-medium"
-              onClick={() => drawRoute({ lat: pizzeria.lat, lng: pizzeria.lng })}
-            >
-              Cómo llegar
-            </Button>
-            <Button
-              className="col-span-2 bg-yellow-500 hover:bg-yellow-600 text-white h-9 text-sm font-medium"
-              onClick={() => {
-                if (onRate) onRate(pizzeria);
-              }}
-            >
-              <Star className="w-4 h-4 mr-2 fill-current" />
-              Calificar
-            </Button>
-          </div>
-        </div>
-      );
+      // Use Leaflet DomEvent to strictly handle events and stop propagation
+      L.DomEvent.disableClickPropagation(btnMenu);
+      L.DomEvent.on(btnMenu, 'click', (e) => {
+        L.DomEvent.stop(e);
+        if (onViewMenu) onViewMenu(pizzeria);
+      });
 
-      // Determine offset based on screen width (Mobile < 768px)
+      btnGrid.appendChild(btnMenu);
+
+      // Directions Button
+      const btnRoute = document.createElement('button');
+      btnRoute.type = 'button';
+      btnRoute.className = "bg-red-600 hover:bg-red-700 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors";
+      btnRoute.textContent = "Cómo llegar";
+
+      L.DomEvent.disableClickPropagation(btnRoute);
+      L.DomEvent.on(btnRoute, 'click', (e) => {
+        L.DomEvent.stop(e);
+        drawRoute({ lat: pizzeria.lat, lng: pizzeria.lng });
+      });
+
+      btnGrid.appendChild(btnRoute);
+
+      // Rate Button
+      const btnRate = document.createElement('button');
+      btnRate.type = 'button';
+      btnRate.className = "col-span-2 bg-yellow-500 hover:bg-yellow-600 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors flex items-center justify-center gap-2";
+      btnRate.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 fill-current"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Calificar`;
+
+      L.DomEvent.disableClickPropagation(btnRate);
+      L.DomEvent.on(btnRate, 'click', (e) => {
+        L.DomEvent.stop(e);
+        if (onRate) onRate(pizzeria);
+      });
+
+      btnGrid.appendChild(btnRate);
+
+      container.appendChild(btnGrid);
+
+      const popupContent = container;
+      // End Native DOM
+
+      // Determine offset
       const isMobile = window.innerWidth < 768;
       const currentOffset = isMobile ? (popupOffsetYMobile ?? -35) : (popupOffsetY ?? -35);
 
-      const popup = L.popup({
-        offset: [0, currentOffset],
-        closeButton: true,
-        className: 'custom-popup',
-        maxWidth: 300
-      }).setContent(popupContent);
-
-      marker.bindPopup(popup);
-
-      if (isSelected) {
-        marker.setZIndexOffset(1000);
-        marker.openPopup();
-        popupRef.current = popup;
+      if (marker.getPopup()) {
+        marker.setPopupContent(popupContent);
+        marker.getPopup()!.options.offset = [0, currentOffset] as any;
+        marker.getPopup()!.update();
+      } else {
+        const popup = L.popup({
+          offset: [0, currentOffset],
+          closeButton: true,
+          className: 'custom-popup',
+          maxWidth: 300
+        }).setContent(popupContent);
+        marker.bindPopup(popup);
       }
 
-      markersRef.current.push(marker);
-    });
+      // If we just selected this, ensure popup is open.
+      if (isSelected && !marker.isPopupOpen()) {
+        // marker.openPopup(); // Handled by click logic locally now to avoid loop
+      }
 
-    // Debug to ensure effect is running
-    // console.log("Markers rebuilt. Offset:", popupOffsetY, "MobileOffset:", popupOffsetYMobile, "Mobile?", window.innerWidth < 768);
+    }); // End visiblePizzerias loop
+
+    // Remove markers that are no longer visible
+    markersMapRef.current.forEach((marker, id) => {
+      if (!currentIds.has(id)) {
+        marker.remove();
+        markersMapRef.current.delete(id);
+      }
+    });
 
   }, [visiblePizzerias, selectedPizzeria, onMarkerClick, userLocation, activeRoute, popupOffsetY, popupOffsetYMobile]);
 
@@ -934,8 +1051,10 @@ export default function PizzaMap({
                             marker.off('dragend');
                             marker.on('dragend', (e) => {
                               const newPos = e.target.getLatLng();
-                              setUserLocation({ lat: newPos.lat, lng: newPos.lng });
-                              onLocateUser({ lat: newPos.lat, lng: newPos.lng });
+                              const newLoc = { lat: newPos.lat, lng: newPos.lng };
+                              setUserLocation(newLoc);
+                              localStorage.setItem('userLocation', JSON.stringify(newLoc));
+                              onLocateUser(newLoc);
                               toast({ title: 'Ubicación actualizada manualmente' });
                             });
                           }
@@ -1080,8 +1199,10 @@ export default function PizzaMap({
                         marker.off('dragend');
                         marker.on('dragend', (e) => {
                           const newPos = e.target.getLatLng();
-                          setUserLocation({ lat: newPos.lat, lng: newPos.lng });
-                          onLocateUser({ lat: newPos.lat, lng: newPos.lng });
+                          const newLoc = { lat: newPos.lat, lng: newPos.lng };
+                          setUserLocation(newLoc);
+                          localStorage.setItem('userLocation', JSON.stringify(newLoc));
+                          onLocateUser(newLoc);
                           toast({ title: 'Ubicación actualizada manualmente' });
                         });
                       }
@@ -1239,3 +1360,5 @@ export default function PizzaMap({
     </div>
   );
 };
+
+export default memo(PizzaMap);

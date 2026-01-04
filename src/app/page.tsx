@@ -26,9 +26,9 @@ const TestimonialForm = dynamic(() => import('@/components/testimonial/testimoni
 const RankingManager = dynamic(() => import('@/components/admin/ranking-manager'));
 const ExplorarPizzerias = dynamic(() => import('@/components/pizzeria/explorar-pizzerias'));
 const RankingStyler = dynamic(() => import('@/components/admin/ranking-styler').then(mod => mod.RankingStyler));
-const PizzeriaReviews = dynamic(() => import('@/components/pizzeria/pizzeria-reviews'));
-const PizzeriaDetail = dynamic(() => import('@/components/pizzeria/pizzeria-detail'));
-const MenuModal = dynamic(() => import('@/components/pizzeria/menu-modal'));
+const PizzeriaReviews = dynamic(() => import('@/components/pizzeria/pizzeria-reviews'), { loading: () => null });
+const PizzeriaDetail = dynamic(() => import('@/components/pizzeria/pizzeria-detail'), { loading: () => null });
+const MenuModal = dynamic(() => import('@/components/pizzeria/menu-modal'), { loading: () => null });
 
 function HomeContent() {
   const [selectedPizzeria, setSelectedPizzeria] = useState<Pizzeria | null>(null); // Used for Menu Sheet (Map/Explore)
@@ -404,7 +404,7 @@ function HomeContent() {
               onLocateUser={handleLocateUser}
               allPizzerias={allPizzerias}
               routeDestination={routeDestination}
-              onViewMenu={handleSelectPizzeria}
+              onViewMenu={(pizzeria) => setSelectedPizzeriaForMenu(pizzeria)}
               onRate={handleRatePizzeria}
               isAdmin={canManagePizzerias || canManageContent} // Pass admin status (allow access if has pizzerias OR content permissions, or basically is admin)
               layoutSettings={layoutSettings}
