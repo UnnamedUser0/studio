@@ -55,7 +55,7 @@ export async function getAllPizzerias() {
     })
 }
 
-export async function addPizzeria(data: { name: string, address: string, lat: number, lng: number, imageUrl?: string, category?: string, source?: string, phoneNumber?: string, website?: string, socialMedia?: string }) {
+export async function addPizzeria(data: { name: string, address: string, lat: number, lng: number, imageUrl?: string, category?: string, source?: string, phoneNumber?: string, website?: string, socialMedia?: string, schedule?: string, description?: string }) {
     const id = crypto.randomUUID()
     return await prisma.pizzeria.create({
         data: {
@@ -68,11 +68,13 @@ export async function addPizzeria(data: { name: string, address: string, lat: nu
             phoneNumber: data.phoneNumber,
             website: data.website,
             socialMedia: data.socialMedia,
-        }
+            schedule: data.schedule,
+            description: data.description,
+        } as any
     })
 }
 
-export async function updatePizzeria(id: string, data: { name: string, address: string, lat: number, lng: number, imageUrl?: string, category?: string, source?: string, phoneNumber?: string, website?: string, socialMedia?: string }) {
+export async function updatePizzeria(id: string, data: { name: string, address: string, lat: number, lng: number, imageUrl?: string, category?: string, source?: string, phoneNumber?: string, website?: string, socialMedia?: string, schedule?: string, description?: string }) {
     return await prisma.pizzeria.upsert({
         where: { id },
         update: {
@@ -84,8 +86,10 @@ export async function updatePizzeria(id: string, data: { name: string, address: 
             phoneNumber: data.phoneNumber,
             website: data.website,
             socialMedia: data.socialMedia,
+            schedule: data.schedule,
+            description: data.description,
             // Preserve existing relationship/fields if any, but currently schema has none critical here other than items/reviews handled separately
-        },
+        } as any,
         create: {
             id,
             name: data.name,
@@ -96,7 +100,9 @@ export async function updatePizzeria(id: string, data: { name: string, address: 
             phoneNumber: data.phoneNumber,
             website: data.website,
             socialMedia: data.socialMedia,
-        }
+            schedule: data.schedule,
+            description: data.description,
+        } as any
     })
 }
 

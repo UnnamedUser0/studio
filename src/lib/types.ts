@@ -30,6 +30,8 @@ export type Pizzeria = {
   phoneNumber?: string;
   website?: string;
   socialMedia?: string;
+  schedule?: string;
+  description?: string;
 };
 
 export type Testimonial = {

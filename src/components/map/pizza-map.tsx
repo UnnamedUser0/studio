@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, memo } from 'react';
+import { useEffect, useRef, useState, memo, useMemo } from 'react';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css';
 import * as L from 'leaflet';
@@ -681,42 +681,57 @@ function PizzaMap({
   const [showAll, setShowAll] = useState(false);
 
   // Filter pizzerias based on distance if user location is known and not showing all
-  const visiblePizzerias = pizzerias.filter(pizzeria => {
-    // Always show selected pizzeria
-    if (selectedPizzeria?.id === pizzeria.id) return true;
-
-    // If explicitly showing all, show everything
-    if (showAll) return true;
-
-    // If we have a search center (meaning a search was performed), show pizzerias
-    if (searchCenter) return true;
-
-    // If user location is known, filter by distance (2.5km)
-    if (userLocation && typeof pizzeria.lat === 'number' && typeof pizzeria.lng === 'number') {
-      // Always show if it is the route destination
-      if (routeDestination &&
-        Math.abs(pizzeria.lat - routeDestination.lat) < 0.0001 &&
-        Math.abs(pizzeria.lng - routeDestination.lng) < 0.0001) {
-        return true;
-      }
-
-      // Also show if it is the active route destination
-      if (activeRoute &&
-        Math.abs(pizzeria.lat - activeRoute.lat) < 0.0001 &&
-        Math.abs(pizzeria.lng - activeRoute.lng) < 0.0001) {
-        return true;
-      }
-
-      const distance = getDistance(
-        { latitude: userLocation.lat, longitude: userLocation.lng },
-        { latitude: pizzeria.lat, longitude: pizzeria.lng }
-      );
-      return distance <= 2500; // 2.5km in meters
+  const visiblePizzerias = useMemo(() => {
+    // Create a base list that includes the selected pizzeria if it's not already in the prop list
+    let candidates = pizzerias;
+    if (selectedPizzeria && !pizzerias.find(p => p.id === selectedPizzeria.id)) {
+      candidates = [...pizzerias, selectedPizzeria];
     }
 
-    // Otherwise (no user location, no search, not showing all), hide everything
-    return false;
-  });
+    return candidates.filter(pizzeria => {
+      // Always show selected pizzeria
+      if (selectedPizzeria?.id === pizzeria.id) return true;
+
+      // If explicitly showing all, show everything
+      if (showAll) return true;
+
+      // If we have a search center, show pizzerias near it (Focus context)
+      // This replaces "return true" which showed EVERYTHING causing clutter
+      if (searchCenter && typeof pizzeria.lat === 'number' && typeof pizzeria.lng === 'number') {
+        const distToSearch = getDistance(
+          { latitude: searchCenter.lat, longitude: searchCenter.lng },
+          { latitude: pizzeria.lat, longitude: pizzeria.lng }
+        );
+        if (distToSearch <= 2500) return true;
+      }
+
+      // If user location is known, filter by distance (2.5km) (User context)
+      if (userLocation && typeof pizzeria.lat === 'number' && typeof pizzeria.lng === 'number') {
+        // Always show if it is the route destination
+        if (routeDestination &&
+          Math.abs(pizzeria.lat - routeDestination.lat) < 0.0001 &&
+          Math.abs(pizzeria.lng - routeDestination.lng) < 0.0001) {
+          return true;
+        }
+
+        // Also show if it is the active route destination
+        if (activeRoute &&
+          Math.abs(pizzeria.lat - activeRoute.lat) < 0.0001 &&
+          Math.abs(pizzeria.lng - activeRoute.lng) < 0.0001) {
+          return true;
+        }
+
+        const distance = getDistance(
+          { latitude: userLocation.lat, longitude: userLocation.lng },
+          { latitude: pizzeria.lat, longitude: pizzeria.lng }
+        );
+        return distance <= 2500; // 2.5km in meters
+      }
+
+      // Otherwise (no user location, no search, not showing all), hide everything
+      return false;
+    });
+  }, [pizzerias, selectedPizzeria, showAll, searchCenter, userLocation, routeDestination, activeRoute]);
 
   // Effect for changing map view
   useEffect(() => {
@@ -744,7 +759,16 @@ function PizzaMap({
         duration: 1.5,
       });
     } else if (searchCenter) {
-      map.flyTo([searchCenter.lat, searchCenter.lng], 14, {
+      // SMART CENTERING FOR SEARCH (Keep Popup Visible)
+      // Similar reasoning as selectedPizzeria: shift map down so center is "above" the visual center
+      // to accommodate the popup located ABOVE the coordinate.
+      const targetLat = searchCenter.lat;
+      const targetLng = searchCenter.lng;
+      const projectPoint = map.project([targetLat, targetLng], 16);
+      const pointTarget = projectPoint.subtract([0, 150]); // Shift up 150px
+      const latlngTarget = map.unproject(pointTarget, 16);
+
+      map.flyTo(latlngTarget, 16, {
         animate: true,
         duration: 1.5,
       });
@@ -869,11 +893,67 @@ function PizzaMap({
       addressRow.appendChild(addressText);
       infoContainer.appendChild(addressRow);
 
+      // Schedule (Horario)
+      if (pizzeria.schedule) {
+        const scheduleRow = document.createElement('div');
+        scheduleRow.className = "flex items-start gap-2";
+        scheduleRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-orange-500 mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+        const scheduleText = document.createElement('span');
+        scheduleText.className = "leading-tight";
+        scheduleText.textContent = pizzeria.schedule;
+        scheduleRow.appendChild(scheduleText);
+        infoContainer.appendChild(scheduleRow);
+      }
+
+      // Phone
+      if (pizzeria.phoneNumber) {
+        const phoneRow = document.createElement('div');
+        phoneRow.className = "flex items-start gap-2";
+        phoneRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-green-600 mt-0.5 shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
+        const phoneLink = document.createElement('a');
+        phoneLink.href = `tel:${pizzeria.phoneNumber}`;
+        phoneLink.className = "leading-tight hover:underline text-primary";
+        phoneLink.textContent = pizzeria.phoneNumber;
+        phoneRow.appendChild(phoneLink);
+        infoContainer.appendChild(phoneRow);
+      }
+
+      // Website
+      if (pizzeria.website) {
+        const webRow = document.createElement('div');
+        webRow.className = "flex items-start gap-2";
+        webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-blue-500 mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+        const webLink = document.createElement('a');
+        webLink.href = pizzeria.website;
+        webLink.target = "_blank";
+        webLink.rel = "noopener noreferrer";
+        webLink.className = "leading-tight hover:underline text-blue-600 truncate max-w-[220px] block";
+        webLink.textContent = pizzeria.website.replace(/^https?:\/\//, '');
+        webRow.appendChild(webLink);
+        infoContainer.appendChild(webRow);
+      }
+
+      // Social
+      if (pizzeria.socialMedia) {
+        const socialRow = document.createElement('div');
+        socialRow.className = "flex items-start gap-2";
+        socialRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-purple-500 mt-0.5 shrink-0"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>`; // Share icon generic
+        const socialLink = document.createElement('a');
+        socialLink.href = pizzeria.socialMedia.startsWith('http') ? pizzeria.socialMedia : `https://${pizzeria.socialMedia}`;
+        socialLink.target = "_blank";
+        socialLink.rel = "noopener noreferrer";
+        socialLink.className = "leading-tight hover:underline text-purple-600 truncate max-w-[220px] block";
+        socialLink.textContent = "Redes Sociales";
+        socialRow.appendChild(socialLink);
+        infoContainer.appendChild(socialRow);
+      }
+
       // Distance
       const dist = userLocation
         ? (getDistance(
           { latitude: userLocation.lat, longitude: userLocation.lng },
           { latitude: pizzeria.lat, longitude: pizzeria.lng }
+
         ) / 1000).toFixed(1) + ' km'
         : 'Calculando...';
 
@@ -971,7 +1051,7 @@ function PizzaMap({
 
       // If we just selected this, ensure popup is open.
       if (isSelected && !marker.isPopupOpen()) {
-        // marker.openPopup(); // Handled by click logic locally now to avoid loop
+        marker.openPopup();
       }
 
     }); // End visiblePizzerias loop

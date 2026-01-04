@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Pizzeria } from '@/lib/types';
@@ -40,6 +41,8 @@ const formSchema = z.object({
   phoneNumber: z.string().optional(),
   website: z.string().optional(),
   socialMedia: z.string().optional(),
+  schedule: z.string().optional(),
+  description: z.string().optional(),
 });
 
 type PizzeriaFormValues = z.infer<typeof formSchema>;
@@ -66,6 +69,8 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
       phoneNumber: '',
       website: '',
       socialMedia: '',
+      schedule: '',
+      description: '',
     }
   });
 
@@ -106,6 +111,8 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
         phoneNumber: pizzeria.phoneNumber || '',
         website: pizzeria.website || '',
         socialMedia: pizzeria.socialMedia || '',
+        schedule: pizzeria.schedule || '',
+        description: pizzeria.description || '',
       });
     } else {
       reset({
@@ -119,6 +126,8 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
         phoneNumber: '',
         website: '',
         socialMedia: '',
+        schedule: '',
+        description: '',
       });
     }
   }, [pizzeria, reset]);
@@ -213,11 +222,23 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <Label htmlFor="description">Descripción</Label>
+        <Textarea id="description" placeholder="Breve descripción de la pizzería..." {...register('description')} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="phoneNumber">Teléfono</Label>
           <Input id="phoneNumber" placeholder="662 123 4567" {...register('phoneNumber')} />
         </div>
+        <div>
+          <Label htmlFor="schedule">Horario</Label>
+          <Input id="schedule" placeholder="Lun-Dom: 12pm - 10pm" {...register('schedule')} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="website">Página Web</Label>
           <Input id="website" placeholder="https://..." {...register('website')} />

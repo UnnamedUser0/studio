@@ -61,17 +61,19 @@ model VerificationToken {
 }
 
 model Pizzeria {
-  id        String   @id
-  name      String
-  address   String
-  lat       Float
-  lng       Float
-  imageUrl  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id
+  name        String
+  address     String
+  lat         Float
+  lng         Float
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   phoneNumber String?
   website     String?
   socialMedia String?
+  schedule    String?
+  description String?
 
   reviews Review[]
   items   MenuItem[]

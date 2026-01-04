@@ -61,7 +61,7 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
     return (
         <>
             <SheetHeader className="p-0 border-b relative">
-                <div className="relative h-48 w-full">
+                <div className="relative h-56 w-full">
                     <Image
                         src={imageUrl}
                         alt={pizzeria.name}
@@ -70,89 +70,70 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
                         sizes="(max-width: 640px) 90vw, 440px"
                         className="object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                </div>
-                <div className="p-6 pt-2 absolute bottom-0 w-full">
-                    <SheetTitle className="font-headline text-3xl text-primary-foreground">{pizzeria.name}</SheetTitle>
-                    <SheetDescription className="text-muted-foreground/80">{pizzeria.address}</SheetDescription>
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-90" />
+                    <div className="absolute bottom-0 w-full p-6 bg-gradient-to-t from-background to-transparent pt-12">
+                        <SheetTitle className="font-headline text-3xl mb-1">{pizzeria.name}</SheetTitle>
+                        <p className="text-muted-foreground flex items-center gap-1 text-sm">
+                            <span className="truncate">{pizzeria.address}</span>
+                        </p>
+                    </div>
                 </div>
             </SheetHeader>
-            <div className="flex flex-wrap gap-4 px-6 py-4 text-sm text-muted-foreground border-b bg-muted/20 shrink-0">
-                {pizzeria.phoneNumber && (
-                    <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4" />
-                        <a href={`tel:${pizzeria.phoneNumber}`} className="hover:underline hover:text-primary transition-colors">{pizzeria.phoneNumber}</a>
+
+            <div className="px-6 py-4 space-y-4 bg-card/50">
+                {/* Coordinates & Technical Info */}
+                <div className="grid grid-cols-2 gap-4 text-xs font-mono text-muted-foreground bg-muted p-2 rounded-md">
+                    <div className="flex flex-col">
+                        <span className="uppercase tracking-wider opacity-70">Latitud</span>
+                        <span>{pizzeria.lat.toFixed(5)}</span>
                     </div>
-                )}
-                {pizzeria.website && (
-                    <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4" />
-                        <a href={pizzeria.website} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary transition-colors">Sitio Web</a>
+                    <div className="flex flex-col">
+                        <span className="uppercase tracking-wider opacity-70">Longitud</span>
+                        <span>{pizzeria.lng.toFixed(5)}</span>
                     </div>
-                )}
-                {pizzeria.socialMedia && (
-                    <div className="flex items-center gap-2">
-                        <Share2 className="w-4 h-4" />
-                        <a href={pizzeria.socialMedia} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary transition-colors">Red Social</a>
+                </div>
+
+                {/* Contact Links */}
+                <div className="flex flex-col gap-2 pt-2">
+                    {pizzeria.phoneNumber && (
+                        <div className="flex items-center gap-3 text-sm">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                                <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <a href={`tel:${pizzeria.phoneNumber}`} className="hover:underline font-medium break-all">{pizzeria.phoneNumber}</a>
+                        </div>
+                    )}
+                    {pizzeria.website && (
+                        <div className="flex items-center gap-3 text-sm">
+                            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+                                <Globe className="w-4 h-4 text-green-600 dark:text-green-400" />
+                            </div>
+                            <a href={pizzeria.website} target="_blank" rel="noopener noreferrer" className="hover:underline font-medium truncate flex-1">
+                                {pizzeria.website.replace(/^https?:\/\/(www\.)?/, '')}
+                            </a>
+                        </div>
+                    )}
+                    {pizzeria.socialMedia && (
+                        <div className="flex items-center gap-3 text-sm">
+                            <div className="w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center shrink-0">
+                                <Share2 className="w-4 h-4 text-pink-600 dark:text-pink-400" />
+                            </div>
+                            <a href={pizzeria.socialMedia} target="_blank" rel="noopener noreferrer" className="hover:underline font-medium truncate flex-1">Redes Sociales</a>
+                        </div>
+                    )}
+                </div>
+
+                {/* Description */}
+                {pizzeria.description && (
+                    <div className="mt-4 pt-4 border-t border-border/50">
+                        <h4 className="font-headline text-sm font-semibold mb-2">Descripción</h4>
+                        <div className="text-sm text-muted-foreground leading-relaxed">
+                            {pizzeria.description}
+                        </div>
                     </div>
                 )}
             </div>
-            <ScrollArea className="flex-1">
-                <div className="p-6 space-y-6">
-                    <div>
-                        <h3 className="font-headline text-xl mb-4 text-foreground">Menú</h3>
 
-                        {isLoading ? (
-                            <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-                        ) : items.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground">
-                                <Pizza className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                <p>El menú digital aún no está disponible.</p>
-                                <p className="text-sm">Visita el local para ver sus especialidades.</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-6">
-                                {categories.map(category => {
-                                    const categoryItems = groupedItems[category];
-                                    if (!categoryItems || categoryItems.length === 0) return null;
-                                    return (
-                                        <div key={category} className="space-y-3">
-                                            <h4 className="font-bold text-lg text-primary border-b pb-1">{category}</h4>
-                                            <div className="grid gap-3">
-                                                {categoryItems.map(item => (
-                                                    <Card key={item.id} className="overflow-hidden">
-                                                        <CardContent className="p-3 flex gap-3">
-                                                            {item.imageUrl && (
-                                                                <div className="relative w-20 h-20 shrink-0 rounded-md overflow-hidden">
-                                                                    <Image
-                                                                        src={item.imageUrl}
-                                                                        alt={item.name}
-                                                                        fill
-                                                                        className="object-cover"
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex justify-between items-start gap-2">
-                                                                    <h5 className="font-bold truncate">{item.name}</h5>
-                                                                    <span className="font-semibold text-primary shrink-0">${item.price.toFixed(2)}</span>
-                                                                </div>
-                                                                {item.description && (
-                                                                    <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{item.description}</p>
-                                                                )}
-                                                            </div>
-                                                        </CardContent>
-                                                    </Card>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </ScrollArea>
         </>
     );
 }

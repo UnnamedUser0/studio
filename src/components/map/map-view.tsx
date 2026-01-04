@@ -3,12 +3,10 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import SmartSearch from '@/components/search/smart-search';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Pizzeria } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-const PizzeriaDetail = dynamic(() => import('@/components/pizzeria/pizzeria-detail'));
 const PizzaMap = dynamic(() => import('@/components/map/pizza-map'), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
@@ -111,12 +109,7 @@ export default function MapView({
         </div>
       </div>
 
-      {/* Pizzeria Detail Sheet */}
-      <Sheet open={!!selectedPizzeria} onOpenChange={(open) => !open && onCloseDetail()}>
-        <SheetContent side="right" className="w-[90vw] max-w-[600px] p-0 flex flex-col" aria-describedby={undefined}>
-          {selectedPizzeria && <PizzeriaDetail pizzeria={selectedPizzeria} />}
-        </SheetContent>
-      </Sheet>
+
     </div>
   );
 }

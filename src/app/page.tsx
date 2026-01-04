@@ -1,9 +1,10 @@
-
 'use client';
 import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import getDistance from 'geolib/es/getDistance';
 import dynamic from 'next/dynamic';
+import PizzeriaDetail from '@/components/pizzeria/pizzeria-detail';
+import PizzeriaReviews from '@/components/pizzeria/pizzeria-reviews';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 import MapView from '@/components/map/map-view';
@@ -20,14 +21,12 @@ import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import WelcomeScreen from '@/components/welcome/welcome-screen';
 import type { RankingStyles } from '@/components/admin/ranking-styler';
 
-const WhyChoosePizzapp = dynamic(() => import('@/components/layout/why-choose-pizzapp'));
-const TestimonialsCarousel = dynamic(() => import('@/components/testimonial/testimonials-carousel'));
-const TestimonialForm = dynamic(() => import('@/components/testimonial/testimonial-form'));
-const RankingManager = dynamic(() => import('@/components/admin/ranking-manager'));
-const ExplorarPizzerias = dynamic(() => import('@/components/pizzeria/explorar-pizzerias'));
-const RankingStyler = dynamic(() => import('@/components/admin/ranking-styler').then(mod => mod.RankingStyler));
-const PizzeriaReviews = dynamic(() => import('@/components/pizzeria/pizzeria-reviews'), { loading: () => null });
-const PizzeriaDetail = dynamic(() => import('@/components/pizzeria/pizzeria-detail'), { loading: () => null });
+const WhyChoosePizzapp = dynamic(() => import('@/components/layout/why-choose-pizzapp'), { loading: () => null });
+const TestimonialsCarousel = dynamic(() => import('@/components/testimonial/testimonials-carousel'), { loading: () => null });
+const TestimonialForm = dynamic(() => import('@/components/testimonial/testimonial-form'), { loading: () => null });
+const RankingManager = dynamic(() => import('@/components/admin/ranking-manager'), { loading: () => null });
+const ExplorarPizzerias = dynamic(() => import('@/components/pizzeria/explorar-pizzerias'), { loading: () => null });
+const RankingStyler = dynamic(() => import('@/components/admin/ranking-styler').then(mod => mod.RankingStyler), { loading: () => null });
 const MenuModal = dynamic(() => import('@/components/pizzeria/menu-modal'), { loading: () => null });
 
 function HomeContent() {
@@ -257,6 +256,10 @@ function HomeContent() {
     return sorted.slice(0, 3);
   }, [allPizzerias, rankingSettings]);
 
+
+
+
+
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   useEffect(() => {
     import('@/app/actions').then(({ getTestimonials }) => {
@@ -280,8 +283,27 @@ function HomeContent() {
     });
   }, []);
 
+  const [userLocation, setUserLocation] = useState<Geocode | null>(null);
+
+  const handleCloseWelcome = () => {
+    setShowWelcome(false);
+    localStorage.setItem('hasSeenWelcome', 'true');
+  };
+
   const handleSelectPizzeria = useCallback((pizzeria: Pizzeria) => {
     setSelectedPizzeria(pizzeria);
+
+    // Treat as search but PRESERVE existing visible pizzerias to keep context
+    // This allows "adding" the far-away one to the visible set without hiding nearby ones
+    setVisiblePizzerias(prev => {
+      // If it's already there, don't change anything to avoid re-renders
+      if (prev.find(p => p.id === pizzeria.id)) return prev;
+      // Add it to the list
+      return [...prev, pizzeria];
+    });
+
+    setSearchCenter({ lat: pizzeria.lat, lng: pizzeria.lng });
+    setIsSearching(true);
   }, []);
 
   const handleRatePizzeria = useCallback((pizzeria: Pizzeria) => {
@@ -324,7 +346,7 @@ function HomeContent() {
   }, []);
 
   const handleLocateUser = useCallback((coords: { lat: number, lng: number }) => {
-    // setUserLocation(coords);
+    setUserLocation(coords);
   }, []);
 
   const [routeDestination, setRouteDestination] = useState<{ lat: number, lng: number } | null>(null);
@@ -632,16 +654,16 @@ function HomeContent() {
               </ScrollReveal>
             </div>
 
-            {allPizzerias && (
+            <div id="explorar" className="relative z-10">
               <ExplorarPizzerias
                 pizzerias={allPizzerias}
-                onLocate={handleNavigate}
-                onRate={(p) => setSelectedPizzeriaForReviews(p)}
                 onSelect={handleSelectPizzeria}
-                isAdmin={canManagePizzerias}
+                onLocate={handleNavigate}
+                onRate={handleRatePizzeria}
+                isAdmin={canManagePizzerias || canManageContent}
                 initialLayoutSettings={layoutSettings}
               />
-            )}
+            </div>
 
             <div id="testimonials" className="bg-muted/50 py-16">
               <div className="container">
