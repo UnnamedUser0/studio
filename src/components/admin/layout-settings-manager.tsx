@@ -292,6 +292,55 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                 />
                             </div>
                         </div>
+
+                        {/* Advanced Map Settings */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                            <h4 className="font-semibold text-sm">Configuración Avanzada Mapa</h4>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <Label>Desplazamiento Centro Cámara (px)</Label>
+                                    <span className="text-sm text-muted-foreground">{settings.mapCenterOffset || 150}px</span>
+                                </div>
+                                <Slider
+                                    value={[settings.mapCenterOffset || 150]}
+                                    min={0}
+                                    max={400}
+                                    step={10}
+                                    onValueChange={([val]) => handleSettingChange('mapCenterOffset', val)}
+                                />
+                                <p className="text-xs text-muted-foreground">Ajusta cuánto se baja el mapa para centrar el popup visualmente.</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-dashed">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label>Ancla Icono X</Label>
+                                        <span className="text-sm text-muted-foreground">{settings.iconAnchorX || 25}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.iconAnchorX || 25]}
+                                        min={0}
+                                        max={50}
+                                        step={1}
+                                        onValueChange={([val]) => handleSettingChange('iconAnchorX', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label>Ancla Icono Y</Label>
+                                        <span className="text-sm text-muted-foreground">{settings.iconAnchorY || 25}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.iconAnchorY || 25]}
+                                        min={0}
+                                        max={50}
+                                        step={1}
+                                        onValueChange={([val]) => handleSettingChange('iconAnchorY', val)}
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Ajusta el punto de anclaje del icono (centro de la pizza).</p>
+                        </div>
                     </div>
                 ) : (
                     <div className="space-y-6 animate-in fade-in duration-300">

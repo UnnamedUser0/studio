@@ -16,74 +16,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import LayoutSettingsManager from '@/components/admin/layout-settings-manager';
 
 
+// Define custom icons outside or Inside
+// We move them inside to support dynamic anchoring from props if needed, or keep them static if just props are sufficient.
+// The user wants to adjust "icon location", which implies anchor.
 const HERMOSILLO_CENTER: L.LatLngTuple = [29.085, -110.977];
-
-// Define custom icons
-const defaultIcon = new L.Icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/128/3595/3595458.png',
-  iconSize: [35, 35],
-  iconAnchor: [17, 35],
-  popupAnchor: [0, -35],
-});
-
-const selectedIcon = new L.Icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/128/1046/1046751.png',
-  iconSize: [45, 45],
-  iconAnchor: [22, 45],
-  popupAnchor: [0, -45],
-});
-
-const pizzaIcon = new L.Icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/128/1404/1404945.png', // Pizza Slice Icon
-  iconSize: [50, 50],
-  iconAnchor: [25, 25],
-  popupAnchor: [0, -25],
-  className: 'drop-shadow-lg'
-});
-
-const myLocationIcon = new L.Icon({
-  iconUrl: '/icono512.jpg', // Local custom icon
-  iconSize: [40, 40],
-  iconAnchor: [20, 20],
-  className: 'drop-shadow-md rounded-full'
-});
-
-const navigationIcon = new L.DivIcon({
-  className: 'navigation-arrow',
-  html: `<div class="nav-arrow-inner" style="
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-        /* Remove translate(-50%, -50%) from here as needed, but DivIcon usually needs centering logic if not handled by Anchor. 
-           L.DivIcon with iconAnchor [20,20] centers the TopLeft of the div at the point. 
-           If the div is 40x40, [20,20] is center. 
-           So we don't need translate(-50%,-50%) inside the HTML if iconAnchor is correct.
-           However, let's keep the existing styles but mainly add the class. 
-           Wait, existing style has transform: translate(-50%, -50%). 
-           If iconAnchor is [20,20] (center), Leaflet positions the top-left of the icon element at (Point - Anchor).
-           So TopLeft is at (Px - 20, Py - 20). 
-           So the div (40x40) occupies (Px-20, Py-20) to (Px+20, Py+20). Correctly centered.
-           The inner transform translate(-50%, -50%) might shift it further? 
-           Let's inspect original: transform: translate(-50%, -50%) was there. 
-           If the container div provided by Leaflet is 0x0 (default DivIcon size if not specified, but here size IS specified).
-           Actually, DivIcon creates a div. 'html' is put INSIDE it.
-           If iconSize is [40,40], the Wrapper Div is 40x40.
-           So the inner html just needs to fill it. 
-           The existing style seems to try to center itself relative to something. 
-           I will just wrap everything in nav-arrow-inner and keep styles safe.
-        */
-      ">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="20" cy="20" r="18" fill="white" fill-opacity="0.2"/>
-          <path d="M20 5L32 35L20 27L8 35L20 5Z" fill="#2563EB" stroke="white" stroke-width="3" stroke-linejoin="round"/>
-        </svg>
-      </div>`,
-  iconSize: [40, 40],
-  iconAnchor: [20, 20]
-});
 
 type PizzaMapProps = {
   pizzerias: Pizzeria[];
@@ -99,6 +35,11 @@ type PizzaMapProps = {
   routeDestination?: { lat: number, lng: number } | null;
   popupOffsetY?: number;
   popupOffsetYMobile?: number;
+  mapCenterOffset?: number; // New prop for adjusting the map center shift
+  iconAnchorX?: number; // New prop for icon anchor adjustment
+  iconAnchorY?: number; // New prop for icon anchor adjustment
+  disableDistanceFilter?: boolean; // New prop to bypass distance check
+  explicitPizzeriasToShow?: Pizzeria[]; // New prop to force render specific pizzerias
 };
 
 function PizzaMap({
@@ -116,12 +57,18 @@ function PizzaMap({
   isAdmin = false,
   popupOffsetY = -35,
   popupOffsetYMobile = -35,
+  mapCenterOffset = 150,
+  iconAnchorX = 25,
+  iconAnchorY = 25,
+  disableDistanceFilter = false,
+  explicitPizzeriasToShow = [],
   onSettingsChange
-}: PizzaMapProps & { isAdmin?: boolean, popupOffsetY?: number, popupOffsetYMobile?: number, onSettingsChange?: (settings: any) => void }) {
+}: PizzaMapProps & { isAdmin?: boolean, popupOffsetY?: number, popupOffsetYMobile?: number, onSettingsChange?: (settings: any) => void, mapCenterOffset?: number, iconAnchorX?: number, iconAnchorY?: number, disableDistanceFilter?: boolean, explicitPizzeriasToShow?: Pizzeria[] }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const myLocationMarkerRef = useRef<L.Marker | null>(null);
+  const searchMarkerRef = useRef<L.Marker | null>(null); // New ref for search pin
   const routeLayerRef = useRef<L.Polyline | null>(null);
   const popupRef = useRef<L.Popup | null>(null);
   const trafficLayerRef = useRef<L.TileLayer | null>(null);
@@ -135,6 +82,74 @@ function PizzaMap({
   const [isMuted, setIsMuted] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState(0);
   const [mapRotation, setMapRotation] = useState(0);
+
+  // Memoize Icons to allow dynamic props (specifically anchor)
+  const { defaultIcon, selectedIcon, pizzaIcon, myLocationIcon, navigationIcon, searchIcon } = useMemo(() => {
+    return {
+      defaultIcon: new L.Icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/128/3595/3595458.png',
+        iconSize: [35, 35],
+        iconAnchor: [17, 35],
+        popupAnchor: [0, -35],
+      }),
+      selectedIcon: new L.Icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/128/1046/1046751.png',
+        iconSize: [45, 45],
+        iconAnchor: [22, 45],
+        popupAnchor: [0, -45],
+      }),
+      pizzaIcon: new L.Icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/128/1404/1404945.png', // Pizza Slice Icon
+        iconSize: [50, 50],
+        iconAnchor: [iconAnchorX, iconAnchorY], // Dynamic Anchor
+        popupAnchor: [0, -iconAnchorY],
+        className: 'drop-shadow-lg'
+      }),
+      myLocationIcon: new L.Icon({
+        iconUrl: '/icono512.jpg',
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+        className: 'drop-shadow-md rounded-full'
+      }),
+      navigationIcon: new L.DivIcon({
+        className: 'navigation-arrow',
+        html: `<div class="nav-arrow-inner" style="
+              width: 40px;
+              height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+            ">
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="20" r="18" fill="white" fill-opacity="0.2"/>
+                <path d="M20 5L32 35L20 27L8 35L20 5Z" fill="#2563EB" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+              </svg>
+            </div>`,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+      }),
+      searchIcon: new L.DivIcon({
+        className: 'search-pin-icon',
+        html: `<div style="
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+        ">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="#ef4444" stroke="#7f1d1d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+            <circle cx="12" cy="10" r="3" fill="white"/>
+          </svg>
+        </div>`,
+        iconSize: [40, 40],
+        iconAnchor: [20, 40], // Bottom Center
+        popupAnchor: [0, -40],
+      })
+    };
+  }, [iconAnchorX, iconAnchorY]);
 
   // Helper: Calculate bearing between two points
   const calculateBearing = (lat1: number, lng1: number, lat2: number, lng2: number) => {
@@ -688,12 +703,25 @@ function PizzaMap({
       candidates = [...pizzerias, selectedPizzeria];
     }
 
+    // Also ensure explicitly requested pizzerias are in candidates
+    explicitPizzeriasToShow?.forEach(explicit => {
+      if (!candidates.find(p => p.id === explicit.id)) {
+        candidates = [...candidates, explicit];
+      }
+    });
+
     return candidates.filter(pizzeria => {
       // Always show selected pizzeria
       if (selectedPizzeria?.id === pizzeria.id) return true;
 
+      // Always show explicit pizzerias (e.g. last selected)
+      if (explicitPizzeriasToShow?.some(e => e.id === pizzeria.id)) return true;
+
       // If explicitly showing all, show everything
       if (showAll) return true;
+
+      // If distance filter disabled (manual mode), show everything passed in props (which should be the subset)
+      if (disableDistanceFilter) return true;
 
       // If we have a search center, show pizzerias near it (Focus context)
       // This replaces "return true" which showed EVERYTHING causing clutter
@@ -731,7 +759,7 @@ function PizzaMap({
       // Otherwise (no user location, no search, not showing all), hide everything
       return false;
     });
-  }, [pizzerias, selectedPizzeria, showAll, searchCenter, userLocation, routeDestination, activeRoute]);
+  }, [pizzerias, selectedPizzeria, showAll, searchCenter, userLocation, routeDestination, activeRoute, disableDistanceFilter, explicitPizzeriasToShow]);
 
   // Effect for changing map view
   useEffect(() => {
@@ -751,9 +779,13 @@ function PizzaMap({
       // Fixed offset estimate: half of popup height + anchor at ZOOM 16
       const projectPoint = map.project([targetLat, targetLng], 16);
       // Shift point UP (negative Y) by ~150px (approx center of popup+marker composition)
-      const pointTarget = projectPoint.subtract([0, 150]);
+      const pointTarget = projectPoint.subtract([0, mapCenterOffset]);
       const latlngTarget = map.unproject(pointTarget, 16);
 
+      map.flyTo(latlngTarget, 16, {
+        animate: true,
+        duration: 1.5,
+      });
       map.flyTo(latlngTarget, 16, {
         animate: true,
         duration: 1.5,
@@ -765,7 +797,7 @@ function PizzaMap({
       const targetLat = searchCenter.lat;
       const targetLng = searchCenter.lng;
       const projectPoint = map.project([targetLat, targetLng], 16);
-      const pointTarget = projectPoint.subtract([0, 150]); // Shift up 150px
+      const pointTarget = projectPoint.subtract([0, mapCenterOffset]); // Shift up
       const latlngTarget = map.unproject(pointTarget, 16);
 
       map.flyTo(latlngTarget, 16, {
@@ -782,6 +814,26 @@ function PizzaMap({
       }
     }
   }, [selectedPizzeria, searchCenter, routeLayerRef, userLocation, isNavigating]);
+
+  // Handle Search Marker (Red Pin)
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (searchCenter) {
+      if (searchMarkerRef.current) {
+        searchMarkerRef.current.setLatLng([searchCenter.lat, searchCenter.lng]);
+        searchMarkerRef.current.setIcon(searchIcon);
+      } else {
+        searchMarkerRef.current = L.marker([searchCenter.lat, searchCenter.lng], { icon: searchIcon, zIndexOffset: 2000 }).addTo(map);
+      }
+    } else {
+      if (searchMarkerRef.current) {
+        searchMarkerRef.current.remove();
+        searchMarkerRef.current = null;
+      }
+    }
+  }, [searchCenter, searchIcon]);
 
   // Ref to track existing markers by ID to avoid constant rebuilds
   const markersMapRef = useRef<Map<string, L.Marker>>(new Map());
@@ -834,7 +886,7 @@ function PizzaMap({
           const targetLat = pizzeria.lat!;
           const targetLng = pizzeria.lng!;
           const projectPoint = map.project([targetLat, targetLng], 16); // Target Zoom 16!
-          const pointTarget = projectPoint.subtract([0, 150]);
+          const pointTarget = projectPoint.subtract([0, mapCenterOffset]);
           const latlngTarget = map.unproject(pointTarget, 16);
 
           map.flyTo(latlngTarget, 16, {

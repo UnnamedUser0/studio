@@ -290,20 +290,20 @@ function HomeContent() {
     localStorage.setItem('hasSeenWelcome', 'true');
   };
 
+  const [lastSelectedPizzeria, setLastSelectedPizzeria] = useState<Pizzeria | null>(null);
+
   const handleSelectPizzeria = useCallback((pizzeria: Pizzeria) => {
     setSelectedPizzeria(pizzeria);
+    setLastSelectedPizzeria(pizzeria);
 
-    // Treat as search but PRESERVE existing visible pizzerias to keep context
-    // This allows "adding" the far-away one to the visible set without hiding nearby ones
-    setVisiblePizzerias(prev => {
-      // If it's already there, don't change anything to avoid re-renders
-      if (prev.find(p => p.id === pizzeria.id)) return prev;
-      // Add it to the list
-      return [...prev, pizzeria];
-    });
-
-    setSearchCenter({ lat: pizzeria.lat, lng: pizzeria.lng });
-    setIsSearching(true);
+    // When selecting a pizzeria, we want to show:
+    // 1. The selected pizzeria (Focus)
+    // 2. The User's context (Nearby pizzerias relative to User)
+    // We do NOT want to show the 'Search Context' anymore if we were searching.
+    // By setting isSearching=false, MapView uses 'pizzeriasForRanking' (all pizzerias).
+    // PizzaMap then filters this list: retaining the Selected one and those near User.
+    setIsSearching(false);
+    setSearchCenter(null);
   }, []);
 
   const handleRatePizzeria = useCallback((pizzeria: Pizzeria) => {
@@ -312,7 +312,8 @@ function HomeContent() {
 
   const handleSearch = useCallback((results: Pizzeria[], geocode?: Geocode) => {
     setIsSearching(true);
-
+    setLastSelectedPizzeria(null); // Clear last selected when searching fresh
+    // ... rest of handleSearch logic
     if (results.length === 0 && geocode) {
       // If searching for a location, show pizzerias within 2.5km
       const nearby = allPizzerias.filter(p => {
@@ -339,6 +340,7 @@ function HomeContent() {
     setIsSearching(false);
     setVisiblePizzerias([]);
     setSearchCenter(null);
+    setLastSelectedPizzeria(null);
   }, []);
 
   const handleCloseDetail = useCallback(() => {
@@ -431,6 +433,8 @@ function HomeContent() {
               isAdmin={canManagePizzerias || canManageContent} // Pass admin status (allow access if has pizzerias OR content permissions, or basically is admin)
               layoutSettings={layoutSettings}
               onSettingsChange={setLayoutSettings}
+              disableDistanceFilter={isSearching && !searchCenter}
+              explicitPizzeriasToShow={lastSelectedPizzeria ? [lastSelectedPizzeria] : []}
             />
           </div>
 

@@ -28,6 +28,8 @@ type MapViewProps = {
   onViewMenu?: (pizzeria: Pizzeria) => void;
   onRate?: (pizzeria: Pizzeria) => void;
   isAdmin?: boolean;
+  disableDistanceFilter?: boolean; // NEW PROP
+  explicitPizzeriasToShow?: Pizzeria[]; // NEW PROP
 };
 
 export default function MapView({
@@ -44,8 +46,10 @@ export default function MapView({
   onViewMenu,
   onRate,
   isAdmin = false,
-  layoutSettings, // Receive settings
-  onSettingsChange
+  layoutSettings,
+  onSettingsChange,
+  disableDistanceFilter = false,
+  explicitPizzeriasToShow = []
 }: MapViewProps & { layoutSettings?: any, onSettingsChange?: (settings: any) => void }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -81,8 +85,13 @@ export default function MapView({
         onRate={onRate || onSelectPizzeria}
         routeDestination={routeDestination}
         isAdmin={isAdmin}
+        disableDistanceFilter={disableDistanceFilter}
+        explicitPizzeriasToShow={explicitPizzeriasToShow}
         popupOffsetY={layoutSettings?.popupOffsetY ?? -35}
         popupOffsetYMobile={layoutSettings?.popupOffsetYMobile ?? -35}
+        mapCenterOffset={layoutSettings?.mapCenterOffset ?? 150}
+        iconAnchorX={layoutSettings?.iconAnchorX ?? 25}
+        iconAnchorY={layoutSettings?.iconAnchorY ?? 25}
         onSettingsChange={onSettingsChange}
       />
 

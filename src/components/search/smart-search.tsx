@@ -86,42 +86,80 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
 
     setSuggestions(localPizzeriaSuggestions);
 
-    // 2. AI search for addresses and other terms (debounced)
+    // 2. Coordinate Search
+    const coordinateRegex = /^(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)$/;
+    const coordMatch = currentQuery.match(coordinateRegex);
+    if (coordMatch) {
+      const lat = parseFloat(coordMatch[1]);
+      const lng = parseFloat(coordMatch[3]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setSuggestions(prev => [
+          ...prev,
+          {
+            type: 'geocode',
+            label: `Ir a coordenadas: ${lat}, ${lng}`,
+            data: { lat, lng }
+          }
+        ]);
+        return; // Return early if coordinates found
+      }
+    }
+
+    // 3. Nominatim Geocoding & AI Search
     startTransition(async () => {
       try {
-        const result = await getSmartSearchSuggestions({ query: currentQuery });
         const aiSuggestions: Suggestion[] = [];
 
+        // Nominatim Geocoding for Addresses (Hermosillo Priority)
+        try {
+          // Viewbox for Hermosillo approx: [left, top, right, bottom] -> minlon, minlat, maxlon, maxlat
+          // -111.2, 28.8, -110.8, 29.3
+          const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(currentQuery + ' Hermosillo')}&viewbox=-111.2,29.3,-110.8,28.8&bounded=1&limit=3`;
+
+          const response = await fetch(nominatimUrl);
+          if (response.ok) {
+            const data = await response.json();
+            data.forEach((item: any) => {
+              aiSuggestions.push({
+                type: 'geocode',
+                label: item.display_name,
+                data: { lat: parseFloat(item.lat), lng: parseFloat(item.lon) }
+              });
+            });
+          }
+        } catch (e) {
+          console.error("Nominatim error:", e);
+        }
+
+        /* AI Search - Disabled/Secondary to prefer direct geocoding for speed/accuracy on addresses
+        const result = await getSmartSearchSuggestions({ query: currentQuery });
         if (result.geocode) {
-          // Create a primary suggestion for the geocoded location
           aiSuggestions.push({
             type: 'geocode',
             label: `Pizzerías cerca de ${currentQuery}`,
             data: result.geocode,
           });
         }
-
         result.suggestions?.forEach(label => {
-          // Avoid adding duplicate labels from local search
           if (!localPizzeriaSuggestions.some(p => p.label === label)) {
-            aiSuggestions.push({ type: 'ai', label, data: label });
+             aiSuggestions.push({ type: 'ai', label, data: label });
           }
         });
+        */
 
-        // Combine and set suggestions, giving priority to local results
         setSuggestions(prev => {
-          const combined = [...prev.filter(s => s.type === 'pizzeria'), ...aiSuggestions];
-          const uniqueLabels = new Set<string>();
-          return combined.filter(s => {
-            if (uniqueLabels.has(s.label)) return false;
-            uniqueLabels.add(s.label);
-            return true;
-          }).slice(0, 5);
+          // Merge: Local > Geocoded > Previous AI/History
+          // We filter out duplicates
+          const combined = [...prev, ...aiSuggestions];
+          const unique = new Map();
+          combined.forEach(s => {
+            if (!unique.has(s.label)) unique.set(s.label, s);
+          });
+          return Array.from(unique.values()).slice(0, 5);
         });
 
       } catch (error) {
-        console.error("AI search failed:", error);
-        // Fallback to only local suggestions if AI fails
+        console.error("Search failed:", error);
       }
     });
 
@@ -137,6 +175,47 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
     };
   }, [query, fetchSuggestions]);
 
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // If suggestions exist, pick the first one?
+      // Or perform a fresh search if no suggestion clicked.
+      // Better: Try to geocode the current query directly.
+      if (query.trim().length > 2) {
+        setSuggestions([]); // Clear UI
+
+        // 1. Check if it matches a pizzeria name exactly or partially
+        const lowerCaseQuery = query.toLowerCase();
+        const localMatch = allPizzerias.filter(p => p.name.toLowerCase().includes(lowerCaseQuery));
+
+        if (localMatch.length > 0) {
+          // If many matches, just show them as list
+          onSearch(localMatch);
+          return;
+        }
+
+        // 2. Fallback to Geocoding
+        try {
+          const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' Hermosillo')}&viewbox=-111.2,29.3,-110.8,28.8&bounded=1&limit=1`;
+          const response = await fetch(nominatimUrl);
+          const data = await response.json();
+
+          if (data && data.length > 0) {
+            const result = data[0];
+            performGeocodeSearch({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+          } else {
+            // 3. Last resort: AI (if enabled) or just no results
+            // For now, no results found toast?
+            onSearch([]);
+          }
+        } catch (e) {
+          console.error("Enter search failed", e);
+          onSearch([]);
+        }
+      }
+    }
+  };
+
   return (
     <div className="relative h-full">
       <div className="relative h-full">
@@ -149,6 +228,7 @@ export default function SmartSearch({ onSearch, allPizzerias, onClear }: SmartSe
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => fetchSuggestions(query)}
+          onKeyDown={handleKeyDown}
         />
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {query && (
