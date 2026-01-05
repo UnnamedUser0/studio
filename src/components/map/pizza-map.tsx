@@ -791,16 +791,10 @@ function PizzaMap({
         duration: 1.5,
       });
     } else if (searchCenter) {
-      // SMART CENTERING FOR SEARCH (Keep Popup Visible)
-      // Similar reasoning as selectedPizzeria: shift map down so center is "above" the visual center
-      // to accommodate the popup located ABOVE the coordinate.
-      const targetLat = searchCenter.lat;
-      const targetLng = searchCenter.lng;
-      const projectPoint = map.project([targetLat, targetLng], 16);
-      const pointTarget = projectPoint.subtract([0, mapCenterOffset]); // Shift up
-      const latlngTarget = map.unproject(pointTarget, 16);
-
-      map.flyTo(latlngTarget, 16, {
+      // CENTER EXACTLY ON SEARCH PIN
+      // User requested independent centering for the pin, centered on the searched place.
+      // We do NOT apply mapCenterOffset here.
+      map.flyTo([searchCenter.lat, searchCenter.lng], 16, {
         animate: true,
         duration: 1.5,
       });
