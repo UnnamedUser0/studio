@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run next:dev\" \"npm run mobile\"",
+    "dev": "concurrently \"npm run next:dev\" \"npm run mobile\" \"node open-browser.js\"",
     "mobile": "npx expo start",
     "next:dev": "next dev --experimental-https",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
