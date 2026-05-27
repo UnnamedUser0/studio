@@ -104,7 +104,7 @@ const AddReview = ({ pizzeriaId, onReviewAdded }: { pizzeriaId: string, onReview
 
 const ReviewCard = ({ review, pizzeriaId, onReviewUpdated }: { review: Review, pizzeriaId: string, onReviewUpdated?: () => void }) => {
     const { data: session } = useSession();
-    const isAdmin = session?.user?.isAdmin;
+    const isAdmin = (session?.user as any)?.isAdmin === true;
     const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState('');
     const { toast } = useToast();
