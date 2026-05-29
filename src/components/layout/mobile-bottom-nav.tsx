@@ -1,16 +1,25 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, HelpCircle, LifeBuoy, Mail } from 'lucide-react';
+import { Home, HelpCircle, LifeBuoy, Mail, Pizza } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function MobileBottomNav() {
     const pathname = usePathname();
+    const [isWelcome, setIsWelcome] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setIsWelcome(window.location.search.includes('welcome=true'));
+        }
+    }, [pathname]);
 
     const navItems = [
         { name: 'Inicio', href: '/', icon: Home },
         { name: 'FAQ', href: '/faq', icon: HelpCircle },
+        { name: 'Bienvenida', href: '/?welcome=true', icon: Pizza },
         { name: 'Ayuda', href: '/help', icon: LifeBuoy },
         { name: 'Contacto', href: '/contact', icon: Mail },
     ];
@@ -20,7 +29,14 @@ export default function MobileBottomNav() {
             <nav className="flex justify-around items-center h-16 px-2">
                 {navItems.map((item) => {
                     const Icon = item.icon;
-                    const isActive = pathname === item.href;
+                    
+                    // Custom active state logic to differentiate / and /?welcome=true
+                    const isActive = item.href === '/?welcome=true'
+                        ? (pathname === '/' && isWelcome)
+                        : item.href === '/'
+                            ? (pathname === '/' && !isWelcome)
+                            : pathname === item.href;
+
                     return (
                         <Link
                             key={item.href}
