@@ -4,6 +4,3 @@
 [build.environment]
   NPM_FLAGS = "--legacy-peer-deps"
   AUTH_TRUST_HOST = "true"
-
-[functions]
-  included_files = ["prisma/dev.db"]

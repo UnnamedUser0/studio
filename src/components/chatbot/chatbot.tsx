@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { PizzaBotIcon } from '../icons/pizza-bot-icon';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
+import { pizzAppChat } from '@/ai/flows/pizzapp-chat-flow';
 
 
 type Message = {
@@ -33,7 +34,7 @@ export default function Chatbot() {
     const currentInput = input;
     setInput('');
 
-    // Local simple bot logic
+    // Local simple bot logic (fallback when GEMINI_API_KEY is not set)
     const getBotResponse = (query: string) => {
       const lower = query.toLowerCase();
       if (lower.includes('hola') || lower.includes('buenos días') || lower.includes('buenas')) {
@@ -58,12 +59,31 @@ export default function Chatbot() {
     };
 
     startTransition(async () => {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      try {
+        // Format conversation history for Genkit flow
+        const formattedHistory = messages.map(msg => ({
+          role: msg.role === 'user' ? 'user' : 'model',
+          content: msg.content.map(c => ({ text: c.text }))
+        }));
 
-      const responseText = getBotResponse(currentInput);
-      const botMessage: Message = { role: 'model', content: [{ text: responseText }] };
-      setMessages(prev => [...prev, botMessage]);
+        const response = await pizzAppChat({
+          history: formattedHistory,
+          message: currentInput
+        });
+
+        // Trigger fallback if Genkit API error occurs
+        if (response.answer.includes('problemas para conectar con mi cerebro digital') || response.answer.includes('API de Google AI no está habilitada')) {
+          throw new Error('AI flow returned connection/key error. Falling back.');
+        }
+
+        const botMessage: Message = { role: 'model', content: [{ text: response.answer }] };
+        setMessages(prev => [...prev, botMessage]);
+      } catch (error) {
+        console.warn("Pizzi AI flow unavailable, using local fallback. Error:", error);
+        const responseText = getBotResponse(currentInput);
+        const botMessage: Message = { role: 'model', content: [{ text: responseText }] };
+        setMessages(prev => [...prev, botMessage]);
+      }
     });
   };
 

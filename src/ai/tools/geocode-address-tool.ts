@@ -19,9 +19,26 @@ export const geocodeAddressTool = ai.defineTool(
     outputSchema: GeocodeAddressOutputSchema,
   },
   async ({ address }) => {
-    // In a real application, you would use a Geocoding API.
-    // We will use the public OpenStreetMap Nominatim API for this prototype.
+    const apiKey = process.env.HERE_API_KEY || process.env.NEXT_PUBLIC_HERE_API_KEY;
     const query = encodeURIComponent(`${address}, Hermosillo, Sonora, Mexico`);
+
+    if (apiKey) {
+      const hereUrl = `https://geocode.search.hereapi.com/v1/geocode?q=${query}&apiKey=${apiKey}`;
+      try {
+        const response = await fetch(hereUrl);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.items && data.items.length > 0) {
+            const { lat, lng } = data.items[0].position;
+            return { lat, lng };
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching from HERE Maps API, falling back to Nominatim:', error);
+      }
+    }
+
+    // Fallback to public OpenStreetMap Nominatim API
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`;
     
     try {
@@ -32,7 +49,6 @@ export const geocodeAddressTool = ai.defineTool(
       });
       if (!response.ok) {
         console.error('Nominatim API error:', response.statusText);
-        // Fallback to default coordinates on API error
         return { lat: 29.07296, lng: -110.95732 };
       }
       
