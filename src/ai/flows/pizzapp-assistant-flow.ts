@@ -110,7 +110,7 @@ export const pizzAppAssistantFlow = ai.defineFlow(
 
         try {
             const result = await ai.generate({
-                model: 'googleai/gemini-2.5-flash',
+                model: 'googleai/gemini-2.0-flash',
                 messages: messages,
             });
 
