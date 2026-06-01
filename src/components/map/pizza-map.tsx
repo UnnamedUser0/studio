@@ -296,7 +296,11 @@ function PizzaMap({
       // ... rest of function remains same
       const latlng = new L.LatLng(latitude, longitude);
       setUserLocation({ lat: latitude, lng: longitude });
-      localStorage.setItem('userLocation', JSON.stringify({ lat: latitude, lng: longitude }));
+      try {
+        localStorage.setItem('userLocation', JSON.stringify({ lat: latitude, lng: longitude }));
+      } catch (e) {
+        console.warn("Storage access failed:", e);
+      }
 
       // Always update markers or create if works
       if (myLocationMarkerRef.current) {
@@ -630,7 +634,12 @@ function PizzaMap({
       L.control.layers(baseMaps, overlayMaps).addTo(map);
 
       // Restore Base Layer
-      const savedBaseLayerName = localStorage.getItem('mapBaseLayer');
+      let savedBaseLayerName = null;
+      try {
+        savedBaseLayerName = localStorage.getItem('mapBaseLayer');
+      } catch (e) {
+        console.warn("Storage access failed:", e);
+      }
       if (savedBaseLayerName && baseMaps[savedBaseLayerName]) {
         baseMaps[savedBaseLayerName].addTo(map);
       } else {
@@ -642,12 +651,21 @@ function PizzaMap({
         // Only save if it's a base layer (not overlay)
         // e.name gives the name in the control
         if (baseMaps[e.name]) {
-          localStorage.setItem('mapBaseLayer', e.name);
+          try {
+            localStorage.setItem('mapBaseLayer', e.name);
+          } catch (err) {
+            console.warn("Storage access failed:", err);
+          }
         }
       });
 
       // Restore user location from storage
-      const savedLoc = localStorage.getItem('userLocation');
+      let savedLoc = null;
+      try {
+        savedLoc = localStorage.getItem('userLocation');
+      } catch (e) {
+        console.warn("Storage access failed:", e);
+      }
       if (savedLoc) {
         try {
           const { lat, lng } = JSON.parse(savedLoc);
@@ -1179,7 +1197,11 @@ function PizzaMap({
                               const newPos = e.target.getLatLng();
                               const newLoc = { lat: newPos.lat, lng: newPos.lng };
                               setUserLocation(newLoc);
-                              localStorage.setItem('userLocation', JSON.stringify(newLoc));
+                              try {
+                                localStorage.setItem('userLocation', JSON.stringify(newLoc));
+                              } catch (err) {
+                                console.warn("Storage access failed:", err);
+                              }
                               onLocateUser(newLoc);
                               toast({ title: 'Ubicación actualizada manualmente' });
                             });
@@ -1327,7 +1349,11 @@ function PizzaMap({
                           const newPos = e.target.getLatLng();
                           const newLoc = { lat: newPos.lat, lng: newPos.lng };
                           setUserLocation(newLoc);
-                          localStorage.setItem('userLocation', JSON.stringify(newLoc));
+                          try {
+                            localStorage.setItem('userLocation', JSON.stringify(newLoc));
+                          } catch (err) {
+                            console.warn("Storage access failed:", err);
+                          }
                           onLocateUser(newLoc);
                           toast({ title: 'Ubicación actualizada manualmente' });
                         });

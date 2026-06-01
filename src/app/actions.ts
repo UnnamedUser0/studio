@@ -295,24 +295,56 @@ export async function updateLayoutSettings(settings: any) {
 }
 
 export async function uploadAvatar(formData: FormData) {
-    const file = formData.get('file') as File
-    if (!file) {
-        throw new Error('No file uploaded')
+    console.log("[Server Action] uploadAvatar called");
+    try {
+        const file = formData.get('file');
+        console.log("[Server Action] file retrieved:", file);
+        
+        if (!file) {
+            throw new Error('No file uploaded or file is empty');
+        }
+
+        // Check if file is a string (e.g. if form submitted empty)
+        if (typeof file === 'string') {
+            throw new Error('Uploaded content is a string, not a file');
+        }
+
+        const fileObj = file as File;
+
+        // Check if it's a file/blob and get its buffer
+        let buffer: Buffer;
+        if (typeof fileObj.arrayBuffer === 'function') {
+            const bytes = await fileObj.arrayBuffer();
+            buffer = Buffer.from(bytes);
+        } else if (typeof (fileObj as any).stream === 'function') {
+            // Fallback for older environments/streams
+            const chunks = [];
+            for await (const chunk of (fileObj as any).stream()) {
+                chunks.push(chunk);
+            }
+            buffer = Buffer.concat(chunks);
+        } else {
+            throw new Error('Unsupported file object type: cannot read bytes');
+        }
+
+        // Ensure uploads directory exists
+        const uploadDir = join(process.cwd(), 'public', 'uploads');
+        await mkdir(uploadDir, { recursive: true });
+
+        const originalName = fileObj.name || 'uploaded_image.png';
+        // Sanitize filename to avoid filesystem issues
+        const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const fileName = `${Date.now()}-${sanitizedName}`;
+        const filePath = join(uploadDir, fileName);
+
+        await writeFile(filePath, buffer);
+        console.log("[Server Action] File written successfully to:", filePath);
+
+        return `/uploads/${fileName}`;
+    } catch (err: any) {
+        console.error("[Server Action] Error in uploadAvatar:", err);
+        throw new Error(err.message || 'Error al subir la imagen en el servidor');
     }
-
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-
-    // Ensure uploads directory exists
-    const uploadDir = join(process.cwd(), 'public', 'uploads')
-    await mkdir(uploadDir, { recursive: true })
-
-    const fileName = `${Date.now()}-${file.name}`
-    const filePath = join(uploadDir, fileName)
-
-    await writeFile(filePath, buffer)
-
-    return `/uploads/${fileName}`
 }
 
 export async function addTestimonial(data: { name: string, email?: string, comment: string, role?: string, avatarUrl?: string }) {

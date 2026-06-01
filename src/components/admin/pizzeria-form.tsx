@@ -91,8 +91,9 @@ export default function PizzeriaForm({ pizzeria, onSuccess }: PizzeriaFormProps)
       formData.append('file', file);
       const url = await uploadAvatar(formData);
       setValue('imageUrl', url, { shouldDirty: true });
-    } catch (error) {
-      toast({ title: 'Error', description: 'Error al subir imagen.', variant: 'destructive' });
+    } catch (error: any) {
+      console.error("Error uploading image in pizzeria-form:", error);
+      toast({ title: 'Error', description: `Error al subir imagen: ${error.message || error}`, variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }

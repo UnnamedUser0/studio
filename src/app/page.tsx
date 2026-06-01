@@ -77,6 +77,7 @@ function HomeContent() {
   });
 
   useEffect(() => {
+    setHasMounted(true);
     import('@/app/actions').then(({ getRankingStyles }) => {
       getRankingStyles().then((styles) => {
         if (styles) {
@@ -94,23 +95,33 @@ function HomeContent() {
 
   useEffect(() => {
     const checkWelcome = () => {
-      const forceWelcome = searchParams.get('welcome') === 'true';
-      const hasSeen = localStorage.getItem('hasSeenWelcome');
+      try {
+        const forceWelcome = searchParams.get('welcome') === 'true';
+        const hasSeen = localStorage.getItem('hasSeenWelcome');
 
-      if (forceWelcome) {
-        setShowWelcome(true);
-      } else if (!hasSeen) {
-        setShowWelcome(true);
-      } else {
+        if (forceWelcome) {
+          setShowWelcome(true);
+        } else if (!hasSeen) {
+          setShowWelcome(true);
+        } else {
+          setShowWelcome(false);
+        }
+      } catch (e) {
+        console.warn("Storage access failed:", e);
         setShowWelcome(false);
+      } finally {
+        setIsCheckingWelcome(false);
       }
-      setIsCheckingWelcome(false);
     };
     checkWelcome();
   }, [searchParams]);
 
   const handleEnterApp = () => {
-    localStorage.setItem('hasSeenWelcome', 'true');
+    try {
+      localStorage.setItem('hasSeenWelcome', 'true');
+    } catch (e) {
+      console.warn("Storage access failed:", e);
+    }
     setShowWelcome(false);
     // Remove query param if present
     if (searchParams.get('welcome') === 'true') {
@@ -287,7 +298,11 @@ function HomeContent() {
 
   const handleCloseWelcome = () => {
     setShowWelcome(false);
-    localStorage.setItem('hasSeenWelcome', 'true');
+    try {
+      localStorage.setItem('hasSeenWelcome', 'true');
+    } catch (e) {
+      console.warn("Storage access failed:", e);
+    }
   };
 
   const [lastSelectedPizzeria, setLastSelectedPizzeria] = useState<Pizzeria | null>(null);

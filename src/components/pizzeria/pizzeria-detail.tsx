@@ -69,6 +69,7 @@ export default function PizzeriaDetail({ pizzeria }: PizzeriaDetailProps) {
                         fill
                         sizes="(max-width: 640px) 90vw, 440px"
                         className="object-cover"
+                        unoptimized={imageUrl.startsWith('/uploads')}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-90" />
                     <div className="absolute bottom-0 w-full p-6 bg-gradient-to-t from-background to-transparent pt-12">

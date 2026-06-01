@@ -29,24 +29,32 @@ function CursorSwitcher() {
 
   useEffect(() => {
     setMounted(true);
-    const isDisabled = localStorage.getItem('custom-cursor-disabled') === 'true';
-    setEnabled(!isDisabled);
-    if (isDisabled) {
-      document.body.classList.add('no-custom-cursor');
-    } else {
-      document.body.classList.remove('no-custom-cursor');
+    try {
+      const isDisabled = localStorage.getItem('custom-cursor-disabled') === 'true';
+      setEnabled(!isDisabled);
+      if (isDisabled) {
+        document.body.classList.add('no-custom-cursor');
+      } else {
+        document.body.classList.remove('no-custom-cursor');
+      }
+    } catch (e) {
+      console.warn("Storage access failed:", e);
     }
   }, []);
 
   const toggleCursor = () => {
     const newState = !enabled;
     setEnabled(newState);
-    if (newState) {
-      document.body.classList.remove('no-custom-cursor');
-      localStorage.removeItem('custom-cursor-disabled');
-    } else {
-      document.body.classList.add('no-custom-cursor');
-      localStorage.setItem('custom-cursor-disabled', 'true');
+    try {
+      if (newState) {
+        document.body.classList.remove('no-custom-cursor');
+        localStorage.removeItem('custom-cursor-disabled');
+      } else {
+        document.body.classList.add('no-custom-cursor');
+        localStorage.setItem('custom-cursor-disabled', 'true');
+      }
+    } catch (e) {
+      console.warn("Storage access failed:", e);
     }
   };
 

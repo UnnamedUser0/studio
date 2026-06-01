@@ -71,9 +71,9 @@ export default function MenuModal({
             formDataUpload.append('file', file);
             const url = await uploadAvatar(formDataUpload);
             setFormData(prev => ({ ...prev, imageUrl: url }));
-        } catch (error) {
+        } catch (error: any) {
             console.error("Upload error:", error);
-            toast({ title: "Error", description: "Error al subir imagen. Ver consola.", variant: "destructive" });
+            toast({ title: "Error", description: `Error al subir imagen: ${error.message || error}`, variant: "destructive" });
         } finally {
             setUploading(false);
         }
