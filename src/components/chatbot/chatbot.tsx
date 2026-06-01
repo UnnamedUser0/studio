@@ -34,28 +34,37 @@ export default function Chatbot() {
     const currentInput = input;
     setInput('');
 
-    // Local simple bot logic (fallback when GEMINI_API_KEY is not set)
+    // Local smart bot logic (fallback when Gemini API Key is not set or quota is exceeded)
     const getBotResponse = (query: string) => {
       const lower = query.toLowerCase();
-      if (lower.includes('hola') || lower.includes('buenos días') || lower.includes('buenas')) {
-        return "¡Hola! Soy Pizzi, tu asistente virtual. ¿En qué puedo ayudarte a encontrar la mejor pizza hoy?";
+      if (lower.includes('hola') || lower.includes('buenos días') || lower.includes('buenas') || lower.includes('saludos')) {
+        return "¡Hola! Soy Pizzi, el asistente experto de PizzApp. Estoy aquí para guiarte a descubrir las mejores pizzerías en Hermosillo. ¿Qué tipo de pizza o local estás buscando hoy?";
       }
-      if (lower.includes('menu') || lower.includes('menú') || lower.includes('carta')) {
-        return "Puedes ver el menú de cada pizzería haciendo clic en el botón 'Ver menú' en las tarjetas de las pizzerías.";
+      if (lower.includes('menu') || lower.includes('menú') || lower.includes('carta') || lower.includes('platillo') || lower.includes('precio')) {
+        return "¡Claro! En PizzApp puedes ver el menú detallado de cada pizzería haciendo clic en el botón 'Ver menú' en la tarjeta de cualquier pizzería. Ahí verás los platillos disponibles, sus ingredientes y sus precios.";
       }
-      if (lower.includes('horario') || lower.includes('abierto')) {
-        return "La mayoría de nuestras pizzerías abren de 11:00 AM a 11:00 PM. Te recomiendo verificar el horario específico en la ficha de cada una.";
+      if (lower.includes('horario') || lower.includes('abierto') || lower.includes('hora') || lower.includes('tiempo')) {
+        return "Los horarios varían por establecimiento, pero la mayoría de las pizzerías en Hermosillo abren entre 11:00 AM y 11:00 PM. Puedes ver el horario exacto de tu local favorito haciendo clic en su ficha en el mapa interactivo.";
       }
-      if (lower.includes('ubicación') || lower.includes('donde') || lower.includes('llegar')) {
-        return "Usa el botón 'Cómo llegar' en la tarjeta de la pizzería que te interese para ver la ruta en el mapa.";
+      if (lower.includes('mapa') || lower.includes('ubicación') || lower.includes('donde') || lower.includes('dirección') || lower.includes('llegar') || lower.includes('cómo llegar')) {
+        return "Contamos con un Mapa Interactivo Leaflet centrado en Hermosillo, Sonora. Puedes buscar pizzerías por nombre o colonia en la barra superior. Si encuentras una que te guste, haz clic en 'Cómo llegar' para trazar la ruta en tiempo real directamente en el mapa.";
       }
-      if (lower.includes('mejor') || lower.includes('ranking') || lower.includes('top')) {
-        return "¡Nuestra sección de Ranking muestra las pizzerías mejor valoradas por la comunidad! Échale un vistazo.";
+      if (lower.includes('mejor') || lower.includes('ranking') || lower.includes('top') || lower.includes('estrella') || lower.includes('calificar') || lower.includes('reseña') || lower.includes('opinión')) {
+        return "¡Nuestra comunidad es súper activa! En la sección de 'Ranking', verás las pizzerías mejor valoradas de Hermosillo. Además, si inicias sesión, puedes calificar de 1 a 5 estrellas y escribir una reseña sobre tu experiencia para ayudar a otros usuarios.";
       }
-      if (lower.includes('gracias')) {
-        return "¡De nada! Disfruta tu pizza 🍕";
+      if (lower.includes('cuenta') || lower.includes('registro') || lower.includes('login') || lower.includes('iniciar sesión') || lower.includes('sesión')) {
+        return "¡Unirte a la comunidad es facilísimo! Para explorar el mapa y los menús no necesitas cuenta. Pero si deseas escribir reseñas, calificar locales o guardar favoritos, puedes registrarte gratis con tu correo o iniciar sesión de forma anónima.";
       }
-      return "Interesante pregunta. Aunque soy un bot sencillo, te sugiero explorar la sección de 'Explorar Pizzerías' para más detalles o contactar directamente al local.";
+      if (lower.includes('contacto') || lower.includes('soporte') || lower.includes('dueño') || lower.includes('negocio') || lower.includes('agregar')) {
+        return "Si deseas agregar tu pizzería a PizzApp, sugerir un cambio o reportar un problema, ve a nuestra sección de 'Contacto'. El equipo de soporte revisará la información de inmediato para actualizar el listado.";
+      }
+      if (lower.includes('imagen') || lower.includes('foto') || lower.includes('subir') || lower.includes('error') || lower.includes('base64') || lower.includes('serverless') || lower.includes('netlify')) {
+        return "Hemos implementado una robusta arquitectura serverless en PizzApp conectada a Neon PostgreSQL. Todas las fotos de pizzerías, menús y avatares se procesan 100% en memoria en formato Base64 de alta velocidad. Esto elimina cualquier error de escritura en producción y mantiene tus imágenes seguras permanentemente en la nube.";
+      }
+      if (lower.includes('gracias') || lower.includes('agradezco') || lower.includes('excelente') || lower.includes('perfecto')) {
+        return "¡Es todo un placer ayudarte! Disfruta la mejor pizza de Hermosillo. Si tienes otra duda sobre PizzApp, aquí estaré. 🍕";
+      }
+      return "Entiendo tu duda sobre PizzApp. Aunque actualmente estoy operando en mi modo de respaldo inteligente por límites de cuota, te comento que PizzApp es una completa guía interactiva 3D de pizzerías en Hermosillo. Te sugiero explorar el mapa de inicio, la sección de Rankings, o la pestaña de Ayuda para más detalles.";
     };
 
     startTransition(async () => {
