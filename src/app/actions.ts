@@ -295,11 +295,9 @@ export async function updateLayoutSettings(settings: any) {
 }
 
 export async function uploadAvatar(formData: FormData) {
-    console.log("[Server Action] uploadAvatar called");
+    console.log("[Server Action] uploadAvatar called (Base64 Mode)");
     try {
         const file = formData.get('file');
-        console.log("[Server Action] file retrieved:", file);
-        
         if (!file) {
             throw new Error('No file uploaded or file is empty');
         }
@@ -327,23 +325,14 @@ export async function uploadAvatar(formData: FormData) {
             throw new Error('Unsupported file object type: cannot read bytes');
         }
 
-        // Ensure uploads directory exists
-        const uploadDir = join(process.cwd(), 'public', 'uploads');
-        await mkdir(uploadDir, { recursive: true });
-
-        const originalName = fileObj.name || 'uploaded_image.png';
-        // Sanitize filename to avoid filesystem issues
-        const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const fileName = `${Date.now()}-${sanitizedName}`;
-        const filePath = join(uploadDir, fileName);
-
-        await writeFile(filePath, buffer);
-        console.log("[Server Action] File written successfully to:", filePath);
-
-        return `/uploads/${fileName}`;
+        const base64 = buffer.toString('base64');
+        const mimeType = fileObj.type || 'image/jpeg';
+        
+        console.log(`[Server Action] File successfully converted to Base64 (mime: ${mimeType}, length: ${base64.length})`);
+        return `data:${mimeType};base64,${base64}`;
     } catch (err: any) {
         console.error("[Server Action] Error in uploadAvatar:", err);
-        throw new Error(err.message || 'Error al subir la imagen en el servidor');
+        throw new Error(err.message || 'Error al procesar la imagen en el servidor');
     }
 }
 

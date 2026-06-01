@@ -245,7 +245,7 @@ export default function PizzeriaReviews({ pizzeria }: { pizzeria: Pizzeria }) {
                         fill
                         sizes="(max-width: 640px) 90vw, 440px"
                         className="object-cover"
-                        unoptimized={imageUrl.startsWith('/uploads')}
+                        unoptimized={imageUrl.startsWith('/uploads') || imageUrl.startsWith('data:')}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 </div>

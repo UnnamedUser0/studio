@@ -117,7 +117,7 @@ export default function PizzeriaCard({
               fill
               sizes={compact ? "100vw" : "112px"}
               className="object-cover"
-              unoptimized={imageUrl.startsWith('/uploads')}
+              unoptimized={imageUrl.startsWith('/uploads') || imageUrl.startsWith('data:')}
             />
           </div>
           <div className={cn("flex-1 min-w-0", compact ? "p-2 w-full" : "p-4")}>
