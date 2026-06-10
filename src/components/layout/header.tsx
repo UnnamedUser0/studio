@@ -246,6 +246,14 @@ export default function Header() {
                         )}
                       </>
                     )}
+                    {!isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/messages">
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          <span>Mis Mensajes</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
                       <SettingsIcon className="mr-2 h-4 w-4" />
                       <span>Configuración</span>

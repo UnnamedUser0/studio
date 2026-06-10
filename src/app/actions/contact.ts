@@ -64,11 +64,14 @@ export async function sendAdminReply(messageId: string, content: string) {
         throw new Error("El mensaje no puede estar vacío")
     }
 
+    // Safely use name or email prefix to avoid exposing email
+    const displayName = admin.name || (admin.email ? admin.email.split('@')[0] : "Administrador")
+
     // 1. Create reply
     const reply = await prisma.contactReply.create({
         data: {
             messageId,
-            senderName: admin.name || admin.email || "Administrador",
+            senderName: displayName,
             senderEmail: admin.email || "",
             content
         }
@@ -107,4 +110,67 @@ export async function deleteContactMessage(messageId: string) {
     })
 
     revalidatePath("/admin/messages")
+}
+
+export async function getUserContactMessages() {
+    const session = await auth()
+    if (!session?.user?.email) {
+        throw new Error("No autenticado: Inicia sesión para ver tus mensajes")
+    }
+
+    return await prisma.contactMessage.findMany({
+        where: {
+            email: session.user.email
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+            replies: {
+                orderBy: { createdAt: 'asc' }
+            }
+        }
+    })
+}
+
+export async function sendUserReply(messageId: string, content: string) {
+    const session = await auth()
+    if (!session?.user?.email) {
+        throw new Error("No autenticado")
+    }
+
+    if (!content.trim()) {
+        throw new Error("El mensaje no puede estar vacío")
+    }
+
+    // Verify ownership of the contact message
+    const message = await prisma.contactMessage.findUnique({
+        where: { id: messageId }
+    })
+
+    if (!message) {
+        throw new Error("Conversación no encontrada")
+    }
+
+    if (message.email.toLowerCase() !== session.user.email.toLowerCase()) {
+        throw new Error("No autorizado para responder a este mensaje")
+    }
+
+    // Create the reply from the user
+    const reply = await prisma.contactReply.create({
+        data: {
+            messageId,
+            senderName: session.user.name || session.user.email.split('@')[0] || "Usuario",
+            senderEmail: session.user.email,
+            content
+        }
+    })
+
+    // Update parent message status back to 'pending' to alert admins
+    await prisma.contactMessage.update({
+        where: { id: messageId },
+        data: { status: "pending" }
+    })
+
+    revalidatePath("/admin/messages")
+    revalidatePath("/messages")
+    return reply
 }
