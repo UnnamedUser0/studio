@@ -294,6 +294,55 @@ export default function Chatbot() {
       }
     }
 
+    // Check if user is asking about the best rated pizzerias
+    const isRatingQuery = [
+      'mejor puntuacion', 'mejor puntuación',
+      'mejor calificacion', 'mejor calificación',
+      'mejor calificada', 'mejor calificado',
+      'mejor valorada', 'mejor valorado',
+      'mas estrellas', 'más estrellas',
+      'puntuacion mas alta', 'puntuación más alta',
+      'mejor pizzeria', 'mejor pizzería',
+      'pizzerias mas valoradas', 'pizzerías más valoradas'
+    ].some(phrase => lower.includes(phrase));
+
+    if (isRatingQuery) {
+      if (!pizzerias || pizzerias.length === 0) {
+        return "🍕 Actualmente no tengo información de calificaciones de pizzerías en la base de datos de PizzApp. Por favor, intenta consultar de nuevo más tarde o revisa el [Mapa de Inicio](/) para ver las pizzerías registradas.";
+      }
+
+      // Sort pizzerias: rating desc, then reviewCount desc
+      const sorted = [...pizzerias].sort((a, b) => {
+        const ratingA = Number(a.rating) || 0;
+        const ratingB = Number(b.rating) || 0;
+        if (ratingB !== ratingA) {
+          return ratingB - ratingA;
+        }
+        const reviewsA = Number(a.reviewCount) || 0;
+        const reviewsB = Number(b.reviewCount) || 0;
+        return reviewsB - reviewsA;
+      });
+
+      const best = sorted[0];
+      const bestRating = Number(best.rating) || 0;
+      const bestStars = '★'.repeat(Math.round(bestRating)) + '☆'.repeat(5 - Math.round(bestRating));
+      
+      let responseText = `La pizzería con la mejor puntuación en PizzApp es **${best.name}** con una calificación de **${bestRating.toFixed(1)} / 5** ${bestStars} (${best.reviewCount || 0} opiniones).\n\n`;
+
+      if (sorted.length > 1) {
+        responseText += `Otras alternativas recomendadas en PizzApp son:\n`;
+        const alternatives = sorted.slice(1, 3); // next 2
+        alternatives.forEach((p) => {
+          const pRating = Number(p.rating) || 0;
+          const pStars = '★'.repeat(Math.round(pRating)) + '☆'.repeat(5 - Math.round(pRating));
+          responseText += `• **${p.name}**: **${pRating.toFixed(1)} / 5** ${pStars} (${p.reviewCount || 0} opiniones) - _${p.address || 'Hermosillo'}_\n`;
+        });
+      }
+
+      responseText += `\n🗺️ Puedes encontrar todas estas pizzerías en el [Mapa de Inicio](/) y trazar tu ruta haciendo clic en **Cómo llegar**. ¡Buen provecho! 🍕`;
+      return responseText;
+    }
+
     // 1. PIZZERIAS MATCHING (Exact, Fuzzy or Partial) - Check first
     let matchedPizzeria = pizzerias.find(p => lower.includes(p.name.toLowerCase()));
     

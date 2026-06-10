@@ -219,3 +219,25 @@ model AboutContent {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
+
+model ContactMessage {
+  id        String         @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String         @default("pending") // "pending" | "in_progress" | "resolved"
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  replies   ContactReply[]
+}
+
+model ContactReply {
+  id         String         @id @default(cuid())
+  messageId  String
+  senderName String
+  senderEmail String
+  content    String
+  createdAt  DateTime       @default(now())
+  message    ContactMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}

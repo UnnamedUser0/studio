@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, MessageSquare } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { User, Pizzeria, Testimonial } from '@/lib/types';
 import PizzeriaTable from '@/components/admin/pizzeria-table';
@@ -33,6 +33,7 @@ const SUPER_ADMIN_EMAIL = "va21070541@bachilleresdesonora.edu.mx";
 
 function AdminDashboard({ permissions, userEmail }: { permissions: string | null, userEmail?: string | null }) {
   const { data: session } = useSession();
+  const router = useRouter();
   const user = session?.user;
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingPizzeria, setEditingPizzeria] = useState<Pizzeria | null>(null);
@@ -177,6 +178,23 @@ function AdminDashboard({ permissions, userEmail }: { permissions: string | null
       </Dialog>
 
       <div className="space-y-8">
+        <Card className="border-primary/20 bg-primary/5 dark:bg-primary/10">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-headline flex items-center gap-2">
+                <MessageSquare className="h-6 w-6 text-primary" />
+                Mensajes de Soporte
+              </CardTitle>
+              <CardDescription>
+                Bandeja de entrada estilo WhatsApp para responder las consultas de los usuarios y gestionar estados en tiempo real.
+              </CardDescription>
+            </div>
+            <Button onClick={() => router.push('/admin/messages')} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              Ver Mensajes
+            </Button>
+          </CardHeader>
+        </Card>
+
         {hasPermission('manage_pizzerias') && (
           <Card>
             <CardHeader>

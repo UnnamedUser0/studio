@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Pizza, LogOut, Shield, Moon, Sun, MousePointer2, MousePointerClick, Settings as SettingsIcon, Skull } from 'lucide-react';
+import { Pizza, LogOut, Shield, Moon, Sun, MousePointer2, MousePointerClick, Settings as SettingsIcon, Skull, MessageSquare } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User } from '@/lib/types';
@@ -206,6 +206,12 @@ export default function Header() {
                           <Link href="/admin">
                             <Shield className="mr-2 h-4 w-4" />
                             <span>Panel de Admin</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/messages">
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            <span>Mensajes de Soporte</span>
                           </Link>
                         </DropdownMenuItem>
                         {user.email === "va21070541@bachilleresdesonora.edu.mx" && (
