@@ -255,6 +255,45 @@ export default function Chatbot() {
   const getBotResponse = async (query: string): Promise<string> => {
     const lower = query.toLowerCase().trim();
 
+    // 0. CONTEXT CHECKING - Identify if the user is answering a previous question from Pizzi
+    const lastModelMessage = messages.slice().reverse().find(m => m.role === 'model');
+    const lastBotText = lastModelMessage ? lastModelMessage.content[0].text.toLowerCase() : '';
+
+    if (lastBotText) {
+      const isAffirmative = ['sí', 'si', 'claro', 'por favor', 'yes', 'va', 'dale'].some(w => {
+        const regex = new RegExp(`\\b${w}\\b`, 'i');
+        return regex.test(lower);
+      });
+      const isNegative = ['no', 'nada', 'ninguna', 'gracias', 'en nada', 'tampoco'].some(w => {
+        const regex = new RegExp(`\\b${w}\\b`, 'i');
+        return regex.test(lower);
+      });
+
+      if (lastBotText.includes('escribe su nombre') || lastBotText.includes('escribe el nombre')) {
+        if (isAffirmative) {
+          return "¡Excelente! Dime el nombre de la pizzería que buscas para darte sus detalles. 🍕";
+        }
+        if (isNegative) {
+          return "Entendido. ¿Hay alguna otra cosa de PizzApp en la que te pueda ayudar hoy? 😊";
+        }
+      }
+
+      if (lastBotText.includes('menú de alguna pizzería aquí mismo')) {
+        if (isAffirmative) {
+          return "¡Perfecto! Escribe el nombre de la pizzería (por ejemplo, *'Mexy'* o *'La Cobacha'*) para mostrarte el menú. 📋";
+        }
+        if (isNegative) {
+          return "Entendido. Recuerda que puedes consultar los menús completos con el botón *'Ver menú'* en la sección de [Explorar Pizzerías](/#explorar) en cualquier momento. 😉";
+        }
+      }
+
+      if (lastBotText.includes('¿cómo puedo ayudarte hoy?') || lastBotText.includes('¿en qué puedo ayudarte?')) {
+        if (isNegative) {
+          return "¡Entendido! Si en otro momento necesitas buscar una pizzería, trazar una ruta GPS o configurar tu perfil, estaré aquí para ayudarte. ¡Disfruta tu día! 🍕";
+        }
+      }
+    }
+
     // 1. PIZZERIAS MATCHING (Exact, Fuzzy or Partial) - Check first
     let matchedPizzeria = pizzerias.find(p => lower.includes(p.name.toLowerCase()));
     
@@ -337,8 +376,8 @@ export default function Chatbot() {
       {
         id: 'greetings',
         keywords: ['hola', 'buenos dias', 'buenos días', 'buenas tardes', 'buenas noches', 'saludos', 'que tal', 'quién eres', 'quien eres', 'ayuda', 'pizzi', 'para que sirve', 'para qué sirve', 'de que trata', 'de qué trata'],
-        response: "¡Hola! 🍕 Qué alegría saludarte. Soy **Pizzi**, tu asistente y guía virtual experto de **PizzApp**.\n\n" +
-                  "Estoy completamente dotado de todo el conocimiento sobre PizzApp para ayudarte de forma súper directa y entusiasta. Puedes consultarme sobre cualquier sección, característica, o detalle técnico del proyecto. Por ejemplo, pregúntame acerca de:\n" +
+        response: "¡Hola! 🍕 Qué alegría saludarte. Soy **Pizzi**, tu asistente y guía virtual en **PizzApp**.\n\n" +
+                  "Te puedo ayudar a encontrar locales de pizza, ver menús, trazar rutas en el mapa y configurar tu perfil o cuenta. ¿De qué te gustaría hablar hoy? Por ejemplo, puedes preguntarme:\n" +
                   "• 👤 **Cuentas y Perfiles**: *'¿Cómo funcionan las cuentas?'* o *'¿Cómo edito mi avatar?'*\n" +
                   "• 💬 **Opiniones y Comentarios**: *'¿Cómo calificar una pizzería?'* o *'¿Qué son los testimonios?'*\n" +
                   "• 🗺️ **Mapa e Interactividad**: *'¿Cómo trazar rutas con el GPS?'* o *'¿Cómo funciona el mapa?'*\n" +
