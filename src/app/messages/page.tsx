@@ -404,8 +404,7 @@ export default function UserMessagesPage() {
                 {/* Replies Thread */}
                 {activeMessage.replies.map((reply) => {
                   const isReplyFromUser = reply.senderEmail.toLowerCase() === activeMessage.email.toLowerCase();
-                  // Strip email from sender name for security (just in case)
-                  const cleanSenderName = reply.senderName.includes('@') ? reply.senderName.split('@')[0] : reply.senderName;
+                  const cleanSenderName = isReplyFromUser ? "Tú" : "Administrador";
 
                   return (
                     <div key={reply.id} className={cn("flex", isReplyFromUser ? "justify-end" : "justify-start")}>

@@ -411,7 +411,9 @@ export default function AdminMessagesPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-sm truncate">{msg.name}</span>
+                      <span className="font-bold text-sm truncate">
+                        {msg.name.includes('@') ? "Usuario" : (msg.name || "Usuario")}
+                      </span>
                       <span className="text-[10px] text-muted-foreground flex-shrink-0">
                         {formatDistanceToNow(msg.createdAt, { addSuffix: true, locale: es })}
                       </span>
@@ -446,11 +448,13 @@ export default function AdminMessagesPage() {
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                   <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold flex-shrink-0">
-                    {activeMessage.name.charAt(0).toUpperCase()}
+                    {(activeMessage.name.includes('@') ? "Usuario" : (activeMessage.name || "Usuario")).charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h2 className="font-bold text-sm md:text-base truncate">{activeMessage.name}</h2>
+                      <h2 className="font-bold text-sm md:text-base truncate">
+                        {activeMessage.name.includes('@') ? "Usuario" : (activeMessage.name || "Usuario")}
+                      </h2>
                       <span className="hidden sm:inline-block">{getStatusBadge(activeMessage.status)}</span>
                     </div>
                     <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
@@ -512,7 +516,7 @@ export default function AdminMessagesPage() {
                   <div className="max-w-[85%] sm:max-w-[70%] bg-background border rounded-2xl rounded-tl-none p-3 shadow-sm space-y-1">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
                       <User className="h-3.5 w-3.5" />
-                      {activeMessage.name}
+                      {activeMessage.name.includes('@') ? "Usuario" : (activeMessage.name || "Usuario")}
                       <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 bg-muted text-muted-foreground border-none">
                         Usuario
                       </Badge>
@@ -544,7 +548,9 @@ export default function AdminMessagesPage() {
                 {/* Replies Thread */}
                 {activeMessage.replies.map((reply) => {
                   const isReplyFromUser = reply.senderEmail.toLowerCase() === activeMessage.email.toLowerCase();
-                  const cleanSenderName = reply.senderName.includes('@') ? reply.senderName.split('@')[0] : reply.senderName;
+                  const cleanSenderName = isReplyFromUser 
+                    ? (reply.senderName.includes('@') ? "Usuario" : (reply.senderName || "Usuario"))
+                    : "Administrador";
                   
                   return (
                     <div key={reply.id} className={cn("flex", isReplyFromUser ? "justify-start" : "justify-end")}>
