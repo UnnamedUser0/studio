@@ -170,29 +170,7 @@ export default function Chatbot() {
   const getBotResponse = async (query: string): Promise<string> => {
     const lower = query.toLowerCase().trim();
 
-    // 1. GREETINGS & INTRO
-    if (
-      lower.includes('hola') || 
-      lower.includes('buenos días') || 
-      lower.includes('buenos dias') || 
-      lower.includes('buenas tardes') || 
-      lower.includes('buenas noches') || 
-      lower.includes('saludos') || 
-      lower.includes('que tal') || 
-      lower.includes('quien eres') || 
-      lower.includes('quién eres')
-    ) {
-      return "¡Hola! 🍕 Soy **Pizzi**, tu compañero experto y guía en **PizzApp**.\n\n" +
-             "¡Estoy aquí para ayudarte a encontrar la pizza perfecta y resolver cualquier duda que tengas de forma rápida y con mucho entusiasmo!\n\n" +
-             "Dime, ¿qué te gustaría hacer hoy? Puedes preguntarme sobre:\n" +
-             "• 🍕 **Recomendaciones**: Prueba escribiendo *'recomienda pizzerías'* o el nombre de alguna en especial.\n" +
-             "• 📋 **Menús y Precios**: Prueba con *'menú de Mexy'* o *'carta de Dominos Pizza'*.\n" +
-             "• 🗺️ **Ubicaciones y Rutas**: Escribe *'dónde está el mapa'* o *'cómo llegar'*.\n" +
-             "• 💬 **Opiniones**: Pregúntame cómo calificar o escribir reseñas.\n\n" +
-             "¡También puedes navegar directamente usando el [Mapa Interactivo (Inicio)](/) o resolver dudas en la sección de [Preguntas Frecuentes](/faq)!";
-    }
-
-    // 2. PIZZERIAS MATCHING (Exact, Fuzzy or Partial)
+    // 1. PIZZERIAS MATCHING (Exact, Fuzzy or Partial) - Check first
     let matchedPizzeria = pizzerias.find(p => lower.includes(p.name.toLowerCase()));
     
     if (!matchedPizzeria) {
@@ -261,98 +239,164 @@ export default function Chatbot() {
              `\n🗺️ Puedes localizar este lugar directamente en el [Mapa Interactivo (Inicio)](/) y presionar el botón **Cómo llegar** para obtener la ruta. ¡También puedes ver qué ofrecen consultando su **menú**!`;
     }
 
-    // 3. PIZZERIAS LIST / RECOMMENDATIONS
-    if (lower.includes('pizzerias') || lower.includes('pizzerías') || lower.includes('cuales hay') || lower.includes('cuales son') || lower.includes('lista') || lower.includes('locales') || lower.includes('recomienda') || lower.includes('sitios') || lower.includes('donde comer') || lower.includes('restaurantes')) {
-      if (pizzerias.length > 0) {
-        const listText = pizzerias.map(p => {
-          const ratingText = p.rating > 0 ? `★ ${p.rating.toFixed(1)}` : 'Sin calificación';
-          return `• 🍕 **${p.name}** - ${p.address || 'Hermosillo'} (${ratingText})`;
-        }).join('\n');
+    // 2. PROJECT KNOWLEDGE BASE (18 structured entries mapped for total project context)
+    const knowledgeBase = [
+      {
+        id: 'greetings',
+        keywords: ['hola', 'buenos dias', 'buenos días', 'buenas tardes', 'buenas noches', 'saludos', 'que tal', 'quien eres', 'quién eres', 'ayudame', 'ayúdame', 'pizzi'],
+        response: "¡Hola! 🍕 Qué alegría saludarte. Soy **Pizzi**, tu asistente y guía oficial en **PizzApp**.\n\n" +
+                  "¡Estoy aquí para ayudarte de forma súper directa y entusiasta a encontrar las mejores pizzas, consultar menús y navegar por la aplicación! Puedes preguntarme lo que quieras, como por ejemplo:\n" +
+                  "• *'¿Qué pizzerías me recomiendas?'*\n" +
+                  "• *'¿Cuál es el menú de Mexy?'*\n" +
+                  "• *'¿Cómo llegar a Roy\\'s Pizza?'*\n\n" +
+                  "¡O explora tú mismo navegando directamente en el [Mapa de Pizzerías](/) o en la sección de [Preguntas Frecuentes](/faq)!"
+      },
+      {
+        id: 'registration',
+        keywords: ['necesito registrarme', 'necesito registrar', 'obligatorio registrarse', 'para que registrarse', 'crear cuenta', 'registro', 'cuenta', 'registrarse', 'login', 'iniciar sesion', 'iniciar sesión', 'sesion', 'sesión'],
+        response: "¡No es obligatorio registrarse! Puedes explorar el [Mapa Interactivo (Inicio)](/) de pizzerías, ver sus menús y leer las opiniones de la comunidad de forma totalmente libre como invitado.\n\n" +
+                  "Sin embargo, si deseas **guardar tus pizzerías favoritas**, **calificar locales con estrellas** o **escribir reseñas**, sí necesitarás ingresar con una cuenta. ¡Puedes hacerlo en 10 segundos con tu correo electrónico o pulsando **Inicio Anónimo** en la página de [Iniciar Sesión](/login)!"
+      },
+      {
+        id: 'contact',
+        keywords: ['contacto', 'contactarlos', 'contactar', 'correo', 'email', 'sugerir pizzería', 'sugerir pizzerias', 'sugerir', 'reportar', 'mensaje', 'formulario', 'telefono soporte', 'teléfono soporte', 'ayuda soporte'],
+        response: "¡Nos encantaría escucharte! Si tienes dudas, sugerencias de nuevos locales o deseas reportar información incorrecta, ve directamente a nuestra página de [Contacto](/contact).\n\n" +
+                  "Allí encontrarás un sencillo formulario donde solo debes ingresar tu nombre, correo, asunto y mensaje, ¡y nuestro equipo te responderá a la brevedad! ✉️"
+      },
+      {
+        id: 'pizzerias_list',
+        keywords: ['pizzerias', 'pizzerías', 'locales', 'lista', 'sitios', 'restaurantes', 'donde comer', 'dónde comer', 'cuales hay', 'cuales son', 'recomienda pizzerias', 'recomienda'],
+        response: pizzerias.length > 0 
+          ? `¡Por supuesto! Aquí tienes las opciones disponibles en PizzApp:\n\n` +
+            pizzerias.map(p => {
+              const ratingText = p.rating > 0 ? `★ ${p.rating.toFixed(1)}` : 'Sin calificación';
+              return `• 🍕 **${p.name}** - ${p.address || 'Hermosillo'} (${ratingText})`;
+            }).join('\n') + 
+            `\n\n¿Quieres conocer el menú, dirección o detalles de alguna de ellas? ¡Escribe su nombre!`
+          : "¡En Hermosillo tenemos excelentes opciones! Aquí tienes las favoritas de la comunidad:\n\n" +
+            "• 🍕 **Roy's Pizza** (San Benito) - Increíble sabor artesanal local.\n" +
+            "• 🍕 **Pizzería La Cobacha** (Las Palmas) - Excelente ambiente rústico y a la leña.\n" +
+            "• 🍕 **La Nona Pizza & Pasta** (Santa Fe) - El sabor italiano tradicional más puro.\n" +
+            "• 🍕 **Sargento Pimienta** (Valle Verde) - Una de las preferidas de la comunidad.\n" +
+            "• 🍕 **Boston's Pizza** (Prados del Centenario) - Familiar, con menús súper variados.\n" +
+            "• 🍕 **Papa John's** (Colosio) e **Yarda's Pizza** (La Encantada) - Sabor e ingredientes de calidad.\n" +
+            "• 🍕 **Little Caesars** y **Domino's Pizza** (Blvd. Solidaridad) - Calientes y listas en minutos.\n\n" +
+            "¿Quieres conocer la dirección o detalles de alguna de ellas en específico? ¡Dime su nombre!"
+      },
+      {
+        id: 'menu_list',
+        keywords: ['menu', 'menú', 'carta', 'platillos', 'venden', 'precio', 'precios', 'comer', 'productos', 'bebida', 'bebidas'],
+        response: "¡Claro que sí! Para ver el menú y los precios de cualquier pizzería de forma interactiva, simplemente haz clic en el botón **Ver menú** en su tarjeta correspondiente dentro de la sección de [Explorar Pizzerías](/#explorar).\n\n" +
+                  "Si quieres que te muestre los precios de alguna pizzería aquí mismo, dime su nombre (por ejemplo: *'menú de Mexy'* o *'carta de Domino\\'s Pizza'*)."
+      },
+      {
+        id: 'map_gps',
+        keywords: ['mapa', 'gps', 'ubicacion', 'ubicación', 'como llegar', 'cómo llegar', 'leaflet', 'ruta', 'coordenadas', 'dms', 'decimales', 'dirección', 'direccion', 'llegar'],
+        response: "🗺️ ¡Nuestro **Mapa Interactivo** te guiará sin perderte!\n\n" +
+                  "Está ubicado al inicio de la página de [Inicio (PizzApp)](/). Funciona de la siguiente manera:\n" +
+                  "• **Marcadores GPS**: Muestran la ubicación exacta de cada pizzería en Hermosillo.\n" +
+                  "• **Botón Cómo Llegar**: Al seleccionar cualquier pizzería, presiona el botón *Cómo llegar* y el mapa trazará una línea de ruta dinámica y óptima en tiempo real desde tu ubicación actual.\n" +
+                  "• **Barra de Búsqueda**: Te permite buscar por nombre, dirección o colonia de forma inteligente."
+      },
+      {
+        id: 'reviews',
+        keywords: ['reseña', 'reseñas', 'comentario', 'comentarios', 'estrella', 'estrellas', 'calificar', 'valorar', 'opinar', 'opinion', 'opinión', 'opiniones'],
+        response: "⭐ ¡Queremos conocer tu experiencia! Para calificar una pizzería con estrellas (del 1 al 5) y dejar tus comentarios, ve a la sección de [Explorar Pizzerías](/#explorar), selecciona el local y haz clic en **Calificar**.\n\n" +
+                  "Si deseas opinar en general sobre el diseño o funcionamiento de PizzApp, puedes hacerlo en la [Sección de Testimonios](/#testimonials) haciendo clic en *Deja tu propia opinión*. Recuerda que debes [Iniciar Sesión](/login) para poder publicar."
+      },
+      {
+        id: 'commissions',
+        keywords: ['comision', 'comisión', 'comisiones', 'cobran', 'pedido', 'pedidos', 'delivery', 'comida a domicilio', 'costo', 'gratis', 'comprar', 'venta'],
+        response: "❌ **¡PizzApp no cobra ninguna comisión ni procesa pedidos!**\n\n" +
+                  "Nuestra aplicación es una guía 100% gratuita y comunitaria. Te conectamos directamente con los teléfonos, redes sociales y ubicaciones de los locales para que ordenes con ellos sin intermediarios ni costos extra."
+      },
+      {
+        id: 'faq_page',
+        keywords: ['faq', 'preguntas', 'pregunta', 'dudas', 'preguntas frecuentes'],
+        response: "¡Tenemos una sección completa dedicada a responder tus dudas al instante! Visita nuestra página de [Preguntas Frecuentes](/faq), donde organizamos por categorías las preguntas más comunes sobre el uso de la aplicación, mapa, datos y soporte."
+      },
+      {
+        id: 'help_center',
+        keywords: ['ayuda', 'soporte', 'centro de ayuda', 'recursos', 'documentacion', 'documentación', 'manual'],
+        response: "¡Claro! En nuestro [Centro de Ayuda](/help) encontrarás tarjetas informativas que te dirigen a [Preguntas Frecuentes](/faq), la página de [Contacto](/contact) y recursos técnicos adicionales como la documentación de la API de OpenStreetMap y Leaflet."
+      },
+      {
+        id: 'privacy',
+        keywords: ['privacidad', 'datos', 'seguridad', 'correo', 'contraseña', 'guardan', 'comparten'],
+        response: "🔒 En PizzApp nos tomamos muy en serio tu privacidad. Solo solicitamos tu correo para la autenticación y control de reseñas. No compartimos ningún dato personal con terceros. Puedes leer más detalles en nuestra [Política de Privacidad](/privacy)."
+      },
+      {
+        id: 'terms',
+        keywords: ['terminos', 'términos', 'condiciones', 'reglas', 'politicas', 'políticas', 'uso'],
+        response: "📜 El uso de la plataforma está regido por nuestras pautas de convivencia comunitaria. No se permiten comentarios ofensivos o falsos. Puedes leer los detalles completos en nuestros [Términos de Uso](/terms)."
+      },
+      {
+        id: 'theme_mode',
+        keywords: ['oscuro', 'claro', 'tema', 'color', 'colores', 'modo oscuro', 'modo claro', 'pantalla', 'fondo'],
+        response: "🌓 **¡PizzApp cuenta con Modo Oscuro y Claro!**\n\n" +
+                  "Para cambiar el tema visual de la aplicación, simplemente haz clic en el icono de Sol/Luna que se encuentra en la esquina superior derecha del menú de navegación."
+      },
+      {
+        id: 'custom_cursor',
+        keywords: ['cursor', 'puntero', 'raton', 'ratón', 'personalizado', 'icono mouse', 'mouse'],
+        response: "🖱️ **¡Tenemos un puntero de pizza personalizado!**\n\n" +
+                  "Si te gusta o prefieres el cursor clásico de tu navegador, puedes activarlo o desactivarlo haciendo clic en el icono del puntero que se encuentra en el menú superior de navegación."
+      },
+      {
+        id: 'admin_tools',
+        keywords: ['admin', 'administrador', 'panel de admin', 'ranking styler', 'styler', 'layout', 'grid', 'stack', 'otorgamiento', 'permisos', 'gestionar pizzerias', 'usuarios online', 'online', 'ranking', 'podio'],
+        response: "🛠️ ¡El panel de administración te permite gestionar todo el contenido en caliente!\n\n" +
+                  "Si eres administrador, puedes iniciar sesión e ir al [Panel de Administración](/admin) para registrar pizzerías y menús. También puedes usar el *Ranking Styler* en el [Ranking de Pizzerías](/#ranking) para ajustar la escala de las tarjetas en tiempo real, u otorgar permisos en la página de otorgamiento."
+      },
+      {
+        id: 'image_upload',
+        keywords: ['imagen', 'foto', 'subir', 'error', 'base64', 'serverless', 'netlify', 'cargar', 'archivo'],
+        response: "📷 ¡Nuestra subida de imágenes es tolerante a fallos serverless!\n\n" +
+                  "Procesamos todas las imágenes en memoria RAM transformándolas en formato **Base64** para guardarlas de manera permanente en la base de datos cloud de Neon PostgreSQL, evitando problemas de permisos en Netlify. Si eres admin, puedes subirlas en el [Panel de Administración](/admin)."
+      },
+      {
+        id: 'info_source',
+        keywords: ['de donde viene', 'de dónde viene', 'de donde sacan', 'de dónde sacan', 'proviene la informacion', 'proviene la información', 'fuente de datos', 'api overpass', 'osm', 'openstreetmap', 'osm', 'datos'],
+        response: "¡Excelente pregunta! 🗺️ La información de las pizzerías es recopilada por nuestro equipo mediante herramientas colaborativas como **OpenStreetMap** (utilizando la API Overpass) y validada constantemente por la comunidad de PizzApp.\n\n" +
+                  "Además, los dueños de los locales pueden sugerir cambios o añadir información en la página de [Contacto](/contact). Puedes leer más al respecto en el [Centro de Ayuda](/help)!"
+      },
+      {
+        id: 'about_pizzapp',
+        keywords: ['nosotros', 'mision', 'misión', 'pizzapp', 'creadores', 'de que trata', 'proyecto', 'app', 'aplicacion', 'aplicación'],
+        response: "🍕 **¡PizzApp es la guía definitiva para los amantes de la pizza en Hermosillo!**\n\n" +
+                  "Nació del deseo de conectar a la comunidad con los mejores locales tradicionales y artesanales, apoyando al comercio local y facilitando que encuentres tu rebanada ideal. ¡Conóncenos más en nuestra página de [Inicio (PizzApp)](/)!"
+      }
+    ];
 
-        return `¡Claro que sí! Aquí tienes las opciones disponibles en PizzApp:\n\n` +
-               listText + 
-               `\n\n¿Quieres que te muestre el menú de alguna de ellas o cómo llegar? ¡Escribe su nombre!`;
-      } else {
-        return "¡Hermosillo tiene opciones increíbles para ti! Aquí tienes las favoritas de la comunidad:\n\n" +
-               "• 🍕 **Roy's Pizza** (San Benito) - Increíble sabor artesanal local.\n" +
-               "• 🍕 **Pizzería La Cobacha** (Las Palmas) - Excelente ambiente rústico a la leña.\n" +
-               "• 🍕 **La Nona Pizza & Pasta** (Santa Fe) - El sabor italiano tradicional más puro.\n" +
-               "• 🍕 **Sargento Pimienta** (Valle Verde) - Una de las preferidas de la comunidad.\n" +
-               "• 🍕 **Boston's Pizza** (Prados del Centenario) - Familiar, con menús súper variados.\n" +
-               "• 🍕 **Papa John's** (Colosio) e **Yarda's Pizza** (La Encantada) - Calidad y gran sabor.\n" +
-               "• 🍕 **Little Caesars** y **Domino's Pizza** (Solidaridad) - Rápidas y calientes.\n\n" +
-               "¿Te gustaría ver la ubicación o menú de alguna? ¡Dime cuál te llama la atención!";
+    // Find the best matching knowledge base entry based on keyword scoring
+    let bestMatch: { id: string; score: number; response: string } | null = null;
+
+    for (const entry of knowledgeBase) {
+      let score = 0;
+      for (const kw of entry.keywords) {
+        if (lower.includes(kw)) {
+          // Add score weighted by keyword length to prefer specific matches
+          score += kw.length;
+        }
+      }
+      if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+        bestMatch = { id: entry.id, score, response: entry.response };
       }
     }
 
-    // 4. MAP & GPS DIRECTIONS (LEAFLET)
-    if (lower.includes('mapa') || lower.includes('ubicación') || lower.includes('ubicacion') || lower.includes('donde') || lower.includes('dirección') || lower.includes('direccion') || lower.includes('llegar') || lower.includes('cómo llegar') || lower.includes('como llegar') || lower.includes('leaflet') || lower.includes('gps') || lower.includes('coordenadas')) {
-      return "🗺️ **¡El Mapa Interactivo es genial!**\n\n" +
-             "Está ubicado en la parte superior de nuestra página de [Inicio](/). Cuenta con:\n" +
-             "• **Localización GPS**: Muestra todos los negocios exactos en la ciudad.\n" +
-             "• **Ruta Dinámica**: Haz clic en la tarjeta de cualquier pizzería y presiona el botón **Cómo llegar** para que el mapa trace la mejor ruta desde tu ubicación actual.\n" +
-             "• **Explorador**: Si prefieres un listado organizado por cercanía y filtros, deslízate hasta la sección de [Explorar Pizzerías](/#explorar).";
+    if (bestMatch && bestMatch.score > 2) {
+      return bestMatch.response;
     }
 
-    // 5. REVIEWS & RATINGS (STARS)
-    if (lower.includes('reseña') || lower.includes('reseñas') || lower.includes('opinion') || lower.includes('opinión') || lower.includes('opiniones') || lower.includes('estrella') || lower.includes('estrellas') || lower.includes('calificar') || lower.includes('comentario') || lower.includes('valorar')) {
-      return "⭐ **¡Tu opinión vale muchísimo para la comunidad!**\n\n" +
-             "• **Reseñas de Pizzerías**: Ve a la sección de [Explorar Pizzerías](/#explorar), selecciona un local y pulsa el botón **Calificar**. Podrás calificar con estrellas y escribir un comentario.\n" +
-             "• **Opinión de la App**: Si quieres dejar un comentario general sobre PizzApp, ve a la sección de [Testimonios](/#testimonials) y haz clic en *Deja tu propia opinión*.\n\n" +
-             "*(Nota: Necesitas [Iniciar Sesión](/login) para poder publicar valoraciones y evitar spam)*";
-    }
-
-    // 6. ACCOUNTS & SESSIONS
-    if (lower.includes('cuenta') || lower.includes('registro') || lower.includes('login') || lower.includes('iniciar sesión') || lower.includes('sesión') || lower.includes('anónimo') || lower.includes('anonimo') || lower.includes('password') || lower.includes('contraseña')) {
-      return "🔑 **¡Unirse a PizzApp es muy fácil!**\n\n" +
-             "Puedes ingresar a la página de [Iniciar Sesión](/login) para registrarte o entrar. Ofrecemos:\n" +
-             "• **Registro Clásico**: Crea tu cuenta con tu correo electrónico y contraseña.\n" +
-             "• **Inicio Anónimo**: Entra al instante sin correos ni contraseñas para guardar tus pizzerías favoritas y probar la app de inmediato.\n\n" +
-             "¡Una vez dentro, podrás valorar locales y dejar reseñas sobre tu experiencia!";
-    }
-
-    // 7. LAYOUT STYLER & ADMIN TOOLS
-    if (
-      lower.includes('admin') || 
-      lower.includes('administrador') || 
-      lower.includes('gestionar') || 
-      lower.includes('styler') || 
-      lower.includes('layout') || 
-      lower.includes('ranking') || 
-      lower.includes('estilo') || 
-      lower.includes('diseño') ||
-      lower.includes('diseno')
-    ) {
-      return "🛠️ **¡Herramientas de Administración Visual!**\n\n" +
-             "Si tienes permisos de administrador, al iniciar sesión verás accesos especiales:\n" +
-             "• **Panel de Admin**: Entra al [Panel de Administración](/admin) para registrar nuevos locales, editar coordenadas, números de teléfono o subir imágenes.\n" +
-             "• **Ranking**: Personaliza el podio de las pizzerías más populares en la sección de [Ranking de Pizzerías](/#ranking).\n" +
-             "• **Styler**: Modifica en caliente la escala de tarjetas y el diseño visual de la interfaz.";
-    }
-
-    // 8. FAQ & SUPPORT
-    if (lower.includes('ayuda') || lower.includes('soporte') || lower.includes('contacto') || lower.includes('sugerir') || lower.includes('reportar') || lower.includes('faq')) {
-      return "✉️ **¿Necesitas ayuda o quieres sugerir una pizzería?**\n\n" +
-             "¡Estamos listos para escucharte! Puedes utilizar las siguientes vías:\n" +
-             "• **Formulario de Contacto**: Escríbenos en la página de [Contacto](/contact) para reportar datos erróneos o sugerir nuevos locales.\n" +
-             "• **Dudas comunes**: Revisa nuestra lista de respuestas en la página de [Preguntas Frecuentes](/faq).\n" +
-             "• **Centro de Ayuda**: Encuentra documentación detallada en el [Centro de Ayuda](/help).";
-    }
-
-    // 9. GRATITUDE
-    if (lower.includes('gracias') || lower.includes('agradezco') || lower.includes('excelente') || lower.includes('perfecto') || lower.includes('chido') || lower.includes('bueno') || lower.includes('super') || lower.includes('genial') || lower.includes('chilo') || lower.includes('chilo')) {
-      return "¡De nada! 😄 Es un absoluto placer ayudarte a encontrar la mejor pizza. ¡Disfruta tu comida y recuerda que estoy aquí siempre para orientarte! 🍕✨";
-    }
-
-    // 10. GENERAL DETAILED FALLBACK
+    // 3. GENERAL DETAILED FALLBACK
     return "🍕 **¡Hola! Soy Pizzi, tu asistente virtual de PizzApp.**\n\n" +
-           "Estoy aquí para guiarte en tu búsqueda de pizzas en Hermosillo. Pregúntame sobre:\n\n" +
-           "1. 🍕 **Pizzerías**: Encuentra locales recomendados (ej. *'Mexy'*, *'La Cobacha'*, *'Roy's'*).\n" +
-           "2. 📋 **Menús**: Consulta platillos y precios (ej. *'menú de Mexy'*).\n" +
-           "3. 🗺️ **Mapa y GPS**: Descubre cómo trazar tu ruta en el [Mapa Interactivo (Inicio)](/).\n" +
-           "4. ⭐ **Opiniones**: Aprende a calificar en la sección de [Explorar Pizzerías](/#explorar).\n" +
-           "5. 🔑 **Cuentas**: Inicia sesión o regístrate en [Iniciar Sesión](/login).\n" +
-           "6. ✉️ **Contacto**: Sugiere locales o pide soporte en la página de [Contacto](/contact).";
+           "No encontré una respuesta exacta para esa pregunta, pero estoy súper entusiasmado de ayudarte con cualquier duda sobre la aplicación. ¡Pregúntame directamente sobre:\n\n" +
+           "• 🍕 **Nombres de pizzerías** (ej. *'Mexy'*, *'La Cobacha'*, *'Roy\\'s'*).\n" +
+           "• 📋 **Ver sus menús** (ej. *'menú de Mexy'*).\n" +
+           "• 🗺️ Cómo usar el [Mapa Interactivo (Inicio)](/) o trazar rutas con *'Cómo llegar'*.\n" +
+           "• ⭐ Cómo publicar [Testimonios](/#testimonials) o calificar en [Explorar Pizzerías](/#explorar).\n" +
+           "• 🔑 Cómo registrarse o iniciar sesión en [Iniciar Sesión](/login).\n" +
+           "• ✉️ Cómo sugerir locales o pedir ayuda en la página de [Contacto](/contact).";
   };
 
   const handleSendMessage = async () => {
