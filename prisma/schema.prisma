@@ -226,6 +226,7 @@ model ContactMessage {
   email     String
   subject   String
   message   String
+  image     String?        // Base64 image
   status    String         @default("pending") // "pending" | "in_progress" | "resolved"
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
@@ -233,11 +234,12 @@ model ContactMessage {
 }
 
 model ContactReply {
-  id         String         @id @default(cuid())
-  messageId  String
-  senderName String
+  id          String         @id @default(cuid())
+  messageId   String
+  senderName  String
   senderEmail String
-  content    String
-  createdAt  DateTime       @default(now())
-  message    ContactMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  content     String
+  image       String?        // Base64 image
+  createdAt   DateTime       @default(now())
+  message     ContactMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
 }

@@ -28,7 +28,7 @@ async function verifyAdmin() {
     return user
 }
 
-export async function sendContactMessage(data: { name: string, email: string, subject: string, message: string }) {
+export async function sendContactMessage(data: { name: string, email: string, subject: string, message: string, image?: string }) {
     if (!data.name || !data.email || !data.subject || !data.message) {
         throw new Error("Todos los campos son obligatorios")
     }
@@ -39,6 +39,7 @@ export async function sendContactMessage(data: { name: string, email: string, su
             email: data.email,
             subject: data.subject,
             message: data.message,
+            image: data.image || null,
             status: "pending"
         }
     })
@@ -57,23 +58,21 @@ export async function getContactMessages() {
     })
 }
 
-export async function sendAdminReply(messageId: string, content: string) {
+export async function sendAdminReply(messageId: string, content: string, image?: string) {
     const admin = await verifyAdmin()
 
-    if (!content.trim()) {
-        throw new Error("El mensaje no puede estar vacío")
+    if (!content.trim() && !image) {
+        throw new Error("El mensaje o la imagen no pueden estar vacíos")
     }
 
-    // Safely use name or email prefix to avoid exposing email
-    const displayName = admin.name || (admin.email ? admin.email.split('@')[0] : "Administrador")
-
-    // 1. Create reply
+    // 1. Create reply - Admins always display exactly "Administrador" in name
     const reply = await prisma.contactReply.create({
         data: {
             messageId,
-            senderName: displayName,
+            senderName: "Administrador",
             senderEmail: admin.email || "",
-            content
+            content,
+            image: image || null
         }
     })
 
@@ -131,14 +130,14 @@ export async function getUserContactMessages() {
     })
 }
 
-export async function sendUserReply(messageId: string, content: string) {
+export async function sendUserReply(messageId: string, content: string, image?: string) {
     const session = await auth()
     if (!session?.user?.email) {
         throw new Error("No autenticado")
     }
 
-    if (!content.trim()) {
-        throw new Error("El mensaje no puede estar vacío")
+    if (!content.trim() && !image) {
+        throw new Error("El mensaje o la imagen no pueden estar vacíos")
     }
 
     // Verify ownership of the contact message
@@ -154,13 +153,16 @@ export async function sendUserReply(messageId: string, content: string) {
         throw new Error("No autorizado para responder a este mensaje")
     }
 
-    // Create the reply from the user
+    // Create the reply from the user - Name from config or fallback to "Usuario"
+    const displayName = session.user.name || "Usuario"
+
     const reply = await prisma.contactReply.create({
         data: {
             messageId,
-            senderName: session.user.name || session.user.email.split('@')[0] || "Usuario",
+            senderName: displayName,
             senderEmail: session.user.email,
-            content
+            content,
+            image: image || null
         }
     })
 

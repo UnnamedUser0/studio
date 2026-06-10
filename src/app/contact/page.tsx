@@ -19,12 +19,32 @@ const Footer = dynamic(() => import('@/components/layout/footer'), {
 export default function ContactPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
     message: '',
   });
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Archivo demasiado grande",
+          description: "La imagen no debe superar los 5MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,13 +59,21 @@ export default function ContactPage() {
 
     setLoading(true);
     try {
-      await sendContactMessage(formData);
+      await sendContactMessage({
+        ...formData,
+        image: image || undefined
+      });
       toast({
         title: "¡Mensaje Enviado! 🎉",
         description: "Tu consulta de soporte ha sido registrada. Te responderemos a la brevedad.",
         className: "bg-green-500 text-white border-none",
       });
       setFormData({ name: '', email: '', subject: '', message: '' });
+      setImage(null);
+      
+      // Reset file input if present
+      const fileInput = document.getElementById('image') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
     } catch (err: any) {
       console.error(err);
       toast({
@@ -113,6 +141,38 @@ export default function ContactPage() {
                   onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
                   disabled={loading}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="image">Adjuntar Imagen (Opcional)</Label>
+                <div className="flex items-center gap-4">
+                  <Input 
+                    id="image" 
+                    type="file" 
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    disabled={loading}
+                    className="cursor-pointer flex-1"
+                  />
+                  {image && (
+                    <Button 
+                      type="button" 
+                      variant="destructive" 
+                      onClick={() => {
+                        setImage(null);
+                        const fileInput = document.getElementById('image') as HTMLInputElement;
+                        if (fileInput) fileInput.value = '';
+                      }}
+                      disabled={loading}
+                    >
+                      Quitar
+                    </Button>
+                  )}
+                </div>
+                {image && (
+                  <div className="mt-2 relative w-32 h-32 border rounded overflow-hidden">
+                    <img src={image} alt="Vista previa" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
               <div className="text-center">
                 <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={loading}>

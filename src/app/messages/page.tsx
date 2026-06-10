@@ -24,7 +24,8 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Check, 
-  ArrowLeft 
+  ArrowLeft,
+  Paperclip
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -36,6 +37,7 @@ interface Reply {
   senderName: string;
   senderEmail: string;
   content: string;
+  image?: string | null;
   createdAt: Date;
 }
 
@@ -45,6 +47,7 @@ interface ContactMessage {
   email: string;
   subject: string;
   message: string;
+  image?: string | null;
   status: string; // 'pending' | 'in_progress' | 'resolved'
   createdAt: Date;
   updatedAt: Date;
@@ -66,6 +69,7 @@ export default function UserMessagesPage() {
   
   // Reply input
   const [replyText, setReplyText] = useState('');
+  const [replyImage, setReplyImage] = useState<string | null>(null);
   const [isSendingReply, setIsSendingReply] = useState(false);
   
   // For mobile view responsiveness
@@ -130,15 +134,41 @@ export default function UserMessagesPage() {
 
   const activeMessage = messages.find(m => m.id === selectedMessageId);
 
+  const handleReplyImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Archivo demasiado grande",
+          description: "La imagen no debe superar los 5MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReplyImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // 3. Send Reply Handler
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedMessageId || !replyText.trim() || isSendingReply) return;
+    if (!selectedMessageId || isSendingReply) return;
+    if (!replyText.trim() && !replyImage) return;
 
     setIsSendingReply(true);
     try {
-      await sendUserReply(selectedMessageId, replyText);
+      await sendUserReply(selectedMessageId, replyText, replyImage || undefined);
       setReplyText('');
+      setReplyImage(null);
+      
+      // Reset attachment input if present
+      const fileInput = document.getElementById('reply-image') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+
       toast({
         title: "Mensaje enviado",
         description: "Tu respuesta ha sido enviada correctamente al equipo de soporte.",
@@ -350,6 +380,16 @@ export default function UserMessagesPage() {
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">
                       {activeMessage.message}
                     </p>
+                    {activeMessage.image && (
+                      <div className="mt-2 rounded-lg overflow-hidden border border-white/20 max-w-xs cursor-zoom-in">
+                        <img 
+                          src={activeMessage.image} 
+                          alt="Adjunto" 
+                          className="w-full h-auto object-cover max-h-60 hover:opacity-90 transition-opacity" 
+                          onClick={() => window.open(activeMessage.image!, '_blank')}
+                        />
+                      </div>
+                    )}
                     <div className="text-[10px] text-primary-foreground/70 text-right">
                       {new Date(activeMessage.createdAt).toLocaleString('es-ES', { 
                         hour: '2-digit', 
@@ -389,6 +429,16 @@ export default function UserMessagesPage() {
                         <p className="text-sm whitespace-pre-wrap leading-relaxed">
                           {reply.content}
                         </p>
+                        {reply.image && (
+                          <div className="mt-2 rounded-lg overflow-hidden border border-muted max-w-xs cursor-zoom-in">
+                            <img 
+                              src={reply.image} 
+                              alt="Adjunto" 
+                              className="w-full h-auto object-cover max-h-60 hover:opacity-90 transition-opacity" 
+                              onClick={() => window.open(reply.image!, '_blank')}
+                            />
+                          </div>
+                        )}
                         <div className={cn(
                           "text-[10px] text-right flex items-center justify-end gap-1",
                           isReplyFromUser ? "text-primary-foreground/75" : "text-muted-foreground"
@@ -410,9 +460,9 @@ export default function UserMessagesPage() {
               </div>
 
               {/* Chat Input Footer */}
-              <div className="p-4 border-t bg-background">
+              <div className="p-4 border-t bg-background flex flex-col gap-2">
                 {activeMessage.status === 'resolved' && (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5 mb-3 flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5 flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
                     <AlertCircle className="h-4 w-4 flex-shrink-0" />
                     <p>
                       Esta conversación ha sido marcada como <strong>Resuelta</strong> por soporte. Responder volverá a abrir el chat.
@@ -420,7 +470,44 @@ export default function UserMessagesPage() {
                   </div>
                 )}
                 
+                {/* Image Preview Container */}
+                {replyImage && (
+                  <div className="relative w-24 h-24 border rounded overflow-hidden shadow bg-background group">
+                    <img src={replyImage} alt="Vista previa" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyImage(null);
+                        const fileInput = document.getElementById('reply-image') as HTMLInputElement;
+                        if (fileInput) fileInput.value = '';
+                      }}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <span className="text-xs font-bold">Quitar</span>
+                    </button>
+                  </div>
+                )}
+                
                 <form onSubmit={handleSendReply} className="flex items-end gap-2">
+                  <input
+                    type="file"
+                    id="reply-image"
+                    accept="image/*"
+                    onChange={handleReplyImageChange}
+                    className="hidden"
+                    disabled={isSendingReply}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 text-muted-foreground hover:text-primary"
+                    onClick={() => document.getElementById('reply-image')?.click()}
+                    disabled={isSendingReply}
+                    title="Adjuntar Imagen"
+                  >
+                    <Paperclip className="h-5 w-5" />
+                  </Button>
                   <div className="flex-1">
                     <Textarea
                       placeholder="Escribe un mensaje para soporte..."
@@ -441,7 +528,7 @@ export default function UserMessagesPage() {
                     type="submit" 
                     size="icon" 
                     className="h-10 w-10 flex-shrink-0 bg-primary hover:bg-primary/95 text-primary-foreground"
-                    disabled={!replyText.trim() || isSendingReply}
+                    disabled={(!replyText.trim() && !replyImage) || isSendingReply}
                   >
                     <Send className="h-4 w-4" />
                   </Button>
