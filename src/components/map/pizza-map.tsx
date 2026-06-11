@@ -1545,305 +1545,294 @@ function PizzaMap({
   }, [visiblePizzerias, selectedPizzeria, onMarkerClick, userLocation, activeRoute, popupOffsetY, popupOffsetYMobile]);
 
   return (
-    <div
-      className="relative h-full w-full z-0 overflow-hidden"
-      style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
-    >
-      <div
-        ref={mapContainerRef}
-        className={isNavigating && isLocked ? 'navigation-3d-view' : ''}
-        style={{
-          height: '100%',
-          width: '100%',
-          transform: (isNavigating && isLocked) ? `perspective(800px) rotateX(55deg) rotateZ(-${mapRotation}deg) scale(2.2)` : '',
-          transition: 'transform 0.5s ease-out',
-          '--map-rotation': `${mapRotation}deg`
-        } as React.CSSProperties}
-      />
-
-      {/* Map Controls Container - Hide when navigating */}
-      {!isNavigating && (
+    <div className="relative h-full w-full z-0 overflow-hidden">
+      {/* Map Container Wrapper */}
+      <div className="absolute inset-0 z-10">
         <div
-          className="absolute right-4 z-[1001] flex flex-col gap-2 transition-all duration-300 top-[var(--buttons-top-mobile,_160px)] md:top-[var(--buttons-top-desktop,_160px)]"
-        >
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={handleLocateMe}
-            className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
-            aria-label="Find my location"
+          ref={mapContainerRef}
+          className={isNavigating && isLocked ? 'navigation-3d-view' : ''}
+          style={{
+            height: '100%',
+            width: '100%',
+            transform: (isNavigating && isLocked) ? `perspective(800px) rotateX(55deg) rotateZ(-${mapRotation}deg) scale(2.2)` : '',
+            transition: 'transform 0.5s ease-out',
+            '--map-rotation': `${mapRotation}deg`
+          } as React.CSSProperties}
+        />
+      </div>
+
+      {/* Flat 2D Overlays Wrapper */}
+      <div className="absolute inset-0 z-20 pointer-events-none">
+        {/* Map Controls Container - Hide when navigating */}
+        {!isNavigating && (
+          <div
+            className="absolute right-4 z-[1001] flex flex-col gap-2 transition-all duration-300 top-[var(--buttons-top-mobile,_160px)] md:top-[var(--buttons-top-desktop,_160px)] pointer-events-auto"
           >
-            <LocateFixed className="h-4 w-4 md:h-5 md:w-5" />
-          </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleLocateMe}
+              className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
+              aria-label="Find my location"
+            >
+              <LocateFixed className="h-4 w-4 md:h-5 md:w-5" />
+            </Button>
 
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={onToggleFullscreen}
-            className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
-            aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-          >
-            {isFullscreen ? (
-              <Minimize2 className="h-4 w-4 md:h-5 md:w-5" />
-            ) : (
-              <Maximize2 className="h-4 w-4 md:h-5 md:w-5" />
-            )}
-          </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={onToggleFullscreen}
+              className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
+              aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4 md:h-5 md:w-5" />
+              ) : (
+                <Maximize2 className="h-4 w-4 md:h-5 md:w-5" />
+              )}
+            </Button>
 
-          {userLocation && (
-            <div className="flex flex-col gap-2">
-              <Button
-                variant={showAll ? "default" : "secondary"}
-                size="sm"
-                onClick={() => setShowAll(!showAll)}
-                className="shadow-lg rounded-full h-8 md:h-10 px-3 text-xs md:text-sm font-medium"
-              >
-                {showAll ? "Ver cercanas" : "Ver todas"}
-              </Button>
-
-              {/* Manual Location Adjustment - Available on Desktop when location is known */}
-              <div className="hidden md:block">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        onClick={() => {
-                          setIsLocked(false);
-                          if (myLocationMarkerRef.current) {
-                            const marker = myLocationMarkerRef.current;
-                            if (marker.dragging) marker.dragging.enable();
-
-                            // Re-bind dragend to ensure we catch updates
-                            marker.off('dragend');
-                            marker.on('dragend', (e) => {
-                              const newPos = e.target.getLatLng();
-                              const newLoc = { lat: newPos.lat, lng: newPos.lng };
-                              setUserLocation(newLoc);
-                              try {
-                                localStorage.setItem('userLocation', JSON.stringify(newLoc));
-                              } catch (err) {
-                                console.warn("Storage access failed:", err);
-                              }
-                              onLocateUser(newLoc);
-                              toast({ title: 'Ubicación actualizada manualmente' });
-                            });
-                          }
-                          toast({ title: "Modo ajuste", description: "Arrastra tu icono para corregir la ubicación." });
-                        }}
-                        className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white/90 text-black hover:bg-white"
-                      >
-                        <span className="text-base">📍</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left">Ajustar Ubicación</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-          )}
-
-          {isAdmin && (
-            <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-              <DialogTrigger asChild>
+            {userLocation && (
+              <div className="flex flex-col gap-2">
                 <Button
-                  variant="destructive"
-                  size="icon"
-                  className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 border-2 border-white/20"
-                  title="Configuración del Mapa"
-                  aria-label="Configuración"
+                  variant={showAll ? "default" : "secondary"}
+                  size="sm"
+                  onClick={() => setShowAll(!showAll)}
+                  className="shadow-lg rounded-full h-8 md:h-10 px-3 text-xs md:text-sm font-medium"
                 >
-                  <Settings className="h-4 w-4 md:h-5 md:w-5" />
+                  {showAll ? "Ver cercanas" : "Ver todas"}
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-h-[85vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Configuración del Mapa</DialogTitle>
-                </DialogHeader>
-                <LayoutSettingsManager onSettingsChange={onSettingsChange} />
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-      )}
 
-      {/* Start Trip / Navigation Controls */}
-      {activeRoute && !isNavigating && (
-        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-[1002] flex items-center gap-3 animate-in slide-in-from-bottom-4 duration-300">
-          <Button
-            onClick={startNavigation}
-            className="bg-[#4285F4] hover:bg-[#3367d6] text-white shadow-xl rounded-full px-6 h-12 text-base font-semibold border-2 border-white/20"
-          >
-            <Navigation className="mr-2 h-5 w-5 fill-current" />
-            Iniciar viaje
-          </Button>
-          <Button
-            onClick={clearRoute}
-            variant="secondary"
-            size="icon"
-            className="h-12 w-12 rounded-full shadow-xl bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-100"
-            aria-label="Cancelar ruta"
-          >
-            <X className="h-6 w-6" />
-          </Button>
-        </div>
-      )}
+                {/* Manual Location Adjustment - Available on Desktop when location is known */}
+                <div className="hidden md:block">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          onClick={() => {
+                            setIsLocked(false);
+                            if (myLocationMarkerRef.current) {
+                              const marker = myLocationMarkerRef.current;
+                              if (marker.dragging) marker.dragging.enable();
 
-      {/* Navigation Dashboard (Active Mode) */}
-      {/* Navigation Dashboard (Active Mode - Google Maps Style) */}
-      <TooltipProvider>
-        {isNavigating && routeDetails && (
-          <>
-            {/* Top Instruction Bar - Green (Google Maps Style - Dynamic) */}
-            <div
-              className="absolute top-4 left-4 right-4 z-[1002] animate-in slide-in-from-top-4 duration-300"
-              style={{ transform: 'translate3d(0, 0, 100px)' }}
-            >
-              <div className="bg-[#00695C] text-white p-4 rounded-xl shadow-lg flex items-center min-h-[80px] border border-white/10">
-                {/* Maneuver Icon */}
-                <div className="flex-shrink-0 mr-4 bg-white/10 p-2 rounded-lg">
-                  {currentInstruction?.icon || <Navigation className="w-12 h-12 text-white stroke-[3px]" />}
-                </div>
-
-                {/* Text Content */}
-                <div className="flex flex-col justify-center overflow-hidden">
-                  <span className="text-2xl font-black leading-none mb-1 tracking-wide text-teal-200">
-                    {currentInstruction?.distanceText || '--- m'}
-                  </span>
-                  <h3 className="text-xl md:text-2xl font-bold leading-tight truncate">
-                    {currentInstruction?.text || 'Continúa por la ruta seleccionada'}
-                  </h3>
+                              // Re-bind dragend to ensure we catch updates
+                              marker.off('dragend');
+                              marker.on('dragend', (e) => {
+                                const newPos = e.target.getLatLng();
+                                const newLoc = { lat: newPos.lat, lng: newPos.lng };
+                                setUserLocation(newLoc);
+                                try {
+                                  localStorage.setItem('userLocation', JSON.stringify(newLoc));
+                                } catch (err) {
+                                  console.warn("Storage access failed:", err);
+                                }
+                                onLocateUser(newLoc);
+                                toast({ title: 'Ubicación actualizada manualmente' });
+                              });
+                            }
+                            toast({ title: "Modo ajuste", description: "Arrastra tu icono para corregir la ubicación." });
+                          }}
+                          className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white/90 text-black hover:bg-white"
+                        >
+                          <span className="text-base">📍</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">Ajustar Ubicación</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
-            </div>
+            )}
 
-            <div
-              className="absolute right-4 top-1/2 flex flex-col gap-3 z-[1001]"
-              style={{ transform: 'translate3d(0, -50%, 100px)' }}
-            >
-              <Tooltip>
-                <TooltipTrigger asChild>
+            {isAdmin && (
+              <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                <DialogTrigger asChild>
                   <Button
-                    variant="secondary"
+                    variant="destructive"
                     size="icon"
-                    className="h-12 w-12 rounded-full shadow-xl bg-black/80 text-white hover:bg-black/90 border-0 overflow-hidden p-0"
+                    className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 border-2 border-white/20"
+                    title="Configuración del Mapa"
+                    aria-label="Configuración"
+                  >
+                    <Settings className="h-4 w-4 md:h-5 md:w-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[85vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Configuración del Mapa</DialogTitle>
+                  </DialogHeader>
+                  <LayoutSettingsManager onSettingsChange={onSettingsChange} />
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        )}
+
+        {/* Start Trip / Navigation Controls */}
+        {activeRoute && !isNavigating && (
+          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-[1002] flex items-center gap-3 animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto">
+            <Button
+              onClick={startNavigation}
+              className="bg-[#4285F4] hover:bg-[#3367d6] text-white shadow-xl rounded-full px-6 h-12 text-base font-semibold border-2 border-white/20"
+            >
+              <Navigation className="mr-2 h-5 w-5 fill-current" />
+              Iniciar viaje
+            </Button>
+            <Button
+              onClick={clearRoute}
+              variant="secondary"
+              size="icon"
+              className="h-12 w-12 rounded-full shadow-xl bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-100"
+              aria-label="Cancelar ruta"
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
+        )}
+
+        {/* Navigation Dashboard (Active Mode) */}
+        <TooltipProvider>
+          {isNavigating && routeDetails && (
+            <>
+              {/* Top Instruction Bar - Green (Google Maps Style - Dynamic) */}
+              <div className="absolute top-4 left-4 right-4 z-[1002] animate-in slide-in-from-top-4 duration-300 pointer-events-auto">
+                <div className="bg-[#00695C] text-white p-4 rounded-xl shadow-lg flex items-center min-h-[80px] border border-white/10">
+                  {/* Maneuver Icon */}
+                  <div className="flex-shrink-0 mr-4 bg-white/10 p-2 rounded-lg">
+                    {currentInstruction?.icon || <Navigation className="w-12 h-12 text-white stroke-[3px]" />}
+                  </div>
+
+                  {/* Text Content */}
+                  <div className="flex flex-col justify-center overflow-hidden">
+                    <span className="text-2xl font-black leading-none mb-1 tracking-wide text-teal-200">
+                      {currentInstruction?.distanceText || '--- m'}
+                    </span>
+                    <h3 className="text-xl md:text-2xl font-bold leading-tight truncate">
+                      {currentInstruction?.text || 'Continúa por la ruta seleccionada'}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+
+              {/* Compass / Recenter control */}
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-3 z-[1001] pointer-events-auto">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="h-12 w-12 rounded-full shadow-xl bg-black/80 text-white hover:bg-black/90 border-0 overflow-hidden p-0"
+                      onClick={() => {
+                        const map = mapInstanceRef.current;
+                        if (map && animatedCoordsRef.current) {
+                          setIsLocked(true); // Re-lock
+                          map.setZoom(18);
+                          
+                          const coords = animatedCoordsRef.current;
+                          const bearing = currentHeadingRef.current;
+                          const offsetCenter = getOffsetLatLng(coords.lat, coords.lng, bearing, 50);
+                          map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: true, duration: 0.5 });
+
+                          if (mapContainerRef.current) {
+                            mapContainerRef.current.style.transform = `perspective(800px) rotateX(55deg) rotateZ(-${bearing}deg) scale(2.2)`;
+                          }
+                        }
+                      }}
+                    >
+                      <div className="relative w-full h-full bg-[#222] flex items-center justify-center">
+                        <div className="w-1.5 h-4 bg-red-500 rounded-t-sm absolute top-2 left-1/2 -translate-x-1/2 z-10 shadow-sm"></div>
+                        <div className="w-1.5 h-4 bg-gray-300 rounded-b-sm absolute bottom-2 left-1/2 -translate-x-1/2 z-10 shadow-sm"></div>
+                        <div className="w-8 h-8 rounded-full border-[3px] border-gray-600/60"></div>
+                      </div>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <p>Recentrar</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+
+              {/* Floating Speed Bubble */}
+              <div className="absolute bottom-28 left-4 z-[1001] w-16 h-16 bg-black/80 rounded-full flex flex-col items-center justify-center border-2 border-white/10 shadow-xl backdrop-blur-sm pointer-events-auto">
+                <span className="text-white font-bold text-xl leading-none">{currentSpeed}</span>
+                <span className="text-white/70 text-[10px] uppercase font-bold">km/h</span>
+              </div>
+
+              {/* Recentrar / Decentrar Buttons (Locked / Unlocked navigation state controller) */}
+              {isLocked ? (
+                <div
+                  className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto"
+                  style={{ transform: 'translateX(-50%)' }}
+                >
+                  <Button
+                    onClick={() => setIsLocked(false)}
+                    className="bg-[#ef4444] hover:bg-[#dc2626] text-white shadow-2xl rounded-full px-6 h-12 text-base font-bold flex items-center gap-2 border-2 border-white/20"
+                  >
+                    <Maximize2 className="w-5 h-5" />
+                    Decentrar
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto"
+                  style={{ transform: 'translateX(-50%)' }}
+                >
+                  <Button
                     onClick={() => {
+                      setIsLocked(true);
                       const map = mapInstanceRef.current;
                       if (map && animatedCoordsRef.current) {
-                        setIsLocked(true); // Re-lock
-                        map.setZoom(18);
-                        
                         const coords = animatedCoordsRef.current;
                         const bearing = currentHeadingRef.current;
+                        map.setZoom(18);
                         const offsetCenter = getOffsetLatLng(coords.lat, coords.lng, bearing, 50);
                         map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: true, duration: 0.5 });
-
-                        if (mapContainerRef.current) {
-                          mapContainerRef.current.style.transform = `perspective(800px) rotateX(55deg) rotateZ(-${bearing}deg) scale(2.2)`;
-                        }
                       }
                     }}
+                    className="bg-[#00897B] hover:bg-[#00695C] text-white shadow-2xl rounded-full px-6 h-12 text-base font-bold flex items-center gap-2 border-2 border-white/20"
                   >
-                    <div className="relative w-full h-full bg-[#222] flex items-center justify-center">
-                      <div className="w-1.5 h-4 bg-red-500 rounded-t-sm absolute top-2 left-1/2 -translate-x-1/2 z-10 shadow-sm"></div>
-                      <div className="w-1.5 h-4 bg-gray-300 rounded-b-sm absolute bottom-2 left-1/2 -translate-x-1/2 z-10 shadow-sm"></div>
-                      <div className="w-8 h-8 rounded-full border-[3px] border-gray-600/60"></div>
-                    </div>
+                    <Compass className="w-5 h-5" />
+                    Recentrar
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p>Recentrar</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-
-            {/* Floating Speed Bubble */}
-            <div
-              className="absolute bottom-28 left-4 z-[1001] w-16 h-16 bg-black/80 rounded-full flex flex-col items-center justify-center border-2 border-white/10 shadow-xl backdrop-blur-sm"
-              style={{ transform: 'translate3d(0, 0, 100px)' }}
-            >
-              <span className="text-white font-bold text-xl leading-none">{currentSpeed}</span>
-              <span className="text-white/70 text-[10px] uppercase font-bold">km/h</span>
-            </div>
-
-            {/* Recentrar / Decentrar Buttons (Locked / Unlocked navigation state controller) */}
-            {isLocked ? (
-              <div
-                className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200"
-                style={{ transform: 'translate3d(-50%, 0, 100px)' }}
-              >
-                <Button
-                  onClick={() => setIsLocked(false)}
-                  className="bg-[#ef4444] hover:bg-[#dc2626] text-white shadow-2xl rounded-full px-6 h-12 text-base font-bold flex items-center gap-2 border-2 border-white/20"
-                >
-                  <Maximize2 className="w-5 h-5" />
-                  Decentrar
-                </Button>
-              </div>
-            ) : (
-              <div
-                className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200"
-                style={{ transform: 'translate3d(-50%, 0, 100px)' }}
-              >
-                <Button
-                  onClick={() => {
-                    setIsLocked(true);
-                    const map = mapInstanceRef.current;
-                    if (map && animatedCoordsRef.current) {
-                      const coords = animatedCoordsRef.current;
-                      const bearing = currentHeadingRef.current;
-                      map.setZoom(18);
-                      const offsetCenter = getOffsetLatLng(coords.lat, coords.lng, bearing, 50);
-                      map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: true, duration: 0.5 });
-                    }
-                  }}
-                  className="bg-[#00897B] hover:bg-[#00695C] text-white shadow-2xl rounded-full px-6 h-12 text-base font-bold flex items-center gap-2 border-2 border-white/20"
-                >
-                  <Compass className="w-5 h-5" />
-                  Recentrar
-                </Button>
-              </div>
-            )}
-
-            {/* Bottom Status Bar - Black */}
-            <div
-              className="absolute bottom-0 left-0 right-0 z-[1002] bg-[#111111] p-4 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 text-white pb-8"
-              style={{ transform: 'translate3d(0, 0, 100px)' }}
-            >
-              <div className="flex items-center justify-between">
-                <Button
-                  onClick={exitNavigation}
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full h-12 w-12 hover:bg-white/10 text-white"
-                >
-                  <X className="w-8 h-8" />
-                </Button>
-
-                <div className="flex flex-col items-center">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-[#4ade80] leading-none">
-                      {(routeDetails.duration / 60).toFixed(0)} <span className="text-xl">min</span>
-                    </span>
-                    <Leaf className="w-4 h-4 text-[#4ade80] fill-[#4ade80]" />
-                  </div>
-                  <div className="text-gray-400 font-medium text-sm mt-1">
-                    {(routeDetails.distance / 1000).toFixed(1)} km • {new Date(Date.now() + routeDetails.duration * 1000 + 180000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (hora estimada de llegada)
-                  </div>
                 </div>
+              )}
 
-                <div className="w-12" />
+              {/* Bottom Status Bar - Black */}
+              <div className="absolute bottom-0 left-0 right-0 z-[1002] bg-[#111111] p-4 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 text-white pb-8 pointer-events-auto">
+                <div className="flex items-center justify-between">
+                  <Button
+                    onClick={exitNavigation}
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full h-12 w-12 hover:bg-white/10 text-white"
+                  >
+                    <X className="w-8 h-8" />
+                  </Button>
+
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-[#4ade80] leading-none">
+                        {(routeDetails.duration / 60).toFixed(0)} <span className="text-xl">min</span>
+                      </span>
+                      <Leaf className="w-4 h-4 text-[#4ade80] fill-[#4ade80]" />
+                    </div>
+                    <div className="text-gray-400 font-medium text-sm mt-1">
+                      {(routeDetails.distance / 1000).toFixed(1)} km • {new Date(Date.now() + routeDetails.duration * 1000 + 180000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (hora estimada de llegada)
+                    </div>
+                  </div>
+
+                  <div className="w-12" />
+                </div>
               </div>
-            </div>
-          </>
-        )}
-      </TooltipProvider>
+            </>
+          )}
+        </TooltipProvider>
 
-      {/* Traffic Legend */}
-      {
-        showTrafficLegend && !isNavigating && (
-          <div className="absolute bottom-6 left-6 z-[1000] bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border dark:border-slate-700 text-xs transition-colors duration-300">
+        {/* Traffic Legend */}
+        {showTrafficLegend && !isNavigating && (
+          <div className="absolute bottom-6 left-6 z-[1000] bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border dark:border-slate-700 text-xs transition-colors duration-300 pointer-events-auto">
             <h4 className="font-bold mb-2 text-gray-800 dark:text-gray-100">Tráfico</h4>
             <div className="space-y-1.5 font-medium text-gray-600 dark:text-gray-300">
               <div className="flex items-center gap-2">
@@ -1864,8 +1853,8 @@ function PizzaMap({
               </div>
             </div>
           </div>
-        )
-      }
+        )}
+      </div>
 
 
 
