@@ -40,6 +40,7 @@ type PizzaMapProps = {
   iconAnchorY?: number; // New prop for icon anchor adjustment
   disableDistanceFilter?: boolean; // New prop to bypass distance check
   explicitPizzeriasToShow?: Pizzeria[]; // New prop to force render specific pizzerias
+  onNavigationStateChange?: (navigating: boolean) => void; // Callback to notify navigation mode
 };
 
 function PizzaMap({
@@ -62,7 +63,8 @@ function PizzaMap({
   iconAnchorY = 25,
   disableDistanceFilter = false,
   explicitPizzeriasToShow = [],
-  onSettingsChange
+  onSettingsChange,
+  onNavigationStateChange
 }: PizzaMapProps & { isAdmin?: boolean, popupOffsetY?: number, popupOffsetYMobile?: number, onSettingsChange?: (settings: any) => void, mapCenterOffset?: number, iconAnchorX?: number, iconAnchorY?: number, disableDistanceFilter?: boolean, explicitPizzeriasToShow?: Pizzeria[] }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -269,6 +271,52 @@ function PizzaMap({
       }
     }
     return minDistance;
+  };
+
+  // Helper: Find closest point on polyline to snap marker to roads
+  const getClosestPointOnPolyline = (p: L.LatLng, polylinePoints: L.LatLng[]): L.LatLng => {
+    if (!polylinePoints || polylinePoints.length === 0) return p;
+    if (polylinePoints.length === 1) return polylinePoints[0];
+
+    let minDistance = Infinity;
+    let closestPoint = polylinePoints[0];
+
+    for (let i = 0; i < polylinePoints.length - 1; i++) {
+      const a = polylinePoints[i];
+      const b = polylinePoints[i + 1];
+
+      const x = p.lng;
+      const y = p.lat;
+      const x1 = a.lng;
+      const y1 = a.lat;
+      const x2 = b.lng;
+      const y2 = b.lat;
+
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+
+      let t = 0;
+      if (dx !== 0 || dy !== 0) {
+        t = ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy);
+        t = Math.max(0, Math.min(1, t));
+      }
+
+      const projLng = x1 + t * dx;
+      const projLat = y1 + t * dy;
+      const projLatLng = new L.LatLng(projLat, projLng);
+
+      const d = getDistance(
+        { latitude: y, longitude: x },
+        { latitude: projLat, longitude: projLng }
+      );
+
+      if (d < minDistance) {
+        minDistance = d;
+        closestPoint = projLatLng;
+      }
+    }
+
+    return closestPoint;
   };
 
   // Helper: Calculate remaining route distance along polyline from user's current location
@@ -491,6 +539,11 @@ function PizzaMap({
       updateUserMarker(myLocationMarkerRef.current.getLatLng(), true);
     }
   }, [isNavigating]);
+
+  // Effect: Notify parent about navigation state change
+  useEffect(() => {
+    onNavigationStateChange?.(isNavigating);
+  }, [isNavigating, onNavigationStateChange]);
 
 
 
@@ -787,6 +840,18 @@ function PizzaMap({
     const map = mapInstanceRef.current;
     if (!map) return;
 
+    let finalLat = targetLat;
+    let finalLng = targetLng;
+
+    if (isNavigating && routeLayerRef.current) {
+      const routePoints = routeLayerRef.current.getLatLngs() as L.LatLng[];
+      if (routePoints && routePoints.length > 0) {
+        const snapped = getClosestPointOnPolyline(new L.LatLng(targetLat, targetLng), routePoints);
+        finalLat = snapped.lat;
+        finalLng = snapped.lng;
+      }
+    }
+
     const now = Date.now();
     let duration = now - lastGpsTimeRef.current;
     // Cap duration to keep animations smooth and responsive
@@ -794,14 +859,14 @@ function PizzaMap({
     if (duration > 3000) duration = 1500;
     lastGpsTimeRef.current = now;
 
-    const startCoords = animatedCoordsRef.current || { lat: targetLat, lng: targetLng };
+    const startCoords = animatedCoordsRef.current || { lat: finalLat, lng: finalLng };
     const startHeading = currentHeadingRef.current;
 
     let targetHeading = startHeading;
     if (isNavigating) {
-      targetHeading = getRouteBearing(targetLat, targetLng);
+      targetHeading = getRouteBearing(finalLat, finalLng);
       if (targetHeading === 0 && activeRoute) {
-        targetHeading = calculateBearing(targetLat, targetLng, activeRoute.lat, activeRoute.lng);
+        targetHeading = calculateBearing(finalLat, finalLng, activeRoute.lat, activeRoute.lng);
       }
     }
 
@@ -812,8 +877,8 @@ function PizzaMap({
       const progress = Math.min(elapsed / duration, 1);
       
       // Coordinate interpolation
-      const currentLat = startCoords.lat + (targetLat - startCoords.lat) * progress;
-      const currentLng = startCoords.lng + (targetLng - startCoords.lng) * progress;
+      const currentLat = startCoords.lat + (finalLat - startCoords.lat) * progress;
+      const currentLng = startCoords.lng + (finalLng - startCoords.lng) * progress;
 
       // Shortest-path angle interpolation
       let diff = targetHeading - startHeading;
@@ -838,7 +903,7 @@ function PizzaMap({
         map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: false });
 
         if (mapContainerRef.current) {
-          mapContainerRef.current.style.transform = `perspective(800px) rotateX(55deg) rotateZ(-${currentHeading}deg) scale(2.2)`;
+          mapContainerRef.current.style.transform = `rotateX(55deg) rotateZ(-${currentHeading}deg) scale(1.8)`;
           mapContainerRef.current.style.setProperty('--map-rotation', `${currentHeading}deg`);
         }
         setMapRotation(currentHeading);
@@ -877,24 +942,34 @@ function PizzaMap({
       // Zoom in and center on user
       map.setZoom(18);
 
+      // Snap start navigation position to the route
+      let navLoc = new L.LatLng(userLocation.lat, userLocation.lng);
+      if (routeLayerRef.current) {
+        const routePoints = routeLayerRef.current.getLatLngs() as L.LatLng[];
+        if (routePoints && routePoints.length > 0) {
+          navLoc = getClosestPointOnPolyline(navLoc, routePoints);
+        }
+      }
+
       // Initial Bearing with Fallback
-      let bearing = getRouteBearing(userLocation.lat, userLocation.lng);
+      let bearing = getRouteBearing(navLoc.lat, navLoc.lng);
       if (bearing === 0 && activeRoute) {
-        bearing = calculateBearing(userLocation.lat, userLocation.lng, activeRoute.lat, activeRoute.lng);
+        bearing = calculateBearing(navLoc.lat, navLoc.lng, activeRoute.lat, activeRoute.lng);
       }
       setMapRotation(bearing);
       currentHeadingRef.current = bearing;
+      animatedCoordsRef.current = { lat: navLoc.lat, lng: navLoc.lng };
 
       // Force immediate snap with offset without animation to ensure correct center before rotation hits
-      const offsetCenter = getOffsetLatLng(userLocation.lat, userLocation.lng, bearing, 50);
+      const offsetCenter = getOffsetLatLng(navLoc.lat, navLoc.lng, bearing, 50);
       map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: false });
 
       // Update Icon Immediately
-      updateUserMarker(new L.LatLng(userLocation.lat, userLocation.lng), true);
+      updateUserMarker(navLoc, true);
 
       if (mapContainerRef.current) {
         // Apply initial transform immediately with tilt and scale
-        mapContainerRef.current.style.transform = `perspective(800px) rotateX(55deg) rotateZ(-${bearing}deg) scale(2.2)`;
+        mapContainerRef.current.style.transform = `rotateX(55deg) rotateZ(-${bearing}deg) scale(1.8)`;
         mapContainerRef.current.style.setProperty('--map-rotation', `${bearing}deg`);
       }
 
@@ -903,13 +978,13 @@ function PizzaMap({
         // Aggressive centering loop to ensure map snaps correctly after layout shifts
         let attempts = 0;
         const interval = setInterval(() => {
-          const currentPos = animatedCoordsRef.current || userLocation;
+          const currentPos = animatedCoordsRef.current || navLoc;
           const currentH = currentHeadingRef.current || bearing;
           const snapOffsetCenter = getOffsetLatLng(currentPos.lat, currentPos.lng, currentH, 50);
           map.panTo([snapOffsetCenter.lat, snapOffsetCenter.lng], { animate: false });
           
           if (mapContainerRef.current) {
-            mapContainerRef.current.style.transform = `perspective(800px) rotateX(55deg) rotateZ(-${currentH}deg) scale(2.2)`;
+            mapContainerRef.current.style.transform = `rotateX(55deg) rotateZ(-${currentH}deg) scale(1.8)`;
             mapContainerRef.current.style.setProperty('--map-rotation', `${currentH}deg`);
           }
           attempts++;
@@ -1547,14 +1622,15 @@ function PizzaMap({
   return (
     <div className="relative h-full w-full z-0 overflow-hidden">
       {/* Map Container Wrapper */}
-      <div className="absolute inset-0 z-10">
+      <div className="absolute inset-0 z-10" style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}>
         <div
           ref={mapContainerRef}
           className={isNavigating && isLocked ? 'navigation-3d-view' : ''}
           style={{
             height: '100%',
             width: '100%',
-            transform: (isNavigating && isLocked) ? `perspective(800px) rotateX(55deg) rotateZ(-${mapRotation}deg) scale(2.2)` : '',
+            transform: (isNavigating && isLocked) ? `rotateX(55deg) rotateZ(-${mapRotation}deg) scale(1.8)` : '',
+            transformStyle: (isNavigating && isLocked) ? 'preserve-3d' : 'flat',
             transition: 'transform 0.5s ease-out',
             '--map-rotation': `${mapRotation}deg`
           } as React.CSSProperties}
@@ -1736,7 +1812,7 @@ function PizzaMap({
                           map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: true, duration: 0.5 });
 
                           if (mapContainerRef.current) {
-                            mapContainerRef.current.style.transform = `perspective(800px) rotateX(55deg) rotateZ(-${bearing}deg) scale(2.2)`;
+                            mapContainerRef.current.style.transform = `rotateX(55deg) rotateZ(-${bearing}deg) scale(1.8)`;
                           }
                         }
                       }}
