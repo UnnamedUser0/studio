@@ -7,7 +7,7 @@ import * as L from 'leaflet';
 import 'leaflet-defaulticon-compatibility';
 import type { Pizzeria } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star, Settings, Navigation, X, ArrowLeft, MoreVertical, Volume2, Compass, AlertTriangle, Search, Leaf, CornerUpLeft, CornerUpRight, ArrowUp, Play, Phone, Globe, Share2 } from 'lucide-react';
+import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star, Settings, Navigation, X, ArrowLeft, MoreVertical, Volume2, Compass, AlertTriangle, Search, Leaf, CornerUpLeft, CornerUpRight, ArrowUp, Phone, Globe, Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 import getDistance from 'geolib/es/getDistance';
@@ -95,7 +95,6 @@ function PizzaMap({
   const animatedCoordsRef = useRef<{ lat: number, lng: number } | null>(null);
   const currentHeadingRef = useRef<number>(0);
   const animationFrameRef = useRef<number | null>(null);
-  const simulationIntervalRef = useRef<number | null>(null);
   const initialRouteDistanceRef = useRef<number>(0);
   const initialRouteDurationRef = useRef<number>(0);
   const destinationNameRef = useRef<string>('tu destino');
@@ -483,35 +482,7 @@ function PizzaMap({
     }
   }, [isNavigating]);
 
-  // Effect: Listen to user interactions to unlock navigation (Modo Libre)
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
 
-    const handleUserInteraction = () => {
-      if (isNavigating && isLocked) {
-        setIsLocked(false);
-      }
-    };
-
-    map.on('dragstart', handleUserInteraction);
-    map.on('zoomstart', handleUserInteraction);
-    
-    const container = mapContainerRef.current;
-    if (container) {
-      container.addEventListener('touchstart', handleUserInteraction, { passive: true });
-      container.addEventListener('mousedown', handleUserInteraction);
-    }
-
-    return () => {
-      map.off('dragstart', handleUserInteraction);
-      map.off('zoomstart', handleUserInteraction);
-      if (container) {
-        container.removeEventListener('touchstart', handleUserInteraction);
-        container.removeEventListener('mousedown', handleUserInteraction);
-      }
-    };
-  }, [isNavigating, isLocked]);
 
   const handleLocateMe = () => {
     const map = mapInstanceRef.current;
@@ -740,6 +711,7 @@ function PizzaMap({
       const data = await response.json();
 
       if (data.routes && data.routes.length > 0) {
+        map.closePopup();
         const route = data.routes[0];
         const coordinates = route.geometry.coordinates.map((coord: number[]) => [coord[1], coord[0]] as [number, number]);
 
@@ -867,7 +839,7 @@ function PizzaMap({
       } else {
         if (mapContainerRef.current) {
           mapContainerRef.current.style.transform = '';
-          mapContainerRef.current.style.removeProperty('--map-rotation');
+          mapContainerRef.current.style.setProperty('--map-rotation', `${currentHeading}deg`);
         }
       }
 
@@ -883,146 +855,9 @@ function PizzaMap({
   };
 
 
-  // Start simulation runner
-  const startSimulation = (routePoints: L.LatLng[]) => {
-    if (routePoints.length < 2) return;
-    
-    cleanupNavigationTimers();
-    setIsNavigating(true);
-    setIsLocked(true);
-    
-    // Zoom map in and snap
-    const map = mapInstanceRef.current;
-    if (map) {
-      map.setZoom(18);
-    }
-
-    let currentIdx = 0;
-    const speedMetersPerSecond = 12; // ~43 km/h
-    const updateIntervalMs = 100; // 10fps for smooth simulation ticks
-    
-    // Set initial position
-    const startLoc = routePoints[0];
-    setUserLocation({ lat: startLoc.lat, lng: startLoc.lng });
-    animatedCoordsRef.current = { lat: startLoc.lat, lng: startLoc.lng };
-    currentHeadingRef.current = 0;
-
-    let loopCounter = 0;
-
-    simulationIntervalRef.current = setInterval(() => {
-      // Find next idx
-      let remainingMove = speedMetersPerSecond * (updateIntervalMs / 1000);
-      let currentCoords = animatedCoordsRef.current || { lat: routePoints[0].lat, lng: routePoints[0].lng };
-      
-      let nextIdx = currentIdx + 1;
-      if (nextIdx >= routePoints.length) {
-        clearInterval(simulationIntervalRef.current!);
-        simulationIntervalRef.current = null;
-        toast({ title: "¡Has llegado a tu destino!", description: "El viaje simulado ha finalizado." });
-        exitNavigation();
-        return;
-      }
-      
-      let nextPoint = routePoints[nextIdx];
-      let distToNext = getDistance(
-        { latitude: currentCoords.lat, longitude: currentCoords.lng },
-        { latitude: nextPoint.lat, longitude: nextPoint.lng }
-      );
-      
-      while (remainingMove >= distToNext) {
-        remainingMove -= distToNext;
-        currentIdx = nextIdx;
-        currentCoords = { lat: nextPoint.lat, lng: nextPoint.lng };
-        nextIdx = currentIdx + 1;
-        
-        if (nextIdx >= routePoints.length) {
-          animatedCoordsRef.current = { lat: nextPoint.lat, lng: nextPoint.lng };
-          if (myLocationMarkerRef.current) {
-            myLocationMarkerRef.current.setLatLng(nextPoint);
-          }
-          clearInterval(simulationIntervalRef.current!);
-          simulationIntervalRef.current = null;
-          toast({ title: "¡Has llegado a tu destino!", description: "El viaje simulado ha finalizado." });
-          exitNavigation();
-          return;
-        }
-        
-        nextPoint = routePoints[nextIdx];
-        distToNext = getDistance(
-          { latitude: currentCoords.lat, longitude: currentCoords.lng },
-          { latitude: nextPoint.lat, longitude: nextPoint.lng }
-        );
-      }
-      
-      const ratio = remainingMove / distToNext;
-      const nextLat = currentCoords.lat + (nextPoint.lat - currentCoords.lat) * ratio;
-      const nextLng = currentCoords.lng + (nextPoint.lng - currentCoords.lng) * ratio;
-      
-      const newLatLng = new L.LatLng(nextLat, nextLng);
-      animatedCoordsRef.current = { lat: nextLat, lng: nextLng };
-      
-      // Calculate bearing
-      const bearing = calculateBearing(currentCoords.lat, currentCoords.lng, nextPoint.lat, nextPoint.lng);
-      currentHeadingRef.current = bearing;
-      
-      // Update User Marker
-      if (myLocationMarkerRef.current) {
-        myLocationMarkerRef.current.setLatLng(newLatLng);
-        myLocationMarkerRef.current.setIcon(navigationIcon);
-      } else if (mapInstanceRef.current) {
-        myLocationMarkerRef.current = L.marker(newLatLng, { icon: navigationIcon }).addTo(mapInstanceRef.current);
-      }
-      
-      // Telemetry speed
-      const speedKmh = Math.round(speedMetersPerSecond * 3.6 + (Math.random() * 4 - 2));
-      setCurrentSpeed(speedKmh);
-      
-      // Update viewport if locked
-      const map = mapInstanceRef.current;
-      if (map && isLocked) {
-        const offsetCenter = getOffsetLatLng(nextLat, nextLng, bearing, 50);
-        map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: false });
-        
-        if (mapContainerRef.current) {
-          mapContainerRef.current.style.transform = `perspective(800px) rotateX(55deg) rotateZ(-${bearing}deg) scale(2.2)`;
-          mapContainerRef.current.style.setProperty('--map-rotation', `${bearing}deg`);
-        }
-        setMapRotation(bearing);
-      }
-      
-      // Throttled: Update remaining details and instructions (every ~1s, which is 10 cycles)
-      loopCounter++;
-      if (loopCounter % 10 === 0 && routeSteps.length > 0) {
-        updateNavigationInstructions(newLatLng, routeSteps, destinationNameRef.current);
-        
-        const remDistance = calculateRemainingRouteDistance(newLatLng, routePoints);
-        const initialRouteDist = initialRouteDistanceRef.current || 1000;
-        const initialRouteDur = initialRouteDurationRef.current || 120;
-        const progressRatio = remDistance / initialRouteDist;
-        
-        setRouteDetails({
-          distance: remDistance,
-          duration: progressRatio * initialRouteDur
-        });
-      }
-      
-    }, updateIntervalMs) as any;
-
-    toast({
-      title: "Simulación iniciada",
-      description: "Recorriendo la ruta a velocidad de tráfico."
-    });
-  };
-
   // Start Navigation Wrapper to set initial bearing and setup watch GPS
-  const startNavigation = (simulate = false) => {
+  const startNavigation = () => {
     if (!activeRoute) return;
-
-    if (simulate && routeLayerRef.current) {
-      const routePoints = routeLayerRef.current.getLatLngs() as L.LatLng[];
-      startSimulation(routePoints);
-      return;
-    }
 
     setIsNavigating(true);
     setIsLocked(true); // Ensure locked on start
@@ -1084,12 +919,8 @@ function PizzaMap({
     });
   };
 
-  // Stop simulated navigation intervals and animation frames
+  // Stop active navigation animation frames
   const cleanupNavigationTimers = () => {
-    if (simulationIntervalRef.current) {
-      clearInterval(simulationIntervalRef.current);
-      simulationIntervalRef.current = null;
-    }
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
@@ -1822,18 +1653,11 @@ function PizzaMap({
       {activeRoute && !isNavigating && (
         <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-[1002] flex items-center gap-3 animate-in slide-in-from-bottom-4 duration-300">
           <Button
-            onClick={() => startNavigation(false)}
+            onClick={startNavigation}
             className="bg-[#4285F4] hover:bg-[#3367d6] text-white shadow-xl rounded-full px-6 h-12 text-base font-semibold border-2 border-white/20"
           >
             <Navigation className="mr-2 h-5 w-5 fill-current" />
             Iniciar viaje
-          </Button>
-          <Button
-            onClick={() => startNavigation(true)}
-            className="bg-[#00897B] hover:bg-[#00695C] text-white shadow-xl rounded-full px-6 h-12 text-base font-semibold border-2 border-white/20"
-          >
-            <Play className="mr-2 h-5 w-5 fill-current" />
-            Simular viaje
           </Button>
           <Button
             onClick={clearRoute}
@@ -1915,8 +1739,18 @@ function PizzaMap({
               <span className="text-white/70 text-[10px] uppercase font-bold">km/h</span>
             </div>
 
-            {/* Recentrar Button (appears only when camera is unlocked in Modo Libre) */}
-            {!isLocked && (
+            {/* Recentrar / Decentrar Buttons (Locked / Unlocked navigation state controller) */}
+            {isLocked ? (
+              <div className="absolute bottom-28 left-1/2 transform -translate-x-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+                <Button
+                  onClick={() => setIsLocked(false)}
+                  className="bg-[#ef4444] hover:bg-[#dc2626] text-white shadow-2xl rounded-full px-6 h-12 text-base font-bold flex items-center gap-2 border-2 border-white/20"
+                >
+                  <Maximize2 className="w-5 h-5" />
+                  Decentrar
+                </Button>
+              </div>
+            ) : (
               <div className="absolute bottom-28 left-1/2 transform -translate-x-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
                 <Button
                   onClick={() => {
@@ -1930,9 +1764,9 @@ function PizzaMap({
                       map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: true, duration: 0.5 });
                     }
                   }}
-                  className="bg-[#00897B] hover:bg-[#00695C] text-white shadow-2xl rounded-full px-6 h-12 text-base font-bold flex items-center gap-2 border-2 border-white/20 animate-bounce"
+                  className="bg-[#00897B] hover:bg-[#00695C] text-white shadow-2xl rounded-full px-6 h-12 text-base font-bold flex items-center gap-2 border-2 border-white/20"
                 >
-                  <Compass className="w-5 h-5 animate-spin-slow" />
+                  <Compass className="w-5 h-5" />
                   Recentrar
                 </Button>
               </div>
@@ -2053,17 +1887,8 @@ function PizzaMap({
           }
         }
         
-        /* Navigation Mode - 2D Rotation (Course Up) */
-        .navigation-3d-view .leaflet-map-pane {
-           /* No perspective/tilt, just rotate the flat map */
-           transform: rotateZ(var(--map-rotation, 0deg));
-           transform-origin: center center;
-           transition: transform 0.5s ease-out;
-        }
-        
-        /* Rotate INNER CONTENT of markers to keep them upright/aligned relative to screen */
-        .navigation-3d-view .nav-arrow-inner {
-           /* Rotate POSITIVE to counteract negative map rotation */
+        /* Rotate INNER CONTENT of navigation arrow relative to map */
+        .nav-arrow-inner {
            transform: rotateZ(var(--map-rotation, 0deg));
            transition: transform 0.1s linear; /* Smooth rotation */
         }
