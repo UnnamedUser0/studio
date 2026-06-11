@@ -444,41 +444,51 @@ function PizzaMap({
   // Effect: Apply Map Rotation (Course Up)
   const [isLocked, setIsLocked] = useState(true); // New state to track if we are locked on user
 
-  // Effect: Sync map interaction state and classes on navigation mode changes
-  useEffect(() => {
-    if (!mapContainerRef.current || !mapInstanceRef.current) return;
+  // Refs to store latest state values to avoid stale closures in watchers/animations
+  const isNavigatingRef = useRef(isNavigating);
+  const isLockedRef = useRef(isLocked);
 
+  useEffect(() => {
+    isNavigatingRef.current = isNavigating;
+  }, [isNavigating]);
+
+  useEffect(() => {
+    isLockedRef.current = isLocked;
+  }, [isLocked]);
+
+  // Helper to safely manage a single user location marker across renders/remounts
+  const updateUserMarker = (latlng: L.LatLng, forceIconUpdate = false) => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const currentIcon = isNavigatingRef.current ? navigationIcon : myLocationIcon;
+
+    if (!myLocationMarkerRef.current || !map.hasLayer(myLocationMarkerRef.current)) {
+      myLocationMarkerRef.current = L.marker(latlng, { icon: currentIcon }).addTo(map);
+    } else {
+      myLocationMarkerRef.current.setLatLng(latlng);
+      if (forceIconUpdate || myLocationMarkerRef.current.getIcon() !== currentIcon) {
+        myLocationMarkerRef.current.setIcon(currentIcon);
+      }
+    }
+  };
+
+  // Effect: Sync map interaction state on navigation mode changes
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
 
-    if (isNavigating && isLocked) {
-      mapContainerRef.current.classList.add('navigation-3d-view');
-      mapContainerRef.current.style.transition = 'transform 0.5s ease-out';
-      
-      const heading = currentHeadingRef.current;
-      mapContainerRef.current.style.transform = `perspective(800px) rotateX(55deg) rotateZ(-${heading}deg) scale(2.2)`;
-      mapContainerRef.current.style.setProperty('--map-rotation', `${heading}deg`);
-      
-      map.dragging.disable();
-      map.touchZoom.disable();
-      map.doubleClickZoom.disable();
-      map.boxZoom.disable();
-    } else {
-      mapContainerRef.current.classList.remove('navigation-3d-view');
-      mapContainerRef.current.style.transform = '';
-      mapContainerRef.current.style.transition = 'transform 0.5s ease-out';
-      mapContainerRef.current.style.removeProperty('--map-rotation');
-      
-      map.dragging.enable();
-      map.touchZoom.enable();
-      map.doubleClickZoom.enable();
-      map.boxZoom.enable();
-    }
+    // Always keep map dragging and zoom enabled to allow user interactions in both 2D and 3D
+    map.dragging.enable();
+    map.touchZoom.enable();
+    map.doubleClickZoom.enable();
+    map.boxZoom.enable();
   }, [isNavigating, isLocked]);
 
   // Effect: Update marker icon when mode changes
   useEffect(() => {
-    if (myLocationMarkerRef.current) {
-      myLocationMarkerRef.current.setIcon(isNavigating ? navigationIcon : myLocationIcon);
+    if (myLocationMarkerRef.current && mapInstanceRef.current && mapInstanceRef.current.hasLayer(myLocationMarkerRef.current)) {
+      updateUserMarker(myLocationMarkerRef.current.getLatLng(), true);
     }
   }, [isNavigating]);
 
@@ -537,10 +547,8 @@ function PizzaMap({
         console.warn("Storage access failed:", e);
       }
 
-      // Create marker if it doesn't exist
-      if (!myLocationMarkerRef.current) {
-        myLocationMarkerRef.current = L.marker(latlng, { icon: isNavigating ? navigationIcon : myLocationIcon }).addTo(map);
-      }
+      // Create or update marker
+      updateUserMarker(latlng);
 
       // Animate smoothly to initial location
       animateToLocation(latitude, longitude, speedKmh);
@@ -819,15 +827,13 @@ function PizzaMap({
       const latlng = new L.LatLng(currentLat, currentLng);
 
       // Move marker smoothly
-      if (myLocationMarkerRef.current) {
-        myLocationMarkerRef.current.setLatLng(latlng);
-      }
+      updateUserMarker(latlng);
 
       // Update speed
       setCurrentSpeed(targetSpeed);
 
       // Map rotation & centering
-      if (isNavigating && isLocked) {
+      if (isNavigatingRef.current && isLockedRef.current) {
         const offsetCenter = getOffsetLatLng(currentLat, currentLng, currentHeading, 50);
         map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: false });
 
@@ -841,6 +847,7 @@ function PizzaMap({
           mapContainerRef.current.style.transform = '';
           mapContainerRef.current.style.setProperty('--map-rotation', `${currentHeading}deg`);
         }
+        setMapRotation(currentHeading);
       }
 
       if (progress < 1) {
@@ -883,10 +890,7 @@ function PizzaMap({
       map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: false });
 
       // Update Icon Immediately
-      if (myLocationMarkerRef.current) {
-        myLocationMarkerRef.current.setIcon(navigationIcon);
-        myLocationMarkerRef.current.setLatLng(new L.LatLng(userLocation.lat, userLocation.lng));
-      }
+      updateUserMarker(new L.LatLng(userLocation.lat, userLocation.lng), true);
 
       if (mapContainerRef.current) {
         // Apply initial transform immediately with tilt and scale
@@ -906,6 +910,7 @@ function PizzaMap({
           
           if (mapContainerRef.current) {
             mapContainerRef.current.style.transform = `perspective(800px) rotateX(55deg) rotateZ(-${currentH}deg) scale(2.2)`;
+            mapContainerRef.current.style.setProperty('--map-rotation', `${currentH}deg`);
           }
           attempts++;
           if (attempts > 5) clearInterval(interval);
@@ -952,8 +957,8 @@ function PizzaMap({
       }
     }
 
-    if (myLocationMarkerRef.current) {
-      myLocationMarkerRef.current.setIcon(myLocationIcon);
+    if (userLocation) {
+      updateUserMarker(new L.LatLng(userLocation.lat, userLocation.lng), true);
     }
     
     toast({
@@ -991,6 +996,10 @@ function PizzaMap({
       map.doubleClickZoom.enable();
       map.boxZoom.enable();
       map.flyTo(HERMOSILLO_CENTER, 12);
+    }
+
+    if (userLocation) {
+      updateUserMarker(new L.LatLng(userLocation.lat, userLocation.lng), true);
     }
   };
 
@@ -1076,7 +1085,7 @@ function PizzaMap({
           if (typeof lat === 'number' && typeof lng === 'number') {
             setUserLocation({ lat, lng });
             const latlng = new L.LatLng(lat, lng);
-            myLocationMarkerRef.current = L.marker(latlng, { icon: myLocationIcon }).addTo(map);
+            updateUserMarker(latlng, true);
             // Center map on restored location so user sees nearby context
             map.setView(latlng, 16);
           }
@@ -1536,10 +1545,20 @@ function PizzaMap({
   }, [visiblePizzerias, selectedPizzeria, onMarkerClick, userLocation, activeRoute, popupOffsetY, popupOffsetYMobile]);
 
   return (
-    <div className="relative h-full w-full z-0 overflow-hidden">
+    <div
+      className="relative h-full w-full z-0 overflow-hidden"
+      style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
+    >
       <div
         ref={mapContainerRef}
-        style={{ height: '100%', width: '100%' }}
+        className={isNavigating && isLocked ? 'navigation-3d-view' : ''}
+        style={{
+          height: '100%',
+          width: '100%',
+          transform: (isNavigating && isLocked) ? `perspective(800px) rotateX(55deg) rotateZ(-${mapRotation}deg) scale(2.2)` : '',
+          transition: 'transform 0.5s ease-out',
+          '--map-rotation': `${mapRotation}deg`
+        } as React.CSSProperties}
       />
 
       {/* Map Controls Container - Hide when navigating */}
@@ -1677,7 +1696,10 @@ function PizzaMap({
         {isNavigating && routeDetails && (
           <>
             {/* Top Instruction Bar - Green (Google Maps Style - Dynamic) */}
-            <div className="absolute top-4 left-4 right-4 z-[1002] animate-in slide-in-from-top-4 duration-300">
+            <div
+              className="absolute top-4 left-4 right-4 z-[1002] animate-in slide-in-from-top-4 duration-300"
+              style={{ transform: 'translate3d(0, 0, 100px)' }}
+            >
               <div className="bg-[#00695C] text-white p-4 rounded-xl shadow-lg flex items-center min-h-[80px] border border-white/10">
                 {/* Maneuver Icon */}
                 <div className="flex-shrink-0 mr-4 bg-white/10 p-2 rounded-lg">
@@ -1696,7 +1718,10 @@ function PizzaMap({
               </div>
             </div>
 
-            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-3 z-[1001]">
+            <div
+              className="absolute right-4 top-1/2 flex flex-col gap-3 z-[1001]"
+              style={{ transform: 'translate3d(0, -50%, 100px)' }}
+            >
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -1734,14 +1759,20 @@ function PizzaMap({
             </div>
 
             {/* Floating Speed Bubble */}
-            <div className="absolute bottom-28 left-4 z-[1001] w-16 h-16 bg-black/80 rounded-full flex flex-col items-center justify-center border-2 border-white/10 shadow-xl backdrop-blur-sm">
+            <div
+              className="absolute bottom-28 left-4 z-[1001] w-16 h-16 bg-black/80 rounded-full flex flex-col items-center justify-center border-2 border-white/10 shadow-xl backdrop-blur-sm"
+              style={{ transform: 'translate3d(0, 0, 100px)' }}
+            >
               <span className="text-white font-bold text-xl leading-none">{currentSpeed}</span>
               <span className="text-white/70 text-[10px] uppercase font-bold">km/h</span>
             </div>
 
             {/* Recentrar / Decentrar Buttons (Locked / Unlocked navigation state controller) */}
             {isLocked ? (
-              <div className="absolute bottom-28 left-1/2 transform -translate-x-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+              <div
+                className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200"
+                style={{ transform: 'translate3d(-50%, 0, 100px)' }}
+              >
                 <Button
                   onClick={() => setIsLocked(false)}
                   className="bg-[#ef4444] hover:bg-[#dc2626] text-white shadow-2xl rounded-full px-6 h-12 text-base font-bold flex items-center gap-2 border-2 border-white/20"
@@ -1751,7 +1782,10 @@ function PizzaMap({
                 </Button>
               </div>
             ) : (
-              <div className="absolute bottom-28 left-1/2 transform -translate-x-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+              <div
+                className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200"
+                style={{ transform: 'translate3d(-50%, 0, 100px)' }}
+              >
                 <Button
                   onClick={() => {
                     setIsLocked(true);
@@ -1773,7 +1807,10 @@ function PizzaMap({
             )}
 
             {/* Bottom Status Bar - Black */}
-            <div className="absolute bottom-0 left-0 right-0 z-[1002] bg-[#111111] p-4 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 text-white pb-8">
+            <div
+              className="absolute bottom-0 left-0 right-0 z-[1002] bg-[#111111] p-4 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 text-white pb-8"
+              style={{ transform: 'translate3d(0, 0, 100px)' }}
+            >
               <div className="flex items-center justify-between">
                 <Button
                   onClick={exitNavigation}
