@@ -268,21 +268,41 @@ export async function getLayoutSettings() {
     const setting = await prisma.globalSettings.findUnique({
         where: { key: 'layout_settings' }
     })
-    if (!setting) return {
-        sheetWidth: 75, // vw
+    const defaultSettings = {
+        sheetWidth: 75,
+        sheetWidthMobile: 100,
         cardScale: 1,
+        cardScaleMobile: 1,
         buttonScale: 1,
-        buttonLayout: 'grid' // 'grid' | 'stack'
+        buttonLayout: 'grid',
+        searchWidth: 50,
+        searchWidthMobile: 90,
+        searchHeight: 12,
+        searchHeightMobile: 10,
+        buttonsTop: 160,
+        buttonsTopMobile: 160,
+        layerControlTop: 10,
+        layerControlTopMobile: 10,
+        popupWidth: 280,
+        popupWidthMobile: 260,
+        popupScale: 1,
+        popupScaleMobile: 1,
+        popupFontSize: 14,
+        popupFontSizeMobile: 12,
+        popupOffsetY: -35,
+        popupOffsetYMobile: -35,
+        mapHeight: 70,
+        mapHeightMobile: 55,
+        mapCenterOffset: 150,
+        iconAnchorX: 25,
+        iconAnchorY: 25
     }
+    if (!setting) return defaultSettings;
     try {
-        return JSON.parse(setting.value)
+        const parsed = JSON.parse(setting.value);
+        return { ...defaultSettings, ...parsed };
     } catch (e) {
-        return {
-            sheetWidth: 75,
-            cardScale: 1,
-            buttonScale: 1,
-            buttonLayout: 'grid'
-        }
+        return defaultSettings;
     }
 }
 

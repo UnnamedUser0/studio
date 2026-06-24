@@ -756,6 +756,20 @@ function HomeContent() {
           isAdmin={canManagePizzerias}
         />
       )}
+
+      {/* Dynamic Sheet Width Overrides */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        [data-radix-portal] .fixed.z-\[9999\] {
+          width: ${layoutSettings?.sheetWidthMobile ?? 100}vw !important;
+          max-width: 100vw !important;
+        }
+        @media (min-width: 640px) {
+          [data-radix-portal] .fixed.z-\[9999\] {
+            width: ${layoutSettings?.sheetWidth ?? 35}vw !important;
+            max-width: ${layoutSettings?.sheetWidth ?? 35}vw !important;
+          }
+        }
+      `}} />
     </>
   );
 }

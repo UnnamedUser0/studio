@@ -6,9 +6,8 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { getLayoutSettings, updateLayoutSettings } from '@/app/actions'
-import { Save, LayoutTemplate, Smartphone } from 'lucide-react'
+import { Save, LayoutTemplate } from 'lucide-react'
 import { Slider } from '@/components/ui/slider'
-import { Switch } from '@/components/ui/switch'
 
 export default function LayoutSettingsManager({ onSettingsChange }: { onSettingsChange?: (settings: any) => void }) {
     const { toast } = useToast()
@@ -40,6 +39,11 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
         popupFontSizeMobile: 12, // px
         popupOffsetY: -35, // px
         popupOffsetYMobile: -35, // px
+        mapHeight: 70,
+        mapHeightMobile: 55,
+        mapCenterOffset: 150,
+        iconAnchorX: 25,
+        iconAnchorY: 25
     })
 
     useEffect(() => {
@@ -49,7 +53,10 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
     const loadSettings = async () => {
         try {
             const data = await getLayoutSettings()
-            if (data) setSettings(data)
+            if (data) {
+                // Merge data with initial defaults to ensure no property becomes undefined
+                setSettings((prev: any) => ({ ...prev, ...data }))
+            }
         } catch (error) {
             console.error('Error loading layout settings:', error)
         }
@@ -67,14 +74,14 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
 
             toast({
                 title: 'Configuración guardada',
-                description: 'Los ajustes de diseño se han actualizado.',
-                className: 'bg-green-500 text-white border-none',
+                description: 'Los ajustes de diseño se han actualizado correctamente en el servidor.',
+                className: 'bg-green-600 text-white border-none',
             })
         } catch (error) {
             console.error('Error saving layout settings:', error)
             toast({
-                title: 'Error',
-                description: 'No se pudo guardar la configuración.',
+                title: 'Error al guardar',
+                description: 'No se pudo guardar la configuración en la base de datos.',
                 variant: 'destructive'
             })
         } finally {
@@ -92,39 +99,43 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <LayoutTemplate className="w-5 h-5" />
-                    Configuración de Mapa y Diseño
+        <Card className="border-0 shadow-none bg-transparent">
+            <CardHeader className="px-0 pt-0 pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl font-headline">
+                    <LayoutTemplate className="w-5 h-5 text-primary" />
+                    Consola de Ajustes y Diseño del Mapa
                 </CardTitle>
-                <CardDescription>Ajusta el tamaño del panel lateral y la visualización del mapa.</CardDescription>
+                <CardDescription>
+                    Modifica en tiempo real las proporciones del visor del mapa, buscador, controles laterales y popups.
+                </CardDescription>
 
                 <div className="flex w-full rounded-md bg-muted p-1 mt-4">
                     <button
                         onClick={() => setActiveTab('desktop')}
-                        className={`flex-1 text-sm font-medium py-1.5 rounded-sm transition-all ${activeTab === 'desktop' ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        type="button"
+                        className={`flex-1 text-xs font-semibold py-2 rounded-sm transition-all ${activeTab === 'desktop' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     >
-                        Escritorio
+                        Escritorio (Desktop)
                     </button>
                     <button
                         onClick={() => setActiveTab('mobile')}
-                        className={`flex-1 text-sm font-medium py-1.5 rounded-sm transition-all ${activeTab === 'mobile' ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        type="button"
+                        className={`flex-1 text-xs font-semibold py-2 rounded-sm transition-all ${activeTab === 'mobile' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     >
-                        Móvil
+                        Dispositivos Móviles
                     </button>
                 </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 px-0 pb-0">
 
                 {activeTab === 'desktop' ? (
-                    <div className="space-y-6 animate-in fade-in duration-300">
-                        {/* Desktop Settings */}
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                    <div className="space-y-5 animate-in fade-in duration-300">
+                        {/* Map Height */}
+                        <div className="space-y-3 border p-4 rounded-lg bg-muted/20">
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <Label>Altura del Mapa (% de Pantalla)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.mapHeight || 70}%</span>
+                                    <Label className="text-sm font-semibold text-foreground">Proporción de Altura del Mapa</Label>
+                                    <span className="text-xs font-bold text-primary">{settings.mapHeight || 70}%</span>
                                 </div>
                                 <Slider
                                     value={[settings.mapHeight || 70]}
@@ -133,14 +144,18 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     step={5}
                                     onValueChange={([val]) => handleSettingChange('mapHeight', val)}
                                 />
+                                <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                    Establece la altura vertical del mapa en relación con el alto total de la ventana gráfica en ordenadores.
+                                </p>
                             </div>
                         </div>
 
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                        {/* Sheet Width */}
+                        <div className="space-y-3 border p-4 rounded-lg bg-muted/20">
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <Label>Ancho del Panel Lateral</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.sheetWidth}%</span>
+                                    <Label className="text-sm font-semibold text-foreground">Ancho del Panel Lateral (Lista)</Label>
+                                    <span className="text-xs font-bold text-primary">{settings.sheetWidth}%</span>
                                 </div>
                                 <Slider
                                     value={[settings.sheetWidth]}
@@ -149,18 +164,22 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     step={5}
                                     onValueChange={([val]) => handleSettingChange('sheetWidth', val)}
                                 />
-                                <div className="flex justify-between text-xs text-muted-foreground">
-                                    <span>Más Mapa</span>
-                                    <span>Más Panel</span>
+                                <div className="flex justify-between text-[10px] text-muted-foreground">
+                                    <span>Más espacio para el mapa</span>
+                                    <span>Más ancho para listados</span>
                                 </div>
+                                <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                    Define el ancho porcentual (vw) asignado al panel que contiene la lista de pizzerías e información en vista de escritorio.
+                                </p>
                             </div>
                         </div>
 
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                        {/* Card Scale */}
+                        <div className="space-y-3 border p-4 rounded-lg bg-muted/20">
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <Label>Escala de Tarjetas</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.cardScale}x</span>
+                                    <Label className="text-sm font-semibold text-foreground">Escala Visual de Tarjetas de Pizzerías</Label>
+                                    <span className="text-xs font-bold text-primary">{settings.cardScale}x</span>
                                 </div>
                                 <Slider
                                     value={[settings.cardScale]}
@@ -169,17 +188,20 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     step={0.05}
                                     onValueChange={([val]) => handleSettingChange('cardScale', val)}
                                 />
+                                <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                    Ajusta el factor de escala global para el tamaño físico de las tarjetas informativas dentro del listado.
+                                </p>
                             </div>
                         </div>
 
-                        {/* Search Bar Settings (Desktop) */}
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                            <h4 className="font-semibold text-sm">Barra de Búsqueda</h4>
+                        {/* Search Bar Settings */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                            <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Buscador Inteligente</h4>
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
-                                        <Label>Ancho (% de Pantalla)</Label>
-                                        <span className="text-sm text-muted-foreground">{settings.searchWidth || 50}%</span>
+                                        <Label className="text-xs font-medium">Ancho Relativo del Buscador</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.searchWidth || 50}%</span>
                                     </div>
                                     <Slider
                                         value={[settings.searchWidth || 50]}
@@ -188,11 +210,14 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         step={5}
                                         onValueChange={([val]) => handleSettingChange('searchWidth', val)}
                                     />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Porcentaje del ancho de la pantalla que ocupará la barra flotante de búsqueda.
+                                    </p>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
-                                        <Label>Altura (Escala)</Label>
-                                        <span className="text-sm text-muted-foreground">{settings.searchHeight || 12}</span>
+                                        <Label className="text-xs font-medium">Altura del Buscador (Escala)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.searchHeight || 12}</span>
                                     </div>
                                     <Slider
                                         value={[settings.searchHeight || 12]}
@@ -201,155 +226,185 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         step={1}
                                         onValueChange={([val]) => handleSettingChange('searchHeight', val)}
                                     />
-                                    <p className="text-xs text-muted-foreground">Controla el alto y tamaño de texto.</p>
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Multiplicador de altura vertical y tamaño de fuente tipográfica de la caja de texto del buscador.
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <Label>Posición Vertical Botones (px)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.buttonsTop || 160}px</span>
+                        {/* Controls Positions */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                            <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Ubicación de Controles del Mapa</h4>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Desplazamiento Superior de Botones de Control</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.buttonsTop || 160}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.buttonsTop || 160]}
+                                        min={50}
+                                        max={500}
+                                        step={10}
+                                        onValueChange={([val]) => handleSettingChange('buttonsTop', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Posición en píxeles desde el borde superior para botones de acción rápida flotantes a la derecha (Brújula, Geolocalización, Fullscreen).
+                                    </p>
                                 </div>
-                                <Slider
-                                    value={[settings.buttonsTop || 160]}
-                                    min={50}
-                                    max={500}
-                                    step={10}
-                                    onValueChange={([val]) => handleSettingChange('buttonsTop', val)}
-                                />
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Desplazamiento Superior del Selector de Capas</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.layerControlTop || 10}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.layerControlTop || 10]}
+                                        min={0}
+                                        max={300}
+                                        step={5}
+                                        onValueChange={([val]) => handleSettingChange('layerControlTop', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Margen vertical superior en píxeles para el selector flotante de tipos de mapa (Satélite, Relieve, Tránsito).
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <Label>Posición Vertical Tipos de Mapa (px)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.layerControlTop || 10}px</span>
+                        {/* Popup Sizing */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                            <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Globo de Información (Popup)</h4>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Ancho del Globo de Información (Popup)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupWidth || 280}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.popupWidth || 280]}
+                                        min={200}
+                                        max={500}
+                                        step={10}
+                                        onValueChange={([val]) => handleSettingChange('popupWidth', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ancho fijo en píxeles para los globos de previsualización al seleccionar pizzerías.
+                                    </p>
                                 </div>
-                                <Slider
-                                    value={[settings.layerControlTop || 10]}
-                                    min={0}
-                                    max={300}
-                                    step={5}
-                                    onValueChange={([val]) => handleSettingChange('layerControlTop', val)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <Label>Ancho de Mini Paneles (Popup px)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.popupWidth || 280}px</span>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala Visual del Globo de Información</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupScale || 1}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.popupScale || 1]}
+                                        min={0.5}
+                                        max={1.5}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleSettingChange('popupScale', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Multiplicador de tamaño en escala 2D para ajustar la proporción visual del globo.
+                                    </p>
                                 </div>
-                                <Slider
-                                    value={[settings.popupWidth || 280]}
-                                    min={200}
-                                    max={500}
-                                    step={10}
-                                    onValueChange={([val]) => handleSettingChange('popupWidth', val)}
-                                />
-                            </div>
-                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
-                                <div className="flex justify-between">
-                                    <Label>Escala Global del Popup</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.popupScale || 1}x</span>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Tamaño de Fuente del Popup</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupFontSize || 14}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.popupFontSize || 14]}
+                                        min={10}
+                                        max={24}
+                                        step={1}
+                                        onValueChange={([val]) => handleSettingChange('popupFontSize', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Tamaño de letra en píxeles de las descripciones del globo emergente.
+                                    </p>
                                 </div>
-                                <Slider
-                                    value={[settings.popupScale || 1]}
-                                    min={0.5}
-                                    max={1.5}
-                                    step={0.05}
-                                    onValueChange={([val]) => handleSettingChange('popupScale', val)}
-                                />
-                            </div>
-                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
-                                <div className="flex justify-between">
-                                    <Label>Tamaño de Fuente del Contenido (px)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.popupFontSize || 14}px</span>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Desplazamiento de Altura del Popup (Offset Y)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupOffsetY || -35}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.popupOffsetY || -35]}
+                                        min={-100}
+                                        max={0}
+                                        step={1}
+                                        onValueChange={([val]) => handleSettingChange('popupOffsetY', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta qué tan arriba del marcador de pizza se dibuja el globo de diálogo (valores negativos indican mayor distancia hacia arriba).
+                                    </p>
                                 </div>
-                                <Slider
-                                    value={[settings.popupFontSize || 14]}
-                                    min={10}
-                                    max={24}
-                                    step={1}
-                                    onValueChange={([val]) => handleSettingChange('popupFontSize', val)}
-                                />
-                            </div>
-                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
-                                <div className="flex justify-between">
-                                    <Label>Desplazamiento Vertical Popup (px)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.popupOffsetY || -35}px</span>
-                                </div>
-                                <Slider
-                                    value={[settings.popupOffsetY || -35]}
-                                    min={-100}
-                                    max={0}
-                                    step={1}
-                                    onValueChange={([val]) => handleSettingChange('popupOffsetY', val)}
-                                />
                             </div>
                         </div>
 
                         {/* Advanced Map Settings */}
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                            <h4 className="font-semibold text-sm">Configuración Avanzada Mapa</h4>
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <Label>Desplazamiento Centro Cámara (px)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.mapCenterOffset || 150}px</span>
-                                </div>
-                                <Slider
-                                    value={[settings.mapCenterOffset || 150]}
-                                    min={0}
-                                    max={400}
-                                    step={10}
-                                    onValueChange={([val]) => handleSettingChange('mapCenterOffset', val)}
-                                />
-                                <p className="text-xs text-muted-foreground">Ajusta cuánto se baja el mapa para centrar el popup visualmente.</p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-dashed">
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                            <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Cámara y Punteros Avanzados</h4>
+                            <div className="space-y-4">
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
-                                        <Label>Ancla Icono X</Label>
-                                        <span className="text-sm text-muted-foreground">{settings.iconAnchorX || 25}px</span>
+                                        <Label className="text-xs font-medium">Desplazamiento de Centrado de Cámara (Offset vertical)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.mapCenterOffset || 150}px</span>
                                     </div>
                                     <Slider
-                                        value={[settings.iconAnchorX || 25]}
+                                        value={[settings.mapCenterOffset || 150]}
                                         min={0}
-                                        max={50}
-                                        step={1}
-                                        onValueChange={([val]) => handleSettingChange('iconAnchorX', val)}
+                                        max={400}
+                                        step={10}
+                                        onValueChange={([val]) => handleSettingChange('mapCenterOffset', val)}
                                     />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Número de píxeles que la cámara baja el mapa al enfocar una coordenada. Ayuda a evitar que los popups altos queden debajo del buscador.
+                                    </p>
                                 </div>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <Label>Ancla Icono Y</Label>
-                                        <span className="text-sm text-muted-foreground">{settings.iconAnchorY || 25}px</span>
+                                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-dashed">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-xs font-medium">Ancla Eje X (Marcador)</Label>
+                                            <span className="text-xs font-bold text-primary">{settings.iconAnchorX || 25}px</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.iconAnchorX || 25]}
+                                            min={0}
+                                            max={50}
+                                            step={1}
+                                            onValueChange={([val]) => handleSettingChange('iconAnchorX', val)}
+                                        />
                                     </div>
-                                    <Slider
-                                        value={[settings.iconAnchorY || 25]}
-                                        min={0}
-                                        max={50}
-                                        step={1}
-                                        onValueChange={([val]) => handleSettingChange('iconAnchorY', val)}
-                                    />
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-xs font-medium">Ancla Eje Y (Marcador)</Label>
+                                            <span className="text-xs font-bold text-primary">{settings.iconAnchorY || 25}px</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.iconAnchorY || 25]}
+                                            min={0}
+                                            max={50}
+                                            step={1}
+                                            onValueChange={([val]) => handleSettingChange('iconAnchorY', val)}
+                                        />
+                                    </div>
                                 </div>
+                                <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                    Alineación y desfase del marcador respecto a su punto geográfico (el valor ideal [25, 25] corresponde a centrado horizontal y vertical).
+                                </p>
                             </div>
-                            <p className="text-xs text-muted-foreground">Ajusta el punto de anclaje del icono (centro de la pizza).</p>
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-6 animate-in fade-in duration-300">
-                        {/* Mobile Settings */}
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                    <div className="space-y-5 animate-in fade-in duration-300">
+                        {/* Mobile Height */}
+                        <div className="space-y-3 border p-4 rounded-lg bg-muted/20">
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <Label>Altura del Mapa (Móvil)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.mapHeightMobile || 55}%</span>
+                                    <Label className="text-sm font-semibold text-foreground">Proporción de Altura del Mapa (Vista Móvil)</Label>
+                                    <span className="text-xs font-bold text-primary">{settings.mapHeightMobile || 55}%</span>
                                 </div>
                                 <Slider
                                     value={[settings.mapHeightMobile || 55]}
@@ -358,14 +413,18 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     step={5}
                                     onValueChange={([val]) => handleSettingChange('mapHeightMobile', val)}
                                 />
+                                <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                    Altura del mapa para dispositivos móviles expresada en porcentaje respecto a la altura útil de la pantalla móvil.
+                                </p>
                             </div>
                         </div>
 
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                        {/* Mobile Sheet Width */}
+                        <div className="space-y-3 border p-4 rounded-lg bg-muted/20">
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <Label>Ancho del Panel (Móvil)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.sheetWidthMobile ?? 100}%</span>
+                                    <Label className="text-sm font-semibold text-foreground">Ancho del Panel (Vista Móvil)</Label>
+                                    <span className="text-xs font-bold text-primary">{settings.sheetWidthMobile ?? 100}%</span>
                                 </div>
                                 <Slider
                                     value={[settings.sheetWidthMobile ?? 100]}
@@ -374,14 +433,18 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     step={5}
                                     onValueChange={([val]) => handleSettingChange('sheetWidthMobile', val)}
                                 />
+                                <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                    Ancho que abarca la lista de pizzerías deslizable en móviles. Un 100% cubre el ancho total.
+                                </p>
                             </div>
                         </div>
 
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                        {/* Mobile Card Scale */}
+                        <div className="space-y-3 border p-4 rounded-lg bg-muted/20">
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <Label>Escala de Tarjetas (Móvil)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.cardScaleMobile ?? 1}x</span>
+                                    <Label className="text-sm font-semibold text-foreground">Escala Visual de Tarjetas (Vista Móvil)</Label>
+                                    <span className="text-xs font-bold text-primary">{settings.cardScaleMobile ?? 1}x</span>
                                 </div>
                                 <Slider
                                     value={[settings.cardScaleMobile ?? 1]}
@@ -390,17 +453,20 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     step={0.05}
                                     onValueChange={([val]) => handleSettingChange('cardScaleMobile', val)}
                                 />
+                                <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                    Ajuste de escala de tamaño físico para los contenedores de pizzería en dispositivos celulares.
+                                </p>
                             </div>
                         </div>
 
-                        {/* Search Bar Settings (Mobile) */}
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                            <h4 className="font-semibold text-sm">Barra de Búsqueda (Móvil)</h4>
+                        {/* Mobile Search Bar Settings */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                            <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Buscador Inteligente (Móvil)</h4>
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
-                                        <Label>Ancho (% de Pantalla)</Label>
-                                        <span className="text-sm text-muted-foreground">{settings.searchWidthMobile || 90}%</span>
+                                        <Label className="text-xs font-medium">Ancho Relativo del Buscador (Vista Móvil)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.searchWidthMobile || 90}%</span>
                                     </div>
                                     <Slider
                                         value={[settings.searchWidthMobile || 90]}
@@ -409,11 +475,14 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         step={5}
                                         onValueChange={([val]) => handleSettingChange('searchWidthMobile', val)}
                                     />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Define qué porcentaje del ancho disponible ocupa el buscador flotante en la vista celular.
+                                    </p>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
-                                        <Label>Altura (Escala)</Label>
-                                        <span className="text-sm text-muted-foreground">{settings.searchHeightMobile || 10}</span>
+                                        <Label className="text-xs font-medium">Altura del Buscador (Vista Móvil)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.searchHeightMobile || 10}</span>
                                     </div>
                                     <Slider
                                         value={[settings.searchHeightMobile || 10]}
@@ -422,92 +491,120 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         step={1}
                                         onValueChange={([val]) => handleSettingChange('searchHeightMobile', val)}
                                     />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Tamaño de altura del input de búsqueda e iconos en dispositivos táctiles.
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <Label>Posición Vertical Botones (Móvil px)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.buttonsTopMobile || 160}px</span>
+                        {/* Mobile Controls Position */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                            <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Ubicación de Controles (Móvil)</h4>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Desplazamiento Superior de Botones de Control (Vista Móvil)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.buttonsTopMobile || 160}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.buttonsTopMobile || 160]}
+                                        min={50}
+                                        max={500}
+                                        step={10}
+                                        onValueChange={([val]) => handleSettingChange('buttonsTopMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Margen vertical en píxeles para los botones flotantes laterales en dispositivos móviles.
+                                    </p>
                                 </div>
-                                <Slider
-                                    value={[settings.buttonsTopMobile || 160]}
-                                    min={50}
-                                    max={500}
-                                    onValueChange={([val]) => handleSettingChange('buttonsTopMobile', val)}
-                                />
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Desplazamiento Superior del Selector de Capas (Vista Móvil)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.layerControlTopMobile || 10}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.layerControlTopMobile || 10]}
+                                        min={0}
+                                        max={300}
+                                        step={5}
+                                        onValueChange={([val]) => handleSettingChange('layerControlTopMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Margen vertical superior del control selector de estilo de mapa en dispositivos móviles.
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <Label>Posición Vertical Tipos de Mapa (Móvil px)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.layerControlTopMobile || 10}px</span>
+                        {/* Mobile Popup Settings */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                            <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Globo de Información (Popup Móvil)</h4>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Ancho del Globo de Información (Popup Móvil)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupWidthMobile || 260}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.popupWidthMobile || 260]}
+                                        min={150}
+                                        max={350}
+                                        step={10}
+                                        onValueChange={([val]) => handleSettingChange('popupWidthMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta el ancho del popup al tocar un marcador en celulares.
+                                    </p>
                                 </div>
-                                <Slider
-                                    value={[settings.layerControlTopMobile || 10]}
-                                    min={0}
-                                    max={300}
-                                    onValueChange={([val]) => handleSettingChange('layerControlTopMobile', val)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 border p-4 rounded-lg bg-muted/30">
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <Label>Ancho de Mini Paneles (Popup Móvil px)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.popupWidthMobile || 260}px</span>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala Visual del Globo de Información (Vista Móvil)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupScaleMobile || 1}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.popupScaleMobile || 1]}
+                                        min={0.5}
+                                        max={1.5}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleSettingChange('popupScaleMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Escalado visual 2D del popup emergente en dispositivos móviles.
+                                    </p>
                                 </div>
-                                <Slider
-                                    value={[settings.popupWidthMobile || 260]}
-                                    min={150}
-                                    max={350}
-                                    step={10}
-                                    onValueChange={([val]) => handleSettingChange('popupWidthMobile', val)}
-                                />
-                            </div>
-                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
-                                <div className="flex justify-between">
-                                    <Label>Escala Global del Popup (Móvil)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.popupScaleMobile || 1}x</span>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Tamaño de Fuente del Popup (Vista Móvil)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupFontSizeMobile || 12}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.popupFontSizeMobile || 12]}
+                                        min={10}
+                                        max={24}
+                                        step={1}
+                                        onValueChange={([val]) => handleSettingChange('popupFontSizeMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Tamaño de letra en píxeles del popup emergente al usar móviles.
+                                    </p>
                                 </div>
-                                <Slider
-                                    value={[settings.popupScaleMobile || 1]}
-                                    min={0.5}
-                                    max={1.5}
-                                    step={0.05}
-                                    onValueChange={([val]) => handleSettingChange('popupScaleMobile', val)}
-                                />
-                            </div>
-                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
-                                <div className="flex justify-between">
-                                    <Label>Tamaño de Fuente del Contenido (Móvil px)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.popupFontSizeMobile || 12}px</span>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Desplazamiento de Altura del Popup (Offset Y Vista Móvil)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupOffsetYMobile || -35}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.popupOffsetYMobile || -35]}
+                                        min={-100}
+                                        max={0}
+                                        step={1}
+                                        onValueChange={([val]) => handleSettingChange('popupOffsetYMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajuste de separación vertical del popup móvil con respecto al icono de la pizzería.
+                                    </p>
                                 </div>
-                                <Slider
-                                    value={[settings.popupFontSizeMobile || 12]}
-                                    min={10}
-                                    max={24}
-                                    step={1}
-                                    onValueChange={([val]) => handleSettingChange('popupFontSizeMobile', val)}
-                                />
-                            </div>
-                            <div className="space-y-2 mt-4 pt-4 border-t border-dashed">
-                                <div className="flex justify-between">
-                                    <Label>Desplazamiento Vertical Popup (Móvil px)</Label>
-                                    <span className="text-sm text-muted-foreground">{settings.popupOffsetYMobile || -35}px</span>
-                                </div>
-                                <Slider
-                                    value={[settings.popupOffsetYMobile || -35]}
-                                    min={-100}
-                                    max={0}
-                                    step={1}
-                                    onValueChange={([val]) => handleSettingChange('popupOffsetYMobile', val)}
-                                />
                             </div>
                         </div>
                     </div>
@@ -517,10 +614,10 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                 <Button
                     onClick={handleSave}
                     disabled={loading}
-                    className="w-full gap-2"
+                    className="w-full gap-2 mt-6 py-5 text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
                 >
                     <Save className="w-4 h-4" />
-                    {loading ? 'Guardando...' : 'Guardar Cambios'}
+                    {loading ? 'Guardando Ajustes...' : 'Guardar Cambios y Aplicar'}
                 </Button>
             </CardContent>
         </Card >

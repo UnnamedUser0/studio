@@ -436,6 +436,12 @@ function PizzaMap({
   const isRecalculatingRef = useRef<boolean>(false);
 
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
+  const [isAdjustingLocation, setIsAdjustingLocation] = useState(false);
+  const activeRouteRef = useRef<{ lat: number, lng: number } | null>(null);
+
+  useEffect(() => {
+    activeRouteRef.current = activeRoute;
+  }, [activeRoute]);
 
   const isNavigatingRef = useRef(isNavigating);
   const isLockedRef = useRef(isLocked);
@@ -582,10 +588,44 @@ function PizzaMap({
       const marker = new maplibregl.Marker({
         element: el,
         rotationAlignment: 'map',
-        pitchAlignment: 'map'
+        pitchAlignment: 'map',
+        draggable: isAdjustingLocation
       })
       .setLngLat(lnglat)
       .addTo(map);
+
+      // Register dragend listener to update user location state and recalculate active route
+      marker.on('dragend', () => {
+        const newLngLat = marker.getLngLat();
+        const coords = { lat: newLngLat.lat, lng: newLngLat.lng };
+        
+        setUserLocation(coords);
+        if (onLocateUser) {
+          onLocateUser(coords);
+        }
+        
+        setIsAdjustingLocation(false);
+        marker.setDraggable(false);
+        
+        const markerEl = marker.getElement();
+        markerEl.style.cursor = '';
+        markerEl.style.boxShadow = '';
+        
+        try {
+          localStorage.setItem('userLocation', JSON.stringify(coords));
+        } catch (e) {
+          console.warn("Storage access failed:", e);
+        }
+        
+        toast({
+          title: "Ubicación ajustada",
+          description: `Nueva ubicación establecida: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`
+        });
+        
+        if (activeRouteRef.current) {
+          drawRoute(activeRouteRef.current, coords);
+        }
+      });
 
       myLocationMarkerRef.current = marker;
     } else {
@@ -765,9 +805,10 @@ function PizzaMap({
     );
   };
 
-  const drawRoute = async (destination: { lat: number, lng: number }) => {
+  const drawRoute = async (destination: { lat: number, lng: number }, originOverride?: { lat: number, lng: number }) => {
     const map = mapInstanceRef.current;
-    if (!map || !userLocation) {
+    const origin = originOverride || userLocation;
+    if (!map || !origin) {
       toast({
         variant: 'destructive',
         title: 'Ubicación no disponible',
@@ -785,7 +826,7 @@ function PizzaMap({
       }
 
       const response = await fetch(
-        `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&steps=true`
+        `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&steps=true`
       );
 
       if (!response.ok) throw new Error('Error al obtener la ruta');
@@ -861,7 +902,7 @@ function PizzaMap({
           duration: route.duration
         });
 
-        const userLatLng = { lat: userLocation.lat, lng: userLocation.lng };
+        const userLatLng = { lat: origin.lat, lng: origin.lng };
         updateNavigationInstructions(userLatLng, steps, destinationNameRef.current);
 
         if (!isNavigating) {
@@ -1771,31 +1812,57 @@ function PizzaMap({
                 </Button>
 
                 {/* Manual Location Adjustment */}
-                <div className="hidden md:block">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          onClick={() => {
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={isAdjustingLocation ? "default" : "secondary"}
+                        size="icon"
+                        onClick={() => {
+                          if (!myLocationMarkerRef.current) {
+                            toast({
+                              variant: "destructive",
+                              title: "Marcador no disponible",
+                              description: "Por favor ubícate primero usando el botón de brújula."
+                            });
+                            return;
+                          }
+                          const marker = myLocationMarkerRef.current;
+                          const nextState = !isAdjustingLocation;
+                          setIsAdjustingLocation(nextState);
+                          marker.setDraggable(nextState);
+                          const el = marker.getElement();
+                          if (nextState) {
                             changeLockState(false);
-                            if (myLocationMarkerRef.current) {
-                              const marker = myLocationMarkerRef.current;
-                              const el = marker.getElement();
-                              el.style.cursor = 'grab';
-                              toast({ title: "Modo ajuste", description: "Haz clic y arrastra tu icono para ajustar." });
-                            }
-                          }}
-                          className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white/90 text-black hover:bg-white"
-                        >
-                          <span className="text-base">📍</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left">Ajustar Ubicación</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
+                            el.style.cursor = 'grab';
+                            el.style.boxShadow = '0 0 12px 4px rgba(34, 197, 94, 0.8)';
+                            toast({
+                              title: "Ajuste de ubicación activo",
+                              description: "Haz clic y arrastra tu icono de ubicación para ajustar tu posición."
+                            });
+                          } else {
+                            el.style.cursor = '';
+                            el.style.boxShadow = '';
+                            toast({
+                              title: "Ajuste de ubicación desactivado",
+                              description: "Se ha cancelado el ajuste."
+                            });
+                          }
+                        }}
+                        className={cn(
+                          "shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 transition-colors duration-200 border-2",
+                          isAdjustingLocation
+                            ? "bg-green-600 hover:bg-green-700 text-white border-green-400"
+                            : "bg-white dark:bg-slate-950 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-900 border-transparent"
+                        )}
+                        aria-label="Ajustar Ubicación"
+                      >
+                        <span className="text-sm md:text-base">📍</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">Ajustar Ubicación</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
 
