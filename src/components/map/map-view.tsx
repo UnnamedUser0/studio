@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import SmartSearch from '@/components/search/smart-search';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -55,6 +55,17 @@ export default function MapView({
   const [isNavigating, setIsNavigating] = useState(false);
 
   const toggleFullscreen = () => setIsFullscreen(!isFullscreen);
+
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.classList.add('map-fullscreen');
+    } else {
+      document.body.classList.remove('map-fullscreen');
+    }
+    return () => {
+      document.body.classList.remove('map-fullscreen');
+    };
+  }, [isFullscreen]);
 
   const mapHeightStyle = useMemo(() => {
     if (!layoutSettings) return {};

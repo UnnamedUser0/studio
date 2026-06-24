@@ -176,3 +176,16 @@
     cursor: url('/click.png'), grabbing !important;
   }
 }
+
+/* Fullscreen map layout overrides */
+body.map-fullscreen header {
+  display: none !important;
+}
+
+body.map-fullscreen .mobile-bottom-nav {
+  display: none !important;
+}
+
+body.map-fullscreen main {
+  padding-bottom: 0 !important;
+}

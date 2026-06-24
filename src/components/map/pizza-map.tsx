@@ -1212,12 +1212,17 @@ function PizzaMap({
         }
       });
 
-      // Unlock map center tracking on manual dragging
-      map.on('dragstart', () => {
+      // Unlock map center tracking on manual interactions (drag, zoom, rotate, pitch)
+      const unlockMap = () => {
         if (isNavigatingRef.current) {
           changeLockState(false);
         }
-      });
+      };
+
+      map.on('dragstart', unlockMap);
+      map.on('zoomstart', unlockMap);
+      map.on('rotatestart', unlockMap);
+      map.on('pitchstart', unlockMap);
 
       let savedBaseLayerName = 'Estándar';
       try {
@@ -1632,10 +1637,7 @@ function PizzaMap({
     prevSelectedPizzeriaRef.current = selectedPizzeria;
 
     if (selectedPizzeria) {
-      const height = map.getContainer().clientHeight;
-      const isMobile = window.innerWidth < 768;
-      const offsetFactor = isMobile ? 0.22 : 0.15;
-      const offsetPixels = height * offsetFactor;
+      const offsetPixels = mapCenterOffset;
 
       map.easeTo({
         center: [selectedPizzeria.lng, selectedPizzeria.lat],
