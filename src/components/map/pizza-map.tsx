@@ -439,6 +439,7 @@ function PizzaMap({
 
   const isNavigatingRef = useRef(isNavigating);
   const isLockedRef = useRef(isLocked);
+  const isProgrammaticCloseRef = useRef<boolean>(false);
 
   const changeLockState = (val: boolean) => {
     setIsLocked(val);
@@ -511,21 +512,47 @@ function PizzaMap({
     if (navigating) {
       el.innerHTML = `
         <div class="nav-arrow-inner" style="
-          width: 40px;
-          height: 40px;
+          width: 64px;
+          height: 64px;
           display: flex;
           align-items: center;
           justify-content: center;
-          filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+          position: relative;
         ">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="20" cy="20" r="18" fill="white" fill-opacity="0.2"/>
-            <path d="M20 5L32 35L20 27L8 35L20 5Z" fill="#2563EB" stroke="white" stroke-width="3" stroke-linejoin="round"/>
-          </svg>
+          <!-- Pulse Halo (GPS Accuracy) -->
+          <div style="
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(37, 99, 235, 0.15);
+            border: 1.5px solid rgba(37, 99, 235, 0.3);
+            animation: pulse 2s infinite ease-in-out;
+            pointer-events: none;
+          "></div>
+          
+          <!-- White Circle Base -->
+          <div style="
+            position: absolute;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+          ">
+            <!-- Blue Chevron Arrow pointing straight UP -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L22 22L12 17L2 22L12 2Z" fill="#1A73E8" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </div>
         </div>
       `;
-      el.style.width = '40px';
-      el.style.height = '40px';
+      el.style.width = '64px';
+      el.style.height = '64px';
     } else {
       el.innerHTML = `
         <div style="
@@ -767,7 +794,9 @@ function PizzaMap({
 
       if (data.routes && data.routes.length > 0) {
         if (activePopupRef.current) {
+          isProgrammaticCloseRef.current = true;
           activePopupRef.current.remove();
+          isProgrammaticCloseRef.current = false;
         }
 
         const route = data.routes[0];
@@ -858,25 +887,37 @@ function PizzaMap({
     const latlngs = routeCoordinatesRef.current;
     if (!latlngs || latlngs.length < 2) return 0;
 
+    // Find the closest segment
     let minDist = Infinity;
     let closestIdx = 0;
-    for (let i = 0; i < latlngs.length; i++) {
-      const d = Math.sqrt(Math.pow(latlngs[i][0] - userLat, 2) + Math.pow(latlngs[i][1] - userLng, 2));
+    for (let i = 0; i < latlngs.length - 1; i++) {
+      const d = distanceToSegment({ lat: userLat, lng: userLng }, { lat: latlngs[i][0], lng: latlngs[i][1] }, { lat: latlngs[i + 1][0], lng: latlngs[i + 1][1] });
       if (d < minDist) {
         minDist = d;
         closestIdx = i;
       }
     }
 
-    const lookAheadIdx = Math.min(closestIdx + 3, latlngs.length - 1);
-
-    if (lookAheadIdx > closestIdx) {
-      return calculateBearing(latlngs[closestIdx][0], latlngs[closestIdx][1], latlngs[lookAheadIdx][0], latlngs[lookAheadIdx][1]);
-    } else if (closestIdx > 0) {
-      return calculateBearing(latlngs[closestIdx - 1][0], latlngs[closestIdx - 1][1], latlngs[closestIdx][0], latlngs[closestIdx][1]);
+    // Look ahead along the route for at least 15 meters to get a stable segment bearing
+    let targetIdx = closestIdx + 1;
+    let dist = 0;
+    while (targetIdx < latlngs.length) {
+      dist = getDistance(
+        { latitude: latlngs[closestIdx][0], longitude: latlngs[closestIdx][1] },
+        { latitude: latlngs[targetIdx][0], longitude: latlngs[targetIdx][1] }
+      );
+      if (dist >= 15 || targetIdx === latlngs.length - 1) {
+        break;
+      }
+      targetIdx++;
     }
 
-    return 0;
+    return calculateBearing(
+      latlngs[closestIdx][0],
+      latlngs[closestIdx][1],
+      latlngs[targetIdx][0],
+      latlngs[targetIdx][1]
+    );
   };
 
   const animateToLocation = (targetLat: number, targetLng: number, targetSpeed: number) => {
@@ -1281,7 +1322,9 @@ function PizzaMap({
     if (!map) return;
 
     if (activePopupRef.current) {
+      isProgrammaticCloseRef.current = true;
       activePopupRef.current.remove();
+      isProgrammaticCloseRef.current = false;
     }
 
     const container = document.createElement('div');
@@ -1436,13 +1479,15 @@ function PizzaMap({
       offset: [0, currentOffset],
       closeButton: true,
       closeOnClick: true,
-      className: 'custom-popup'
+      className: 'custom-popup',
+      anchor: 'bottom'
     })
     .setDOMContent(container)
     .setLngLat([pizzeria.lng, pizzeria.lat])
     .addTo(map);
 
     popup.on('close', () => {
+      if (isProgrammaticCloseRef.current) return;
       activePopupRef.current = null;
       if (selectedPizzeria?.id === pizzeria.id) {
         onCloseDetail?.();
@@ -1565,7 +1610,9 @@ function PizzaMap({
     } else if (prevSelected && !selectedPizzeria) {
       // If selectedPizzeria transitions to null (closed from parent sheet), remove active map popup
       if (activePopupRef.current) {
+        isProgrammaticCloseRef.current = true;
         activePopupRef.current.remove();
+        isProgrammaticCloseRef.current = false;
       }
     } else if (searchCenter) {
       map.easeTo({
@@ -2230,6 +2277,22 @@ function PizzaMap({
           display: block !important;
           width: 0 !important;
           z-index: 1 !important;
+        }
+
+        /* Pulse Keyframes for GPS Halo */
+        @keyframes pulse {
+          0% {
+            transform: scale(0.85);
+            opacity: 0.9;
+          }
+          50% {
+            transform: scale(1.15);
+            opacity: 0.3;
+          }
+          100% {
+            transform: scale(0.85);
+            opacity: 0.9;
+          }
         }
       `}</style>
     </div>
