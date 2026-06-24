@@ -1,25 +1,27 @@
 'use client';
 
 import { useEffect, useRef, useState, memo, useMemo } from 'react';
-import 'leaflet/dist/leaflet.css';
-import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css';
-import * as L from 'leaflet';
-import 'leaflet-defaulticon-compatibility';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Pizzeria } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star, Settings, Navigation, X, ArrowLeft, MoreVertical, Volume2, Compass, AlertTriangle, Search, Leaf, CornerUpLeft, CornerUpRight, ArrowUp, Phone, Globe, Share2 } from 'lucide-react';
+import { Maximize2, Minimize2, LocateFixed, MapPin, Ruler, Star, Settings, Navigation, X, ArrowLeft, MoreVertical, Volume2, Compass, AlertTriangle, Search, Leaf, CornerUpLeft, CornerUpRight, ArrowUp, Phone, Globe, Share2, Layers } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
 import getDistance from 'geolib/es/getDistance';
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import LayoutSettingsManager from '@/components/admin/layout-settings-manager';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
-
-// Define custom icons outside or Inside
-// We move them inside to support dynamic anchoring from props if needed, or keep them static if just props are sufficient.
-// The user wants to adjust "icon location", which implies anchor.
-const HERMOSILLO_CENTER: L.LatLngTuple = [29.085, -110.977];
+const HERMOSILLO_CENTER: [number, number] = [29.085, -110.977]; // [lat, lng]
 
 type PizzaMapProps = {
   pizzerias: Pizzeria[];
@@ -35,12 +37,331 @@ type PizzaMapProps = {
   routeDestination?: { lat: number, lng: number } | null;
   popupOffsetY?: number;
   popupOffsetYMobile?: number;
-  mapCenterOffset?: number; // New prop for adjusting the map center shift
-  iconAnchorX?: number; // New prop for icon anchor adjustment
-  iconAnchorY?: number; // New prop for icon anchor adjustment
-  disableDistanceFilter?: boolean; // New prop to bypass distance check
-  explicitPizzeriasToShow?: Pizzeria[]; // New prop to force render specific pizzerias
-  onNavigationStateChange?: (navigating: boolean) => void; // Callback to notify navigation mode
+  mapCenterOffset?: number;
+  iconAnchorX?: number;
+  iconAnchorY?: number;
+  disableDistanceFilter?: boolean;
+  explicitPizzeriasToShow?: Pizzeria[];
+  onNavigationStateChange?: (navigating: boolean) => void;
+};
+
+type Coord = { lat: number; lng: number };
+
+const getMapStyle = () => {
+  return {
+    version: 8,
+    sources: {
+      "osm": {
+        type: "raster",
+        tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png", "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png", "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        tileSize: 256,
+        attribution: "&copy; OpenStreetMap contributors"
+      },
+      "satellite": {
+        type: "raster",
+        tiles: ["https://mt0.google.com/vt/lyrs=y&hl=es&x={x}&y={y}&z={z}"],
+        tileSize: 256,
+        attribution: "Map data &copy; Google"
+      },
+      "terrain": {
+        type: "raster",
+        tiles: ["https://a.tile.opentopomap.org/{z}/{x}/{y}.png", "https://b.tile.opentopomap.org/{z}/{x}/{y}.png", "https://c.tile.opentopomap.org/{z}/{x}/{y}.png"],
+        tileSize: 256,
+        attribution: "Map data &copy; OpenTopoMap"
+      },
+      "traffic": {
+        type: "raster",
+        tiles: ["https://mt0.google.com/vt/lyrs=m,traffic&hl=es&x={x}&y={y}&z={z}"],
+        tileSize: 256,
+        attribution: "Traffic &copy; Google"
+      }
+    },
+    layers: [
+      {
+        id: "osm-layer",
+        type: "raster",
+        source: "osm",
+        layout: { visibility: "visible" }
+      },
+      {
+        id: "satellite-layer",
+        type: "raster",
+        source: "satellite",
+        layout: { visibility: "none" }
+      },
+      {
+        id: "terrain-layer",
+        type: "raster",
+        source: "terrain",
+        layout: { visibility: "none" }
+      },
+      {
+        id: "traffic-layer",
+        type: "raster",
+        source: "traffic",
+        layout: { visibility: "none" }
+      }
+    ]
+  } as maplibregl.StyleSpecification;
+};
+
+const updateLayersVisibility = (map: maplibregl.Map, baseLayer: string, showTraffic: boolean) => {
+  map.setLayoutProperty('osm-layer', 'visibility', baseLayer === 'Estándar' ? 'visible' : 'none');
+  map.setLayoutProperty('satellite-layer', 'visibility', baseLayer === 'Satélite' ? 'visible' : 'none');
+  map.setLayoutProperty('terrain-layer', 'visibility', baseLayer === 'Relieve' ? 'visible' : 'none');
+  map.setLayoutProperty('traffic-layer', 'visibility', showTraffic ? 'visible' : 'none');
+};
+
+const calculateBearing = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+  const toRad = (deg: number) => deg * Math.PI / 180;
+  const toDeg = (rad: number) => rad * 180 / Math.PI;
+
+  const y = Math.sin(toRad(lng2 - lng1)) * Math.cos(toRad(lat2));
+  const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+    Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lng2 - lng1));
+  const bearing = (toDeg(Math.atan2(y, x)) + 360) % 360;
+  return bearing;
+};
+
+const getOffsetLatLng = (lat: number, lng: number, bearing: number, distanceMeters: number) => {
+  const R = 6378137;
+  const bearingRad = (bearing * Math.PI) / 180;
+  const dLat = (distanceMeters * Math.cos(bearingRad)) / R;
+  const dLng = (distanceMeters * Math.sin(bearingRad)) / (R * Math.cos((lat * Math.PI) / 180));
+  return {
+    lat: lat + (dLat * 180) / Math.PI,
+    lng: lng + (dLng * 180) / Math.PI,
+  };
+};
+
+const distanceToSegment = (p: Coord, a: Coord, b: Coord) => {
+  const x = p.lng;
+  const y = p.lat;
+  const x1 = a.lng;
+  const y1 = a.lat;
+  const x2 = b.lng;
+  const y2 = b.lat;
+
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  if (dx === 0 && dy === 0) {
+    return getDistance({ latitude: y, longitude: x }, { latitude: y1, longitude: x1 });
+  }
+
+  let t = ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy);
+  t = Math.max(0, Math.min(1, t));
+
+  const closestLng = x1 + t * dx;
+  const closestLat = y1 + t * dy;
+
+  return getDistance({ latitude: y, longitude: x }, { latitude: closestLat, longitude: closestLng });
+};
+
+const distanceToPolyline = (p: Coord, polylinePoints: Coord[]) => {
+  let minDistance = Infinity;
+  for (let i = 0; i < polylinePoints.length - 1; i++) {
+    const d = distanceToSegment(p, polylinePoints[i], polylinePoints[i + 1]);
+    if (d < minDistance) {
+      minDistance = d;
+    }
+  }
+  return minDistance;
+};
+
+const getClosestPointOnPolyline = (p: Coord, polylinePoints: Coord[]): Coord => {
+  if (!polylinePoints || polylinePoints.length === 0) return p;
+  if (polylinePoints.length === 1) return polylinePoints[0];
+
+  let minDistance = Infinity;
+  let closestPoint = polylinePoints[0];
+
+  for (let i = 0; i < polylinePoints.length - 1; i++) {
+    const a = polylinePoints[i];
+    const b = polylinePoints[i + 1];
+
+    const x = p.lng;
+    const y = p.lat;
+    const x1 = a.lng;
+    const y1 = a.lat;
+    const x2 = b.lng;
+    const y2 = b.lat;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+
+    let t = 0;
+    if (dx !== 0 || dy !== 0) {
+      t = ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy);
+      t = Math.max(0, Math.min(1, t));
+    }
+
+    const projLng = x1 + t * dx;
+    const projLat = y1 + t * dy;
+    const projLatLng = { lat: projLat, lng: projLng };
+
+    const d = getDistance(
+      { latitude: y, longitude: x },
+      { latitude: projLat, longitude: projLng }
+    );
+
+    if (d < minDistance) {
+      minDistance = d;
+      closestPoint = projLatLng;
+    }
+  }
+
+  return closestPoint;
+};
+
+const calculateRemainingRouteDistance = (userLatLng: Coord, polylinePoints: Coord[]) => {
+  if (polylinePoints.length < 2) return 0;
+
+  let minDistance = Infinity;
+  let closestSegmentIdx = 0;
+  let closestPointOnSegment = polylinePoints[0];
+
+  for (let i = 0; i < polylinePoints.length - 1; i++) {
+    const a = polylinePoints[i];
+    const b = polylinePoints[i + 1];
+
+    const x = userLatLng.lng;
+    const y = userLatLng.lat;
+    const x1 = a.lng;
+    const y1 = a.lat;
+    const x2 = b.lng;
+    const y2 = b.lat;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+
+    let t = 0;
+    if (dx !== 0 || dy !== 0) {
+      t = ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy);
+      t = Math.max(0, Math.min(1, t));
+    }
+
+    const projLng = x1 + t * dx;
+    const projLat = y1 + t * dy;
+    const projLatLng = { lat: projLat, lng: projLng };
+
+    const d = getDistance(
+      { latitude: y, longitude: x },
+      { latitude: projLat, longitude: projLng }
+    );
+
+    if (d < minDistance) {
+      minDistance = d;
+      closestSegmentIdx = i;
+      closestPointOnSegment = projLatLng;
+    }
+  }
+
+  let remainingDist = getDistance(
+    { latitude: closestPointOnSegment.lat, longitude: closestPointOnSegment.lng },
+    { latitude: polylinePoints[closestSegmentIdx + 1].lat, longitude: polylinePoints[closestSegmentIdx + 1].lng }
+  );
+
+  for (let i = closestSegmentIdx + 1; i < polylinePoints.length - 1; i++) {
+    remainingDist += getDistance(
+      { latitude: polylinePoints[i].lat, longitude: polylinePoints[i].lng },
+      { latitude: polylinePoints[i + 1].lat, longitude: polylinePoints[i + 1].lng }
+    );
+  }
+
+  return remainingDist;
+};
+
+const getCurrentStep = (userLatLng: Coord, steps: any[]) => {
+  if (!steps || steps.length === 0) return null;
+
+  let closestIdx = 0;
+  let minDistance = Infinity;
+
+  for (let i = 0; i < steps.length; i++) {
+    if (!steps[i]?.maneuver?.location) continue;
+    const stepLatLng = { lat: steps[i].maneuver.location[1], lng: steps[i].maneuver.location[0] };
+    const d = getDistance(
+      { latitude: userLatLng.lat, longitude: userLatLng.lng },
+      { latitude: stepLatLng.lat, longitude: stepLatLng.lng }
+    );
+    if (d < minDistance) {
+      minDistance = d;
+      closestIdx = i;
+    }
+  }
+
+  const closestStep = steps[closestIdx];
+  if (!closestStep) return null;
+
+  const closestStepLatLng = { lat: closestStep.maneuver.location[1], lng: closestStep.maneuver.location[0] };
+  const distToManeuver = getDistance(
+    { latitude: userLatLng.lat, longitude: userLatLng.lng },
+    { latitude: closestStepLatLng.lat, longitude: closestStepLatLng.lng }
+  );
+
+  if (distToManeuver < 20 && closestIdx < steps.length - 1) {
+    const nextStep = steps[closestIdx + 1];
+    if (nextStep?.maneuver?.location) {
+      return {
+        step: nextStep,
+        distance: getDistance(
+          { latitude: userLatLng.lat, longitude: userLatLng.lng },
+          { latitude: nextStep.maneuver.location[1], longitude: nextStep.maneuver.location[0] }
+        ),
+        index: closestIdx + 1
+      };
+    }
+  }
+
+  return {
+    step: closestStep,
+    distance: distToManeuver,
+    index: closestIdx
+  };
+};
+
+const getTurnIcon = (type: string, modifier: string) => {
+  const mod = modifier?.toLowerCase() || '';
+  const t = type?.toLowerCase() || '';
+
+  if (t === 'arrive') return <MapPin className="w-12 h-12 text-white stroke-[3px]" />;
+  if (t === 'depart') return <Navigation className="w-12 h-12 text-white stroke-[3px] rotate-45" />;
+
+  if (mod.includes('left')) {
+    return <CornerUpLeft className="w-12 h-12 text-white stroke-[3px]" />;
+  }
+  if (mod.includes('right')) {
+    return <CornerUpRight className="w-12 h-12 text-white stroke-[3px]" />;
+  }
+  return <ArrowUp className="w-12 h-12 text-white stroke-[3px]" />;
+};
+
+const getTurnInstruction = (step: any, destinationName: string) => {
+  if (!step) return 'Continúa por la ruta';
+  const type = step.maneuver.type?.toLowerCase();
+  const modifier = step.maneuver.modifier;
+  const name = step.name || '';
+
+  if (type === 'arrive') {
+    return `Llegarás a ${destinationName}`;
+  }
+  if (type === 'depart') {
+    return `Inicia el viaje hacia ${name || 'tu destino'}`;
+  }
+
+  const spanishModifier = modifier === 'left' ? 'izquierda' :
+                          modifier === 'right' ? 'derecha' :
+                          modifier === 'slight left' ? 'ligeramente a la izquierda' :
+                          modifier === 'slight right' ? 'ligeramente a la derecha' :
+                          modifier === 'sharp left' ? 'cerrado a la izquierda' :
+                          modifier === 'sharp right' ? 'cerrado a la derecha' : '';
+
+  if (spanishModifier) {
+    return `Gira a la ${spanishModifier} en ${name || 'la siguiente calle'}`;
+  }
+
+  return `Continúa por ${name || 'la ruta'}`;
 };
 
 function PizzaMap({
@@ -65,17 +386,21 @@ function PizzaMap({
   explicitPizzeriasToShow = [],
   onSettingsChange,
   onNavigationStateChange
-}: PizzaMapProps & { isAdmin?: boolean, popupOffsetY?: number, popupOffsetYMobile?: number, onSettingsChange?: (settings: any) => void, mapCenterOffset?: number, iconAnchorX?: number, iconAnchorY?: number, disableDistanceFilter?: boolean, explicitPizzeriasToShow?: Pizzeria[] }) {
+}: PizzaMapProps & { isAdmin?: boolean, onSettingsChange?: (settings: any) => void }) {
+  
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.Marker[]>([]);
-  const myLocationMarkerRef = useRef<L.Marker | null>(null);
-  const searchMarkerRef = useRef<L.Marker | null>(null); // New ref for search pin
-  const routeLayerRef = useRef<L.Polyline | null>(null);
-  const popupRef = useRef<L.Popup | null>(null);
-  const trafficLayerRef = useRef<L.TileLayer | null>(null);
+  const mapInstanceRef = useRef<maplibregl.Map | null>(null);
+  const markersMapRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+  const myLocationMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const searchMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const activePopupRef = useRef<maplibregl.Popup | null>(null);
+  const routeCoordinatesRef = useRef<[number, number][]>([]);
+
   const { toast } = useToast();
-  const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
+  
+  // Base style layers state
+  const [currentBaseLayer, setCurrentBaseLayer] = useState<'Estándar' | 'Satélite' | 'Relieve'>('Estándar');
+  const [showTraffic, setShowTraffic] = useState(false);
   const [showTrafficLegend, setShowTrafficLegend] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeRoute, setActiveRoute] = useState<{ lat: number, lng: number } | null>(null);
@@ -84,14 +409,15 @@ function PizzaMap({
   const [isMuted, setIsMuted] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState(0);
   const [mapRotation, setMapRotation] = useState(0);
-
-  // Navigation steps and instructions
   const [routeSteps, setRouteSteps] = useState<any[]>([]);
   const [currentInstruction, setCurrentInstruction] = useState<{
     icon: React.ReactNode;
     text: string;
     distanceText: string;
   } | null>(null);
+
+  const [isLocked, setIsLocked] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   // Animated and tracking refs for 60fps rendering
   const animatedCoordsRef = useRef<{ lat: number, lng: number } | null>(null);
@@ -104,395 +430,8 @@ function PizzaMap({
   const lastRecalculateTimeRef = useRef<number>(0);
   const isRecalculatingRef = useRef<boolean>(false);
 
-  // Memoize Icons to allow dynamic props (specifically anchor)
-  const { defaultIcon, selectedIcon, pizzaIcon, myLocationIcon, navigationIcon, searchIcon } = useMemo(() => {
-    return {
-      defaultIcon: new L.Icon({
-        iconUrl: 'https://cdn-icons-png.flaticon.com/128/3595/3595458.png',
-        iconSize: [35, 35],
-        iconAnchor: [17, 35],
-        popupAnchor: [0, -35],
-      }),
-      selectedIcon: new L.Icon({
-        iconUrl: 'https://cdn-icons-png.flaticon.com/128/1046/1046751.png',
-        iconSize: [45, 45],
-        iconAnchor: [22, 45],
-        popupAnchor: [0, -45],
-      }),
-      pizzaIcon: new L.Icon({
-        iconUrl: 'https://cdn-icons-png.flaticon.com/128/1404/1404945.png', // Pizza Slice Icon
-        iconSize: [50, 50],
-        iconAnchor: [iconAnchorX, iconAnchorY], // Dynamic Anchor
-        popupAnchor: [0, -iconAnchorY],
-        className: 'drop-shadow-lg'
-      }),
-      myLocationIcon: new L.Icon({
-        iconUrl: '/icono512.jpg',
-        iconSize: [40, 40],
-        iconAnchor: [20, 20],
-        className: 'drop-shadow-md rounded-full'
-      }),
-      navigationIcon: new L.DivIcon({
-        className: 'navigation-arrow',
-        html: `<div class="nav-arrow-inner" style="
-              width: 40px;
-              height: 40px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-            ">
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="20" r="18" fill="white" fill-opacity="0.2"/>
-                <path d="M20 5L32 35L20 27L8 35L20 5Z" fill="#2563EB" stroke="white" stroke-width="3" stroke-linejoin="round"/>
-              </svg>
-            </div>`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 20]
-      }),
-      searchIcon: new L.DivIcon({
-        className: 'search-pin-icon',
-        html: `<div style="
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
-        ">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="#ef4444" stroke="#7f1d1d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-            <circle cx="12" cy="10" r="3" fill="white"/>
-          </svg>
-        </div>`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40], // Bottom Center
-        popupAnchor: [0, -40],
-      })
-    };
-  }, [iconAnchorX, iconAnchorY]);
+  const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
 
-  // Helper: Calculate bearing between two points
-  const calculateBearing = (lat1: number, lng1: number, lat2: number, lng2: number) => {
-    // Debug Popup Offset
-    // console.log('PizzaMap Render - OffsetY:', popupOffsetY, 'OffsetYMobile:', popupOffsetYMobile, 'Width:', window.innerWidth);
-    const toRad = (deg: number) => deg * Math.PI / 180;
-    const toDeg = (rad: number) => rad * 180 / Math.PI;
-
-    const y = Math.sin(toRad(lng2 - lng1)) * Math.cos(toRad(lat2));
-    const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
-      Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lng2 - lng1));
-    const bearing = (toDeg(Math.atan2(y, x)) + 360) % 360;
-    return bearing;
-  };
-
-  // Helper: Get target bearing based on route
-  const getRouteBearing = (userLat: number, userLng: number) => {
-    // If we have a route layer, try to find the heading along the path
-    if (!routeLayerRef.current) return 0;
-
-    const latlngs = routeLayerRef.current.getLatLngs() as L.LatLng[];
-    if (!latlngs || latlngs.length < 2) return 0;
-
-    // Find closest point index (simple Euclidean approx for speed)
-    let minDist = Infinity;
-    let closestIdx = 0;
-    for (let i = 0; i < latlngs.length; i++) {
-      const d = Math.sqrt(Math.pow(latlngs[i].lat - userLat, 2) + Math.pow(latlngs[i].lng - userLng, 2));
-      if (d < minDist) {
-        minDist = d;
-        closestIdx = i;
-      }
-    }
-
-    // Look ahead a few points to determine general direction (e.g., 20-30 meters ahead)
-    // Assuming route points are dense. If end of route, use last segment.
-    const lookAheadIdx = Math.min(closestIdx + 3, latlngs.length - 1);
-
-    if (lookAheadIdx > closestIdx) {
-      return calculateBearing(latlngs[closestIdx].lat, latlngs[closestIdx].lng, latlngs[lookAheadIdx].lat, latlngs[lookAheadIdx].lng);
-    } else if (closestIdx > 0) {
-      // End of route, look back
-      return calculateBearing(latlngs[closestIdx - 1].lat, latlngs[closestIdx - 1].lng, latlngs[closestIdx].lat, latlngs[closestIdx].lng);
-    }
-
-    return 0;
-  };
-
-  // Center exactly on user without offset (as requested)
-  const offsetMapCenter = (lat: number, lng: number, map: L.Map) => {
-    map.panTo([lat, lng], { animate: true, duration: 0.5 });
-  };
-
-  // Helper: Get offset LatLng in the direction of bearing (moves center ahead of user)
-  const getOffsetLatLng = (lat: number, lng: number, bearing: number, distanceMeters: number) => {
-    const R = 6378137; // Earth's radius in meters
-    const bearingRad = (bearing * Math.PI) / 180;
-    const dLat = (distanceMeters * Math.cos(bearingRad)) / R;
-    const dLng = (distanceMeters * Math.sin(bearingRad)) / (R * Math.cos((lat * Math.PI) / 180));
-    return {
-      lat: lat + (dLat * 180) / Math.PI,
-      lng: lng + (dLng * 180) / Math.PI,
-    };
-  };
-
-  // Helper: Calculate distance from a point to a segment
-  const distanceToSegment = (p: L.LatLng, a: L.LatLng, b: L.LatLng) => {
-    const x = p.lng;
-    const y = p.lat;
-    const x1 = a.lng;
-    const y1 = a.lat;
-    const x2 = b.lng;
-    const y2 = b.lat;
-
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-
-    if (dx === 0 && dy === 0) {
-      return getDistance({ latitude: y, longitude: x }, { latitude: y1, longitude: x1 });
-    }
-
-    let t = ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy);
-    t = Math.max(0, Math.min(1, t));
-
-    const closestLng = x1 + t * dx;
-    const closestLat = y1 + t * dy;
-
-    return getDistance({ latitude: y, longitude: x }, { latitude: closestLat, longitude: closestLng });
-  };
-
-  // Helper: Calculate shortest distance from a point to a polyline
-  const distanceToPolyline = (p: L.LatLng, polylinePoints: L.LatLng[]) => {
-    let minDistance = Infinity;
-    for (let i = 0; i < polylinePoints.length - 1; i++) {
-      const d = distanceToSegment(p, polylinePoints[i], polylinePoints[i + 1]);
-      if (d < minDistance) {
-        minDistance = d;
-      }
-    }
-    return minDistance;
-  };
-
-  // Helper: Find closest point on polyline to snap marker to roads
-  const getClosestPointOnPolyline = (p: L.LatLng, polylinePoints: L.LatLng[]): L.LatLng => {
-    if (!polylinePoints || polylinePoints.length === 0) return p;
-    if (polylinePoints.length === 1) return polylinePoints[0];
-
-    let minDistance = Infinity;
-    let closestPoint = polylinePoints[0];
-
-    for (let i = 0; i < polylinePoints.length - 1; i++) {
-      const a = polylinePoints[i];
-      const b = polylinePoints[i + 1];
-
-      const x = p.lng;
-      const y = p.lat;
-      const x1 = a.lng;
-      const y1 = a.lat;
-      const x2 = b.lng;
-      const y2 = b.lat;
-
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-
-      let t = 0;
-      if (dx !== 0 || dy !== 0) {
-        t = ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy);
-        t = Math.max(0, Math.min(1, t));
-      }
-
-      const projLng = x1 + t * dx;
-      const projLat = y1 + t * dy;
-      const projLatLng = new L.LatLng(projLat, projLng);
-
-      const d = getDistance(
-        { latitude: y, longitude: x },
-        { latitude: projLat, longitude: projLng }
-      );
-
-      if (d < minDistance) {
-        minDistance = d;
-        closestPoint = projLatLng;
-      }
-    }
-
-    return closestPoint;
-  };
-
-  // Helper: Calculate remaining route distance along polyline from user's current location
-  const calculateRemainingRouteDistance = (userLatLng: L.LatLng, polylinePoints: L.LatLng[]) => {
-    if (polylinePoints.length < 2) return 0;
-
-    let minDistance = Infinity;
-    let closestSegmentIdx = 0;
-    let closestPointOnSegment = polylinePoints[0];
-
-    for (let i = 0; i < polylinePoints.length - 1; i++) {
-      const a = polylinePoints[i];
-      const b = polylinePoints[i + 1];
-
-      const x = userLatLng.lng;
-      const y = userLatLng.lat;
-      const x1 = a.lng;
-      const y1 = a.lat;
-      const x2 = b.lng;
-      const y2 = b.lat;
-
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-
-      let t = 0;
-      if (dx !== 0 || dy !== 0) {
-        t = ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy);
-        t = Math.max(0, Math.min(1, t));
-      }
-
-      const projLng = x1 + t * dx;
-      const projLat = y1 + t * dy;
-      const projLatLng = new L.LatLng(projLat, projLng);
-
-      const d = getDistance(
-        { latitude: y, longitude: x },
-        { latitude: projLat, longitude: projLng }
-      );
-
-      if (d < minDistance) {
-        minDistance = d;
-        closestSegmentIdx = i;
-        closestPointOnSegment = projLatLng;
-      }
-    }
-
-    let remainingDist = getDistance(
-      { latitude: closestPointOnSegment.lat, longitude: closestPointOnSegment.lng },
-      { latitude: polylinePoints[closestSegmentIdx + 1].lat, longitude: polylinePoints[closestSegmentIdx + 1].lng }
-    );
-
-    for (let i = closestSegmentIdx + 1; i < polylinePoints.length - 1; i++) {
-      remainingDist += getDistance(
-        { latitude: polylinePoints[i].lat, longitude: polylinePoints[i].lng },
-        { latitude: polylinePoints[i + 1].lat, longitude: polylinePoints[i + 1].lng }
-      );
-    }
-
-    return remainingDist;
-  };
-
-  // Helper: Find current step from maneuver list based on proximity
-  const getCurrentStep = (userLatLng: L.LatLng, steps: any[]) => {
-    if (!steps || steps.length === 0) return null;
-
-    let closestIdx = 0;
-    let minDistance = Infinity;
-
-    for (let i = 0; i < steps.length; i++) {
-      if (!steps[i]?.maneuver?.location) continue;
-      const stepLatLng = new L.LatLng(steps[i].maneuver.location[1], steps[i].maneuver.location[0]);
-      const d = getDistance(
-        { latitude: userLatLng.lat, longitude: userLatLng.lng },
-        { latitude: stepLatLng.lat, longitude: stepLatLng.lng }
-      );
-      if (d < minDistance) {
-        minDistance = d;
-        closestIdx = i;
-      }
-    }
-
-    const closestStep = steps[closestIdx];
-    if (!closestStep) return null;
-
-    const closestStepLatLng = new L.LatLng(closestStep.maneuver.location[1], closestStep.maneuver.location[0]);
-    const distToManeuver = getDistance(
-      { latitude: userLatLng.lat, longitude: userLatLng.lng },
-      { latitude: closestStepLatLng.lat, longitude: closestStepLatLng.lng }
-    );
-
-    if (distToManeuver < 20 && closestIdx < steps.length - 1) {
-      const nextStep = steps[closestIdx + 1];
-      if (nextStep?.maneuver?.location) {
-        return {
-          step: nextStep,
-          distance: getDistance(
-            { latitude: userLatLng.lat, longitude: userLatLng.lng },
-            { latitude: nextStep.maneuver.location[1], longitude: nextStep.maneuver.location[0] }
-          ),
-          index: closestIdx + 1
-        };
-      }
-    }
-
-    return {
-      step: closestStep,
-      distance: distToManeuver,
-      index: closestIdx
-    };
-  };
-
-  // Helper: Get turn icon component based on OSRM type and modifier
-  const getTurnIcon = (type: string, modifier: string) => {
-    const mod = modifier?.toLowerCase() || '';
-    const t = type?.toLowerCase() || '';
-
-    if (t === 'arrive') return <MapPin className="w-12 h-12 text-white stroke-[3px]" />;
-    if (t === 'depart') return <Navigation className="w-12 h-12 text-white stroke-[3px] rotate-45" />;
-
-    if (mod.includes('left')) {
-      return <CornerUpLeft className="w-12 h-12 text-white stroke-[3px]" />;
-    }
-    if (mod.includes('right')) {
-      return <CornerUpRight className="w-12 h-12 text-white stroke-[3px]" />;
-    }
-    return <ArrowUp className="w-12 h-12 text-white stroke-[3px]" />;
-  };
-
-  // Helper: Translate maneuver details into instruction text
-  const getTurnInstruction = (step: any, destinationName: string) => {
-    if (!step) return 'Continúa por la ruta';
-    const type = step.maneuver.type?.toLowerCase();
-    const modifier = step.maneuver.modifier;
-    const name = step.name || '';
-
-    if (type === 'arrive') {
-      return `Llegarás a ${destinationName}`;
-    }
-    if (type === 'depart') {
-      return `Inicia el viaje hacia ${name || 'tu destino'}`;
-    }
-
-    const spanishModifier = modifier === 'left' ? 'izquierda' :
-                            modifier === 'right' ? 'derecha' :
-                            modifier === 'slight left' ? 'ligeramente a la izquierda' :
-                            modifier === 'slight right' ? 'ligeramente a la derecha' :
-                            modifier === 'sharp left' ? 'cerrado a la izquierda' :
-                            modifier === 'sharp right' ? 'cerrado a la derecha' : '';
-
-    if (spanishModifier) {
-      return `Gira a la ${spanishModifier} en ${name || 'la siguiente calle'}`;
-    }
-
-    return `Continúa por ${name || 'la ruta'}`;
-  };
-
-  // Helper: Update instructions state
-  const updateNavigationInstructions = (userLatLng: L.LatLng, steps: any[], destinationName: string) => {
-    const result = getCurrentStep(userLatLng, steps);
-    if (!result) return;
-
-    const { step, distance } = result;
-
-    const icon = getTurnIcon(step.maneuver?.type || '', step.maneuver?.modifier || '');
-    const text = getTurnInstruction(step, destinationName);
-    const distanceText = distance >= 1000
-      ? `${(distance / 1000).toFixed(1)} km`
-      : `${Math.round(distance)} m`;
-
-    setCurrentInstruction({ icon, text, distanceText });
-  };
-
-  // Effect: Apply Map Rotation (Course Up)
-  const [isLocked, setIsLocked] = useState(true); // New state to track if we are locked on user
-
-  // Refs to store latest state values to avoid stale closures in watchers/animations
   const isNavigatingRef = useRef(isNavigating);
   const isLockedRef = useRef(isLocked);
 
@@ -504,48 +443,86 @@ function PizzaMap({
     isLockedRef.current = isLocked;
   }, [isLocked]);
 
-  // Helper to safely manage a single user location marker across renders/remounts
-  const updateUserMarker = (latlng: L.LatLng, forceIconUpdate = false) => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    const currentIcon = isNavigatingRef.current ? navigationIcon : myLocationIcon;
-
-    if (!myLocationMarkerRef.current || !map.hasLayer(myLocationMarkerRef.current)) {
-      myLocationMarkerRef.current = L.marker(latlng, { icon: currentIcon }).addTo(map);
-    } else {
-      myLocationMarkerRef.current.setLatLng(latlng);
-      if (forceIconUpdate || myLocationMarkerRef.current.getIcon() !== currentIcon) {
-        myLocationMarkerRef.current.setIcon(currentIcon);
-      }
-    }
-  };
-
-  // Effect: Sync map interaction state on navigation mode changes
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-    const map = mapInstanceRef.current;
-
-    // Always keep map dragging and zoom enabled to allow user interactions in both 2D and 3D
-    map.dragging.enable();
-    map.touchZoom.enable();
-    map.doubleClickZoom.enable();
-    map.boxZoom.enable();
-  }, [isNavigating, isLocked]);
-
-  // Effect: Update marker icon when mode changes
-  useEffect(() => {
-    if (myLocationMarkerRef.current && mapInstanceRef.current && mapInstanceRef.current.hasLayer(myLocationMarkerRef.current)) {
-      updateUserMarker(myLocationMarkerRef.current.getLatLng(), true);
-    }
-  }, [isNavigating]);
-
-  // Effect: Notify parent about navigation state change
   useEffect(() => {
     onNavigationStateChange?.(isNavigating);
   }, [isNavigating, onNavigationStateChange]);
 
+  const updateNavigationInstructions = (userLatLng: Coord, steps: any[], destName: string) => {
+    const result = getCurrentStep(userLatLng, steps);
+    if (!result) return;
 
+    const { step, distance } = result;
+    const icon = getTurnIcon(step.maneuver?.type || '', step.maneuver?.modifier || '');
+    const text = getTurnInstruction(step, destName);
+    const distanceText = distance >= 1000
+      ? `${(distance / 1000).toFixed(1)} km`
+      : `${Math.round(distance)} m`;
+
+    setCurrentInstruction({ icon, text, distanceText });
+  };
+
+  const updateUserMarkerElement = (el: HTMLElement, navigating: boolean) => {
+    if (navigating) {
+      el.innerHTML = `
+        <div class="nav-arrow-inner" style="
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        ">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="20" cy="20" r="18" fill="white" fill-opacity="0.2"/>
+            <path d="M20 5L32 35L20 27L8 35L20 5Z" fill="#2563EB" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      `;
+      el.style.width = '40px';
+      el.style.height = '40px';
+    } else {
+      el.innerHTML = `
+        <div style="
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 3px solid white;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+          background-image: url('/icono512.jpg');
+          background-size: cover;
+          background-position: center;
+        "></div>
+      `;
+      el.style.width = '40px';
+      el.style.height = '40px';
+    }
+  };
+
+  const updateUserMarker = (lnglat: [number, number], forceIconUpdate = false) => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (!myLocationMarkerRef.current) {
+      const el = document.createElement('div');
+      updateUserMarkerElement(el, isNavigatingRef.current);
+      
+      const marker = new maplibregl.Marker({
+        element: el,
+        rotationAlignment: 'map',
+        pitchAlignment: 'map'
+      })
+      .setLngLat(lnglat)
+      .addTo(map);
+
+      myLocationMarkerRef.current = marker;
+    } else {
+      myLocationMarkerRef.current.setLngLat(lnglat);
+      if (forceIconUpdate) {
+        const el = myLocationMarkerRef.current.getElement();
+        updateUserMarkerElement(el, isNavigatingRef.current);
+      }
+    }
+  };
 
   const handleLocateMe = () => {
     const map = mapInstanceRef.current;
@@ -560,39 +537,28 @@ function PizzaMap({
       return;
     }
 
-    toast({
-      title: 'Obteniendo ubicación...',
-    });
+    toast({ title: 'Obteniendo ubicación...' });
 
     const onLocationSuccess = (position: GeolocationPosition) => {
       let { latitude, longitude, accuracy, speed } = position.coords;
 
-      // RESTRICT TO HERMOSILLO AREA (approx 30km radius from center)
       const distFromCenter = getDistance(
         { latitude, longitude },
         { latitude: HERMOSILLO_CENTER[0], longitude: HERMOSILLO_CENTER[1] }
       );
 
-      if (distFromCenter > 30000) { // 30km limit
+      if (distFromCenter > 30000) {
         console.warn("Location outside Hermosillo detected.", { latitude, longitude });
         toast({
           title: 'Ubicación lejana detectada',
           description: 'Tu ubicación parece estar fuera de Hermosillo.',
         });
-        // latitude = HERMOSILLO_CENTER[0];
-        // longitude = HERMOSILLO_CENTER[1];
-        // accuracy = 5000; // Degrading accuracy as it is forced
       }
 
-      console.log(`=== LOCATION FOUND ===`);
-
-      // Update speed
       const speedKmh = speed ? Math.round(speed * 3.6) : 0;
       setCurrentSpeed(speedKmh);
 
       let bestAccuracy = accuracy;
-      // ... rest of function remains same
-      const latlng = new L.LatLng(latitude, longitude);
       setUserLocation({ lat: latitude, lng: longitude });
       try {
         localStorage.setItem('userLocation', JSON.stringify({ lat: latitude, lng: longitude }));
@@ -600,15 +566,12 @@ function PizzaMap({
         console.warn("Storage access failed:", e);
       }
 
-      // Create or update marker
-      updateUserMarker(latlng);
+      updateUserMarker([longitude, latitude]);
 
-      // Animate smoothly to initial location
       animateToLocation(latitude, longitude, speedKmh);
 
-      // If not navigating, center normally
       if (!isNavigating) {
-        map.flyTo(latlng, 16);
+        map.easeTo({ center: [longitude, latitude], zoom: 16, duration: 1000 });
       }
 
       onLocateUser({ lat: latitude, lng: longitude });
@@ -618,53 +581,42 @@ function PizzaMap({
         description: `Precisión: ~${accuracy.toFixed(0)}m`,
       });
 
-      // Start watching for better accuracy
       const watchId = navigator.geolocation.watchPosition(
         (betterPosition) => {
           let { latitude: lat, longitude: lng, accuracy: acc, speed: newSpeed } = betterPosition.coords;
-
-          // Check Bounds for updates too
-          const distUpdate = getDistance(
-            { latitude: lat, longitude: lng },
-            { latitude: HERMOSILLO_CENTER[0], longitude: HERMOSILLO_CENTER[1] }
-          );
-
           const speedKmh = newSpeed ? Math.round(newSpeed * 3.6) : 0;
 
-          // Update if accurate enough or navigating
           if (acc < bestAccuracy || isNavigating) {
             bestAccuracy = acc;
             
-            // Animate smoothly to new coordinate
             animateToLocation(lat, lng, speedKmh);
 
-            // Off-route detection and recalculation
-            if (isNavigating && routeLayerRef.current) {
-              const userLatLng = new L.LatLng(lat, lng);
-              const routePoints = routeLayerRef.current.getLatLngs() as L.LatLng[];
-              if (routePoints && routePoints.length > 0) {
-                const distToRoute = distanceToPolyline(userLatLng, routePoints);
+            if (isNavigating && routeCoordinatesRef.current.length > 0) {
+              const userLatLng = { lat, lng };
+              const distToRoute = distanceToPolyline(
+                userLatLng,
+                routeCoordinatesRef.current.map(c => ({ lat: c[0], lng: c[1] }))
+              );
+              
+              if (distToRoute > 50 && !isRecalculatingRef.current && (Date.now() - lastRecalculateTimeRef.current > 5000)) {
+                console.log("Off route detected! Recalculating path...");
+                isRecalculatingRef.current = true;
+                lastRecalculateTimeRef.current = Date.now();
                 
-                // Recalculate if >50m away from route, not already recalculating, and at least 5 seconds since last recalculation
-                if (distToRoute > 50 && !isRecalculatingRef.current && (Date.now() - lastRecalculateTimeRef.current > 5000)) {
-                  console.log("Off route detected! Recalculating path...");
-                  isRecalculatingRef.current = true;
-                  lastRecalculateTimeRef.current = Date.now();
-                  
-                  if (activeRoute) {
-                    drawRoute(activeRoute).finally(() => {
-                      isRecalculatingRef.current = false;
-                    });
-                  }
+                if (activeRoute) {
+                  drawRoute(activeRoute).finally(() => {
+                    isRecalculatingRef.current = false;
+                  });
                 }
               }
             }
 
-            // Real-time telemetry: remaining distance, duration, instructions
-            if (isNavigating && routeLayerRef.current && routeSteps.length > 0) {
-              const userLatLng = new L.LatLng(lat, lng);
-              const routePoints = routeLayerRef.current.getLatLngs() as L.LatLng[];
-              const remDistance = calculateRemainingRouteDistance(userLatLng, routePoints);
+            if (isNavigating && routeCoordinatesRef.current.length > 0 && routeSteps.length > 0) {
+              const userLatLng = { lat, lng };
+              const remDistance = calculateRemainingRouteDistance(
+                userLatLng,
+                routeCoordinatesRef.current.map(c => ({ lat: c[0], lng: c[1] }))
+              );
               
               const initialRouteDist = initialRouteDistanceRef.current || 1000;
               const initialRouteDur = initialRouteDurationRef.current || 120;
@@ -686,7 +638,6 @@ function PizzaMap({
         { enableHighAccuracy: false, timeout: 5000, maximumAge: 30000 }
       );
 
-      // Stop watching after 5 minutes if NOT navigating
       if (!isNavigating) {
         setTimeout(() => navigator.geolocation.clearWatch(watchId), 300000);
       }
@@ -694,8 +645,6 @@ function PizzaMap({
 
     const onLocationError = async (error: GeolocationPositionError) => {
       console.warn("Geolocation error:", error.code, error.message);
-
-      // Fallback to IP Geolocation
       toast({
         title: 'Usando ubicación aproximada (IP)',
         description: 'GPS no disponible. Buscando por red...',
@@ -707,12 +656,11 @@ function PizzaMap({
         const data = await response.json();
 
         if (data.latitude && data.longitude) {
-          // Construct a mock position object
           const mockPosition = {
             coords: {
               latitude: data.latitude,
               longitude: data.longitude,
-              accuracy: 5000, // Low accuracy for IP
+              accuracy: 5000,
               altitude: null,
               altitudeAccuracy: null,
               heading: null,
@@ -735,8 +683,6 @@ function PizzaMap({
       });
     };
 
-    // USE LOW ACCURACY FOR SPEED AND RELIABILITY (WIFI/IP)
-    // User requested low accuracy as it is faster and more reliable in their context.
     navigator.geolocation.getCurrentPosition(
       onLocationSuccess,
       onLocationError,
@@ -772,35 +718,61 @@ function PizzaMap({
       const data = await response.json();
 
       if (data.routes && data.routes.length > 0) {
-        map.closePopup();
-        const route = data.routes[0];
-        const coordinates = route.geometry.coordinates.map((coord: number[]) => [coord[1], coord[0]] as [number, number]);
-
-        if (routeLayerRef.current) {
-          routeLayerRef.current.remove();
+        if (activePopupRef.current) {
+          activePopupRef.current.remove();
         }
 
-        const polyline = L.polyline(coordinates, {
-          color: '#4285F4', // Google Maps Blue
-          weight: 6,
-          opacity: 0.9,
-          lineCap: 'round',
-          lineJoin: 'round'
-        }).addTo(map);
+        const route = data.routes[0];
+        const coordinates = route.geometry.coordinates;
 
-        routeLayerRef.current = polyline;
+        routeCoordinatesRef.current = coordinates.map((c: any) => [c[1], c[0]]); // [lat, lng]
+
+        if (map.getSource('route')) {
+          const source = map.getSource('route') as maplibregl.GeoJSONSource;
+          source.setData({
+            type: 'Feature',
+            properties: {},
+            geometry: route.geometry
+          });
+        } else {
+          map.addSource('route', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: route.geometry
+            }
+          });
+
+          map.addLayer({
+            id: 'route-layer',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#4285F4',
+              'line-width': 6,
+              'line-opacity': 0.9
+            }
+          });
+        }
 
         if (!isNavigating) {
-          map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+          const bounds = coordinates.reduce((acc: maplibregl.LngLatBounds, coord: number[]) => {
+            return acc.extend(coord as [number, number]);
+          }, new maplibregl.LngLatBounds(coordinates[0], coordinates[0]));
+
+          map.fitBounds(bounds, { padding: 50 });
         }
 
-        // Store route legs steps and metadata
         const steps = route.legs?.flatMap((leg: any) => leg.steps) || [];
         setRouteSteps(steps);
         initialRouteDistanceRef.current = route.distance;
         initialRouteDurationRef.current = route.duration;
 
-        // Save destination name
         const destinationPizzeria = pizzerias.find(
           p => Math.abs(p.lat - destination.lat) < 0.0001 && Math.abs(p.lng - destination.lng) < 0.0001
         );
@@ -812,8 +784,7 @@ function PizzaMap({
           duration: route.duration
         });
 
-        // Initialize instructions
-        const userLatLng = new L.LatLng(userLocation.lat, userLocation.lng);
+        const userLatLng = { lat: userLocation.lat, lng: userLocation.lng };
         updateNavigationInstructions(userLatLng, steps, destinationNameRef.current);
 
         if (!isNavigating) {
@@ -835,7 +806,31 @@ function PizzaMap({
     }
   };
 
-  // Interpolates location and rotation smoothly over time (60fps)
+  const getRouteBearing = (userLat: number, userLng: number) => {
+    const latlngs = routeCoordinatesRef.current;
+    if (!latlngs || latlngs.length < 2) return 0;
+
+    let minDist = Infinity;
+    let closestIdx = 0;
+    for (let i = 0; i < latlngs.length; i++) {
+      const d = Math.sqrt(Math.pow(latlngs[i][0] - userLat, 2) + Math.pow(latlngs[i][1] - userLng, 2));
+      if (d < minDist) {
+        minDist = d;
+        closestIdx = i;
+      }
+    }
+
+    const lookAheadIdx = Math.min(closestIdx + 3, latlngs.length - 1);
+
+    if (lookAheadIdx > closestIdx) {
+      return calculateBearing(latlngs[closestIdx][0], latlngs[closestIdx][1], latlngs[lookAheadIdx][0], latlngs[lookAheadIdx][1]);
+    } else if (closestIdx > 0) {
+      return calculateBearing(latlngs[closestIdx - 1][0], latlngs[closestIdx - 1][1], latlngs[closestIdx][0], latlngs[closestIdx][1]);
+    }
+
+    return 0;
+  };
+
   const animateToLocation = (targetLat: number, targetLng: number, targetSpeed: number) => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -843,18 +838,17 @@ function PizzaMap({
     let finalLat = targetLat;
     let finalLng = targetLng;
 
-    if (isNavigating && routeLayerRef.current) {
-      const routePoints = routeLayerRef.current.getLatLngs() as L.LatLng[];
-      if (routePoints && routePoints.length > 0) {
-        const snapped = getClosestPointOnPolyline(new L.LatLng(targetLat, targetLng), routePoints);
-        finalLat = snapped.lat;
-        finalLng = snapped.lng;
-      }
+    if (isNavigating && routeCoordinatesRef.current.length > 0) {
+      const snapped = getClosestPointOnPolyline(
+        { lat: targetLat, lng: targetLng },
+        routeCoordinatesRef.current.map(c => ({ lat: c[0], lng: c[1] }))
+      );
+      finalLat = snapped.lat;
+      finalLng = snapped.lng;
     }
 
     const now = Date.now();
     let duration = now - lastGpsTimeRef.current;
-    // Cap duration to keep animations smooth and responsive
     if (duration < 800) duration = 1000;
     if (duration > 3000) duration = 1500;
     lastGpsTimeRef.current = now;
@@ -876,11 +870,9 @@ function PizzaMap({
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Coordinate interpolation
       const currentLat = startCoords.lat + (finalLat - startCoords.lat) * progress;
       const currentLng = startCoords.lng + (finalLng - startCoords.lng) * progress;
 
-      // Shortest-path angle interpolation
       let diff = targetHeading - startHeading;
       while (diff < -180) diff += 360;
       while (diff > 180) diff -= 360;
@@ -889,29 +881,22 @@ function PizzaMap({
       animatedCoordsRef.current = { lat: currentLat, lng: currentLng };
       currentHeadingRef.current = currentHeading;
 
-      const latlng = new L.LatLng(currentLat, currentLng);
+      updateUserMarker([currentLng, currentLat]);
+      if (myLocationMarkerRef.current) {
+        myLocationMarkerRef.current.setRotation(currentHeading);
+      }
 
-      // Move marker smoothly
-      updateUserMarker(latlng);
-
-      // Update speed
       setCurrentSpeed(targetSpeed);
 
-      // Map rotation & centering
       if (isNavigatingRef.current && isLockedRef.current) {
         const offsetCenter = getOffsetLatLng(currentLat, currentLng, currentHeading, 50);
-        map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: false });
-
-        if (mapContainerRef.current) {
-          mapContainerRef.current.style.transform = `rotateX(55deg) rotateZ(-${currentHeading}deg) scale(1.8)`;
-          mapContainerRef.current.style.setProperty('--map-rotation', `${currentHeading}deg`);
-        }
+        map.jumpTo({
+          center: [offsetCenter.lng, offsetCenter.lat],
+          pitch: 60,
+          bearing: currentHeading
+        });
         setMapRotation(currentHeading);
       } else {
-        if (mapContainerRef.current) {
-          mapContainerRef.current.style.transform = '';
-          mapContainerRef.current.style.setProperty('--map-rotation', `${currentHeading}deg`);
-        }
         setMapRotation(currentHeading);
       }
 
@@ -926,32 +911,24 @@ function PizzaMap({
     animationFrameRef.current = requestAnimationFrame(step);
   };
 
-
-  // Start Navigation Wrapper to set initial bearing and setup watch GPS
   const startNavigation = () => {
     if (!activeRoute) return;
 
     setIsNavigating(true);
-    setIsLocked(true); // Ensure locked on start
+    setIsLocked(true);
     
-    // Start watching GPS location
     handleLocateMe();
 
     const map = mapInstanceRef.current;
     if (map && userLocation) {
-      // Zoom in and center on user
-      map.setZoom(18);
-
-      // Snap start navigation position to the route
-      let navLoc = new L.LatLng(userLocation.lat, userLocation.lng);
-      if (routeLayerRef.current) {
-        const routePoints = routeLayerRef.current.getLatLngs() as L.LatLng[];
-        if (routePoints && routePoints.length > 0) {
-          navLoc = getClosestPointOnPolyline(navLoc, routePoints);
-        }
+      let navLoc = { lat: userLocation.lat, lng: userLocation.lng };
+      if (routeCoordinatesRef.current.length > 0) {
+        navLoc = getClosestPointOnPolyline(
+          navLoc,
+          routeCoordinatesRef.current.map(c => ({ lat: c[0], lng: c[1] }))
+        );
       }
 
-      // Initial Bearing with Fallback
       let bearing = getRouteBearing(navLoc.lat, navLoc.lng);
       if (bearing === 0 && activeRoute) {
         bearing = calculateBearing(navLoc.lat, navLoc.lng, activeRoute.lat, activeRoute.lng);
@@ -960,37 +937,19 @@ function PizzaMap({
       currentHeadingRef.current = bearing;
       animatedCoordsRef.current = { lat: navLoc.lat, lng: navLoc.lng };
 
-      // Force immediate snap with offset without animation to ensure correct center before rotation hits
       const offsetCenter = getOffsetLatLng(navLoc.lat, navLoc.lng, bearing, 50);
-      map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: false });
+      
+      map.jumpTo({
+        center: [offsetCenter.lng, offsetCenter.lat],
+        zoom: 18,
+        pitch: 60,
+        bearing: bearing
+      });
 
-      // Update Icon Immediately
-      updateUserMarker(navLoc, true);
-
-      if (mapContainerRef.current) {
-        // Apply initial transform immediately with tilt and scale
-        mapContainerRef.current.style.transform = `rotateX(55deg) rotateZ(-${bearing}deg) scale(1.8)`;
-        mapContainerRef.current.style.setProperty('--map-rotation', `${bearing}deg`);
+      updateUserMarker([navLoc.lng, navLoc.lat], true);
+      if (myLocationMarkerRef.current) {
+        myLocationMarkerRef.current.setRotation(bearing);
       }
-
-      setTimeout(() => {
-        map.invalidateSize();
-        // Aggressive centering loop to ensure map snaps correctly after layout shifts
-        let attempts = 0;
-        const interval = setInterval(() => {
-          const currentPos = animatedCoordsRef.current || navLoc;
-          const currentH = currentHeadingRef.current || bearing;
-          const snapOffsetCenter = getOffsetLatLng(currentPos.lat, currentPos.lng, currentH, 50);
-          map.panTo([snapOffsetCenter.lat, snapOffsetCenter.lng], { animate: false });
-          
-          if (mapContainerRef.current) {
-            mapContainerRef.current.style.transform = `rotateX(55deg) rotateZ(-${currentH}deg) scale(1.8)`;
-            mapContainerRef.current.style.setProperty('--map-rotation', `${currentH}deg`);
-          }
-          attempts++;
-          if (attempts > 5) clearInterval(interval);
-        }, 100);
-      }, 300);
     }
 
     toast({
@@ -999,7 +958,6 @@ function PizzaMap({
     });
   };
 
-  // Stop active navigation animation frames
   const cleanupNavigationTimers = () => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -1007,33 +965,36 @@ function PizzaMap({
     }
   };
 
-  // Exit turn-by-turn navigation mode but keep the active route drawn
   const exitNavigation = () => {
     cleanupNavigationTimers();
     setIsNavigating(false);
     setIsLocked(false);
     setCurrentInstruction(null);
 
-    if (mapContainerRef.current) {
-      mapContainerRef.current.classList.remove('navigation-3d-view');
-      mapContainerRef.current.style.transform = '';
-      mapContainerRef.current.style.removeProperty('--map-rotation');
-    }
-
     const map = mapInstanceRef.current;
     if (map) {
-      map.dragging.enable();
-      map.touchZoom.enable();
-      map.doubleClickZoom.enable();
-      map.boxZoom.enable();
+      map.easeTo({
+        pitch: 0,
+        bearing: 0,
+        duration: 800
+      });
       
-      if (routeLayerRef.current) {
-        map.flyTo(routeLayerRef.current.getBounds().getCenter(), 14);
+      if (routeCoordinatesRef.current.length > 0) {
+        const bounds = routeCoordinatesRef.current.reduce((acc, coord) => {
+          return acc.extend([coord[1], coord[0]]);
+        }, new maplibregl.LngLatBounds(
+          [routeCoordinatesRef.current[0][1], routeCoordinatesRef.current[0][0]],
+          [routeCoordinatesRef.current[0][1], routeCoordinatesRef.current[0][0]]
+        ));
+        map.fitBounds(bounds, { padding: 50 });
       }
     }
 
     if (userLocation) {
-      updateUserMarker(new L.LatLng(userLocation.lat, userLocation.lng), true);
+      updateUserMarker([userLocation.lng, userLocation.lat], true);
+      if (myLocationMarkerRef.current) {
+        myLocationMarkerRef.current.setRotation(0);
+      }
     }
     
     toast({
@@ -1042,139 +1003,96 @@ function PizzaMap({
     });
   };
 
-  // Clear route completely and exit navigation
   const clearRoute = () => {
     cleanupNavigationTimers();
     setCurrentInstruction(null);
 
-    if (mapContainerRef.current) {
-      mapContainerRef.current.classList.remove('navigation-3d-view');
-      mapContainerRef.current.style.transform = '';
-      mapContainerRef.current.style.removeProperty('--map-rotation');
+    const map = mapInstanceRef.current;
+    if (map) {
+      if (map.getLayer('route-layer')) map.removeLayer('route-layer');
+      if (map.getSource('route')) map.removeSource('route');
+      
+      map.easeTo({
+        pitch: 0,
+        bearing: 0,
+        center: [HERMOSILLO_CENTER[1], HERMOSILLO_CENTER[0]],
+        zoom: 12,
+        duration: 800
+      });
     }
 
-    if (routeLayerRef.current) {
-      routeLayerRef.current.remove();
-      routeLayerRef.current = null;
-    }
-
+    routeCoordinatesRef.current = [];
     setActiveRoute(null);
     setIsNavigating(false);
     setIsLocked(false);
     setRouteDetails(null);
     setRouteSteps([]);
 
-    const map = mapInstanceRef.current;
-    if (map) {
-      map.dragging.enable();
-      map.touchZoom.enable();
-      map.doubleClickZoom.enable();
-      map.boxZoom.enable();
-      map.flyTo(HERMOSILLO_CENTER, 12);
-    }
-
     if (userLocation) {
-      updateUserMarker(new L.LatLng(userLocation.lat, userLocation.lng), true);
+      updateUserMarker([userLocation.lng, userLocation.lat], true);
+      if (myLocationMarkerRef.current) {
+        myLocationMarkerRef.current.setRotation(0);
+      }
     }
   };
 
-  // Effect to handle routeDestination prop
   useEffect(() => {
     if (routeDestination) {
       drawRoute(routeDestination);
     }
   }, [routeDestination]);
 
-  // Effect for map initialization and cleanup
   useEffect(() => {
     if (mapContainerRef.current && !mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current).setView(HERMOSILLO_CENTER, 12);
+      const map = new maplibregl.Map({
+        container: mapContainerRef.current,
+        style: getMapStyle(),
+        center: [HERMOSILLO_CENTER[1], HERMOSILLO_CENTER[0]],
+        zoom: 12,
+        pitch: 0,
+        bearing: 0,
+        attributionControl: false
+      });
+      
       mapInstanceRef.current = map;
 
-      const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      });
-
-      const satelliteLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=es&x={x}&y={y}&z={z}', {
-        attribution: 'Map data &copy; Google',
-        maxZoom: 20
-      });
-
-      const terrainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-      });
-
-      const baseMaps: Record<string, L.TileLayer> = {
-        "Estándar": standardLayer,
-        "Satélite": satelliteLayer,
-        "Relieve": terrainLayer,
-      };
-
-      trafficLayerRef.current = L.tileLayer('https://mt0.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}', {
-        attribution: 'Map data &copy; Google',
-        maxZoom: 20
-      });
-
-      const overlayMaps = {
-        "Tráfico (Google)": trafficLayerRef.current
-      };
-
-      L.control.layers(baseMaps, overlayMaps).addTo(map);
-
-      // Restore Base Layer
-      let savedBaseLayerName = null;
+      let savedBaseLayerName = 'Estándar';
       try {
-        savedBaseLayerName = localStorage.getItem('mapBaseLayer');
-      } catch (e) {
-        console.warn("Storage access failed:", e);
-      }
-      if (savedBaseLayerName && baseMaps[savedBaseLayerName]) {
-        baseMaps[savedBaseLayerName].addTo(map);
-      } else {
-        standardLayer.addTo(map);
-      }
-
-      // Persist Base Layer Change
-      map.on('baselayerchange', (e) => {
-        // Only save if it's a base layer (not overlay)
-        // e.name gives the name in the control
-        if (baseMaps[e.name]) {
-          try {
-            localStorage.setItem('mapBaseLayer', e.name);
-          } catch (err) {
-            console.warn("Storage access failed:", err);
-          }
+        const stored = localStorage.getItem('mapBaseLayer');
+        if (stored === 'Estándar' || stored === 'Satélite' || stored === 'Relieve') {
+          savedBaseLayerName = stored;
         }
-      });
-
-      // Restore user location from storage
-      let savedLoc = null;
-      try {
-        savedLoc = localStorage.getItem('userLocation');
       } catch (e) {
         console.warn("Storage access failed:", e);
       }
-      if (savedLoc) {
+      setCurrentBaseLayer(savedBaseLayerName as any);
+
+      map.on('load', () => {
+        updateLayersVisibility(map, savedBaseLayerName, showTraffic);
+
+        let savedLoc = null;
         try {
-          const { lat, lng } = JSON.parse(savedLoc);
-          if (typeof lat === 'number' && typeof lng === 'number') {
-            setUserLocation({ lat, lng });
-            const latlng = new L.LatLng(lat, lng);
-            updateUserMarker(latlng, true);
-            // Center map on restored location so user sees nearby context
-            map.setView(latlng, 16);
-          }
+          savedLoc = localStorage.getItem('userLocation');
         } catch (e) {
-          console.error("Failed to parse saved location", e);
+          console.warn("Storage access failed:", e);
         }
-      }
+        if (savedLoc) {
+          try {
+            const { lat, lng } = JSON.parse(savedLoc);
+            if (typeof lat === 'number' && typeof lng === 'number') {
+              setUserLocation({ lat, lng });
+              updateUserMarker([lng, lat], true);
+              map.setCenter([lng, lat]);
+              map.setZoom(16);
+            }
+          } catch (e) {
+            console.error("Failed to parse saved location", e);
+          }
+        }
 
-      // Event listeners for traffic layer
-      map.on('overlayadd', (e) => {
-        if (e.name === 'Tráfico (Google)') setShowTrafficLegend(true);
-      });
-      map.on('overlayremove', (e) => {
-        if (e.name === 'Tráfico (Google)') setShowTrafficLegend(false);
+        if (routeDestination) {
+          drawRoute(routeDestination);
+        }
       });
     }
 
@@ -1187,30 +1105,36 @@ function PizzaMap({
     };
   }, []);
 
-  // Effect to update traffic layer periodically
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      if (trafficLayerRef.current) {
-        // Force refresh by updating URL with timestamp
-        const timestamp = Date.now();
-        trafficLayerRef.current.setUrl(`https://mt0.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}&ts=${timestamp}`);
-      }
-    }, 10000); // Update every 10 seconds
+  const handleBaseLayerChange = (layerName: 'Estándar' | 'Satélite' | 'Relieve') => {
+    setCurrentBaseLayer(layerName);
+    try {
+      localStorage.setItem('mapBaseLayer', layerName);
+    } catch (e) {
+      console.warn("Storage access failed:", e);
+    }
+    
+    const map = mapInstanceRef.current;
+    if (map) {
+      updateLayersVisibility(map, layerName, showTraffic);
+    }
+  };
 
-    return () => clearInterval(intervalId);
-  }, []);
+  const handleTrafficToggle = () => {
+    const nextVal = !showTraffic;
+    setShowTraffic(nextVal);
+    setShowTrafficLegend(nextVal);
+    
+    const map = mapInstanceRef.current;
+    if (map) {
+      updateLayersVisibility(map, currentBaseLayer, nextVal);
+    }
+  };
 
-  const [showAll, setShowAll] = useState(false);
-
-  // Filter pizzerias based on distance if user location is known and not showing all
   const visiblePizzerias = useMemo(() => {
-    // Create a base list that includes the selected pizzeria if it's not already in the prop list
     let candidates = pizzerias;
     if (selectedPizzeria && !pizzerias.find(p => p.id === selectedPizzeria.id)) {
       candidates = [...pizzerias, selectedPizzeria];
     }
-
-    // Also ensure explicitly requested pizzerias are in candidates
     explicitPizzeriasToShow?.forEach(explicit => {
       if (!candidates.find(p => p.id === explicit.id)) {
         candidates = [...candidates, explicit];
@@ -1218,20 +1142,11 @@ function PizzaMap({
     });
 
     return candidates.filter(pizzeria => {
-      // Always show selected pizzeria
       if (selectedPizzeria?.id === pizzeria.id) return true;
-
-      // Always show explicit pizzerias (e.g. last selected)
       if (explicitPizzeriasToShow?.some(e => e.id === pizzeria.id)) return true;
-
-      // If explicitly showing all, show everything
       if (showAll) return true;
-
-      // If distance filter disabled (manual mode), show everything passed in props (which should be the subset)
       if (disableDistanceFilter) return true;
 
-      // If we have a search center, show pizzerias near it (Focus context)
-      // This replaces "return true" which showed EVERYTHING causing clutter
       if (searchCenter && typeof pizzeria.lat === 'number' && typeof pizzeria.lng === 'number') {
         const distToSearch = getDistance(
           { latitude: searchCenter.lat, longitude: searchCenter.lng },
@@ -1240,16 +1155,13 @@ function PizzaMap({
         if (distToSearch <= 2500) return true;
       }
 
-      // If user location is known, filter by distance (2.5km) (User context)
       if (userLocation && typeof pizzeria.lat === 'number' && typeof pizzeria.lng === 'number') {
-        // Always show if it is the route destination
         if (routeDestination &&
           Math.abs(pizzeria.lat - routeDestination.lat) < 0.0001 &&
           Math.abs(pizzeria.lng - routeDestination.lng) < 0.0001) {
           return true;
         }
 
-        // Also show if it is the active route destination
         if (activeRoute &&
           Math.abs(pizzeria.lat - activeRoute.lat) < 0.0001 &&
           Math.abs(pizzeria.lng - activeRoute.lng) < 0.0001) {
@@ -1260,87 +1172,195 @@ function PizzaMap({
           { latitude: userLocation.lat, longitude: userLocation.lng },
           { latitude: pizzeria.lat, longitude: pizzeria.lng }
         );
-        return distance <= 2500; // 2.5km in meters
+        return distance <= 2500;
       }
 
-      // Otherwise (no user location, no search, not showing all), hide everything
       return false;
     });
   }, [pizzerias, selectedPizzeria, showAll, searchCenter, userLocation, routeDestination, activeRoute, disableDistanceFilter, explicitPizzeriasToShow]);
 
-  // Effect for changing map view
-  useEffect(() => {
+  const updatePizzeriaMarkerElement = (el: HTMLElement, pizzeria: Pizzeria, isSelected: boolean, isRouteDestination: boolean) => {
+    let iconUrl = 'https://cdn-icons-png.flaticon.com/128/3595/3595458.png';
+    let size = 35;
+    
+    if (isSelected) {
+      iconUrl = 'https://cdn-icons-png.flaticon.com/128/1046/1046751.png';
+      size = 45;
+    } else if (isNavigating && isRouteDestination) {
+      iconUrl = 'https://cdn-icons-png.flaticon.com/128/1404/1404945.png';
+      size = 50;
+    }
+
+    el.innerHTML = `<img src="${iconUrl}" style="width: ${size}px; height: ${size}px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));" />`;
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+    el.style.cursor = 'pointer';
+    el.style.zIndex = isSelected ? '1000' : '0';
+  };
+
+  const openPizzeriaPopup = (pizzeria: Pizzeria, marker: maplibregl.Marker) => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Skip auto-centering if navigating
-    if (isNavigating) return;
-
-    if (selectedPizzeria) {
-      // SMART CENTERING: Center properly considering the popup offset
-      const targetLat = selectedPizzeria.lat;
-      const targetLng = selectedPizzeria.lng;
-
-      // Calculate offset in pixels to center "Marker + Popup" at TARGET ZOOM (16)
-
-      // Fixed offset estimate: half of popup height + anchor at ZOOM 16
-      const projectPoint = map.project([targetLat, targetLng], 16);
-      // Shift point UP (negative Y) by ~150px (approx center of popup+marker composition)
-      const pointTarget = projectPoint.subtract([0, mapCenterOffset]);
-      const latlngTarget = map.unproject(pointTarget, 16);
-
-      map.flyTo(latlngTarget, 16, {
-        animate: true,
-        duration: 1.5,
-      });
-      map.flyTo(latlngTarget, 16, {
-        animate: true,
-        duration: 1.5,
-      });
-    } else if (searchCenter) {
-      // CENTER EXACTLY ON SEARCH PIN
-      // User requested independent centering for the pin, centered on the searched place.
-      // We do NOT apply mapCenterOffset here.
-      map.flyTo([searchCenter.lat, searchCenter.lng], 16, {
-        animate: true,
-        duration: 1.5,
-      });
-    } else {
-      // Don't reset view if we have a route or user location active
-      if (!routeLayerRef.current && !userLocation) {
-        map.flyTo(HERMOSILLO_CENTER, 12, {
-          animate: true,
-          duration: 1.5
-        });
-      }
+    if (activePopupRef.current) {
+      activePopupRef.current.remove();
     }
-  }, [selectedPizzeria, searchCenter, routeLayerRef, userLocation, isNavigating]);
 
-  // Handle Search Marker (Red Pin)
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    if (searchCenter) {
-      if (searchMarkerRef.current) {
-        searchMarkerRef.current.setLatLng([searchCenter.lat, searchCenter.lng]);
-        searchMarkerRef.current.setIcon(searchIcon);
-      } else {
-        searchMarkerRef.current = L.marker([searchCenter.lat, searchCenter.lng], { icon: searchIcon, zIndexOffset: 2000 }).addTo(map);
-      }
-    } else {
-      if (searchMarkerRef.current) {
-        searchMarkerRef.current.remove();
-        searchMarkerRef.current = null;
-      }
+    const container = document.createElement('div');
+    container.className = "w-[280px] p-1 font-sans text-gray-800 dark:text-gray-100";
+    
+    if (pizzeria.imageUrl) {
+      const imgContainer = document.createElement('div');
+      imgContainer.className = "mb-3 rounded-lg overflow-hidden h-36 w-full bg-gray-100 relative shadow-sm";
+      const img = document.createElement('img');
+      img.src = pizzeria.imageUrl;
+      img.alt = pizzeria.name;
+      img.className = "w-full h-full object-cover transform hover:scale-105 transition-transform duration-500";
+      imgContainer.appendChild(img);
+      container.appendChild(imgContainer);
     }
-  }, [searchCenter, searchIcon]);
 
-  // Ref to track existing markers by ID to avoid constant rebuilds
-  const markersMapRef = useRef<Map<string, L.Marker>>(new Map());
+    const titleContainer = document.createElement('div');
+    titleContainer.className = "flex justify-between items-start mb-2";
+    const title = document.createElement('h3');
+    title.className = "text-lg font-bold text-red-600 leading-tight";
+    title.textContent = pizzeria.name;
+    titleContainer.appendChild(title);
+    container.appendChild(titleContainer);
 
-  // Update markers based on visiblePizzerias
+    const infoContainer = document.createElement('div');
+    infoContainer.className = "space-y-2 mb-4 text-sm text-gray-600 dark:text-gray-300";
+
+    const addressRow = document.createElement('div');
+    addressRow.className = "flex items-start gap-2";
+    addressRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-pink-500 mt-0.5 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
+    const addressText = document.createElement('span');
+    addressText.className = "leading-tight text-gray-700 dark:text-gray-300";
+    addressText.textContent = pizzeria.address || 'Dirección no disponible';
+    addressRow.appendChild(addressText);
+    infoContainer.appendChild(addressRow);
+
+    if (pizzeria.schedule) {
+      const scheduleRow = document.createElement('div');
+      scheduleRow.className = "flex items-start gap-2";
+      scheduleRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-orange-500 mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+      const scheduleText = document.createElement('span');
+      scheduleText.className = "leading-tight text-gray-700 dark:text-gray-300";
+      scheduleText.textContent = pizzeria.schedule;
+      scheduleRow.appendChild(scheduleText);
+      infoContainer.appendChild(scheduleRow);
+    }
+
+    if (pizzeria.phoneNumber) {
+      const phoneRow = document.createElement('div');
+      phoneRow.className = "flex items-start gap-2";
+      phoneRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-green-600 mt-0.5 shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
+      const phoneLink = document.createElement('a');
+      phoneLink.href = `tel:${pizzeria.phoneNumber}`;
+      phoneLink.className = "leading-tight hover:underline text-primary";
+      phoneLink.textContent = pizzeria.phoneNumber;
+      phoneRow.appendChild(phoneLink);
+      infoContainer.appendChild(phoneRow);
+    }
+
+    if (pizzeria.website) {
+      const webRow = document.createElement('div');
+      webRow.className = "flex items-start gap-2";
+      webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-blue-500 mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+      const webLink = document.createElement('a');
+      webLink.href = pizzeria.website;
+      webLink.target = "_blank";
+      webLink.rel = "noopener noreferrer";
+      webLink.className = "leading-tight hover:underline text-blue-600 truncate max-w-[200px] block";
+      webLink.textContent = pizzeria.website.replace(/^https?:\/\//, '');
+      webRow.appendChild(webLink);
+      infoContainer.appendChild(webRow);
+    }
+
+    const dist = userLocation
+      ? (getDistance(
+        { latitude: userLocation.lat, longitude: userLocation.lng },
+        { latitude: pizzeria.lat, longitude: pizzeria.lng }
+      ) / 1000).toFixed(1) + ' km'
+      : 'Calculando...';
+
+    const distRow = document.createElement('div');
+    distRow.className = "flex items-center gap-2";
+    distRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-gray-400 shrink-0"><path d="M6 18h12"/><path d="M6 10h12"/><path d="M6 6h12"/><path d="M6 14h12"/></svg>`;
+    const distText = document.createElement('span');
+    distText.textContent = `Distancia: ${dist}`;
+    distRow.appendChild(distText);
+    infoContainer.appendChild(distRow);
+
+    if (pizzeria.rating) {
+      const ratingRow = document.createElement('div');
+      ratingRow.className = "flex items-center gap-1";
+      ratingRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-yellow-400 fill-yellow-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+      const ratingText = document.createElement('span');
+      ratingText.className = "font-medium text-gray-900 dark:text-gray-100";
+      ratingText.textContent = `Rating: ${pizzeria.rating.toFixed(1)}`;
+      ratingRow.appendChild(ratingText);
+      infoContainer.appendChild(ratingRow);
+    }
+
+    container.appendChild(infoContainer);
+
+    const btnGrid = document.createElement('div');
+    btnGrid.className = "grid grid-cols-2 gap-2 mt-2";
+
+    const btnMenu = document.createElement('button');
+    btnMenu.type = 'button';
+    btnMenu.className = "bg-red-600 hover:bg-red-700 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors";
+    btnMenu.textContent = "Ver menú";
+    btnMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (onViewMenu) onViewMenu(pizzeria);
+    });
+    btnGrid.appendChild(btnMenu);
+
+    const btnRoute = document.createElement('button');
+    btnRoute.type = 'button';
+    btnRoute.className = "bg-red-600 hover:bg-red-700 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors";
+    btnRoute.textContent = "Cómo llegar";
+    btnRoute.addEventListener('click', (e) => {
+      e.stopPropagation();
+      drawRoute({ lat: pizzeria.lat, lng: pizzeria.lng });
+    });
+    btnGrid.appendChild(btnRoute);
+
+    const btnRate = document.createElement('button');
+    btnRate.type = 'button';
+    btnRate.className = "col-span-2 bg-yellow-500 hover:bg-yellow-600 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors flex items-center justify-center gap-2";
+    btnRate.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 fill-current"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Calificar`;
+    btnRate.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (onRate) onRate(pizzeria);
+    });
+    btnGrid.appendChild(btnRate);
+
+    container.appendChild(btnGrid);
+
+    const isMobile = window.innerWidth < 768;
+    const currentOffset = isMobile ? (popupOffsetYMobile ?? -35) : (popupOffsetY ?? -35);
+
+    const popup = new maplibregl.Popup({
+      offset: [0, currentOffset],
+      closeButton: true,
+      closeOnClick: false,
+      className: 'custom-popup'
+    })
+    .setDOMContent(container)
+    .setLngLat([pizzeria.lng, pizzeria.lat])
+    .addTo(map);
+
+    activePopupRef.current = popup;
+  };
+
   useEffect(() => {
+    updatePizzeriaMarkers();
+  }, [visiblePizzerias, selectedPizzeria, activeRoute, isNavigating]);
+
+  const updatePizzeriaMarkers = () => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
@@ -1351,314 +1371,202 @@ function PizzaMap({
       currentIds.add(pizzeria.id);
 
       const isSelected = selectedPizzeria?.id === pizzeria.id;
-      const isRouteDestination = activeRoute && Math.abs(activeRoute.lat - pizzeria.lat) < 0.0001 && Math.abs(activeRoute.lng - pizzeria.lng) < 0.0001;
-
-      let markerIcon = defaultIcon;
-      if (isSelected) markerIcon = selectedIcon;
-      else if (isNavigating && isRouteDestination) markerIcon = pizzaIcon;
+      const isRouteDestination = !!(activeRoute && Math.abs(activeRoute.lat - pizzeria.lat) < 0.0001 && Math.abs(activeRoute.lng - pizzeria.lng) < 0.0001);
 
       let marker = markersMapRef.current.get(pizzeria.id);
 
       if (marker) {
-        // Update existing marker
-        if (marker.getIcon() !== markerIcon) {
-          marker.setIcon(markerIcon);
-        }
+        const el = marker.getElement();
+        updatePizzeriaMarkerElement(el, pizzeria, isSelected, isRouteDestination);
+        
         if (isSelected) {
-          marker.setZIndexOffset(1000);
-          // Only open if not already open to avoid disruption? 
-          // Leaflet handles openPopup gracefully usually.
-          if (!marker.isPopupOpen()) marker.openPopup();
-        } else {
-          marker.setZIndexOffset(0);
+          openPizzeriaPopup(pizzeria, marker);
         }
       } else {
-        // Create new marker
-        marker = L.marker([pizzeria.lat, pizzeria.lng], {
-          icon: markerIcon,
-        }).addTo(map);
+        const el = document.createElement('div');
+        el.className = 'pizzeria-marker';
+        updatePizzeriaMarkerElement(el, pizzeria, isSelected, isRouteDestination);
 
-        // Bind click event - HANDLE ITERNALY TO AVOID PAGE RELOAD / SHEET OPEN
-        marker.on('click', (e) => {
-          L.DomEvent.preventDefault(e as any);
-          L.DomEvent.stopPropagation(e as any);
-
-          // SMART CENTERING (Local)
-          const targetLat = pizzeria.lat!;
-          const targetLng = pizzeria.lng!;
-          const projectPoint = map.project([targetLat, targetLng], 16); // Target Zoom 16!
-          const pointTarget = projectPoint.subtract([0, mapCenterOffset]);
-          const latlngTarget = map.unproject(pointTarget, 16);
-
-          map.flyTo(latlngTarget, 16, {
-            animate: true,
-            duration: 1.5,
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          onMarkerClick(pizzeria);
+          
+          map.easeTo({
+            center: [pizzeria.lng, pizzeria.lat],
+            zoom: 16,
+            offset: [0, mapCenterOffset],
+            duration: 1500
           });
-
-          // Force open popup after a small delay to ensure flyTo start doesn't conflict or DOM is ready
-          // Sometimes Leaflet cancels popup on map move if not careful, but usually it binds it to location.
-          // Explicitly opening it is safer.
-          setTimeout(() => {
-            marker!.openPopup();
-          }, 100);
         });
 
-        markersMapRef.current.set(pizzeria.id, marker);
+        const newMarker = new maplibregl.Marker({
+          element: el,
+          anchor: 'bottom'
+        })
+        .setLngLat([pizzeria.lng, pizzeria.lat])
+        .addTo(map);
+
+        markersMapRef.current.set(pizzeria.id, newMarker);
+
+        if (isSelected) {
+          openPizzeriaPopup(pizzeria, newMarker);
+        }
       }
+    });
 
-      // Use Native DOM for Popup to avoid React Root complexity/leaks/event issues
-      const container = document.createElement('div');
-      container.className = "w-[280px] p-1 font-sans";
-
-      // Image
-      if (pizzeria.imageUrl) {
-        const imgContainer = document.createElement('div');
-        imgContainer.className = "mb-3 rounded-lg overflow-hidden h-36 w-full bg-gray-100 relative shadow-sm";
-        const img = document.createElement('img');
-        img.src = pizzeria.imageUrl;
-        img.alt = pizzeria.name;
-        img.className = "w-full h-full object-cover transform hover:scale-105 transition-transform duration-500";
-        img.onerror = () => { imgContainer.style.display = 'none'; };
-        imgContainer.appendChild(img);
-        container.appendChild(imgContainer);
-      }
-
-      // Title
-      const titleContainer = document.createElement('div');
-      titleContainer.className = "flex justify-between items-start mb-2";
-      const title = document.createElement('h3');
-      title.className = "text-lg font-bold text-red-600 leading-tight";
-      title.textContent = pizzeria.name;
-      titleContainer.appendChild(title);
-      container.appendChild(titleContainer);
-
-      // Info
-      const infoContainer = document.createElement('div');
-      infoContainer.className = "space-y-2 mb-4 text-sm text-gray-600";
-
-      // Address
-      const addressRow = document.createElement('div');
-      addressRow.className = "flex items-start gap-2";
-      addressRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-pink-500 mt-0.5 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
-      const addressText = document.createElement('span');
-      addressText.className = "leading-tight";
-      addressText.textContent = pizzeria.address || 'Dirección no disponible';
-      addressRow.appendChild(addressText);
-      infoContainer.appendChild(addressRow);
-
-      // Schedule (Horario)
-      if (pizzeria.schedule) {
-        const scheduleRow = document.createElement('div');
-        scheduleRow.className = "flex items-start gap-2";
-        scheduleRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-orange-500 mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
-        const scheduleText = document.createElement('span');
-        scheduleText.className = "leading-tight";
-        scheduleText.textContent = pizzeria.schedule;
-        scheduleRow.appendChild(scheduleText);
-        infoContainer.appendChild(scheduleRow);
-      }
-
-      // Phone
-      if (pizzeria.phoneNumber) {
-        const phoneRow = document.createElement('div');
-        phoneRow.className = "flex items-start gap-2";
-        phoneRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-green-600 mt-0.5 shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
-        const phoneLink = document.createElement('a');
-        phoneLink.href = `tel:${pizzeria.phoneNumber}`;
-        phoneLink.className = "leading-tight hover:underline text-primary";
-        phoneLink.textContent = pizzeria.phoneNumber;
-        phoneRow.appendChild(phoneLink);
-        infoContainer.appendChild(phoneRow);
-      }
-
-      // Website
-      if (pizzeria.website) {
-        const webRow = document.createElement('div');
-        webRow.className = "flex items-start gap-2";
-        webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-blue-500 mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
-        const webLink = document.createElement('a');
-        webLink.href = pizzeria.website;
-        webLink.target = "_blank";
-        webLink.rel = "noopener noreferrer";
-        webLink.className = "leading-tight hover:underline text-blue-600 truncate max-w-[220px] block";
-        webLink.textContent = pizzeria.website.replace(/^https?:\/\//, '');
-        webRow.appendChild(webLink);
-        infoContainer.appendChild(webRow);
-      }
-
-      // Social
-      if (pizzeria.socialMedia) {
-        const socialRow = document.createElement('div');
-        socialRow.className = "flex items-start gap-2";
-        socialRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-purple-500 mt-0.5 shrink-0"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>`; // Share icon generic
-        const socialLink = document.createElement('a');
-        socialLink.href = pizzeria.socialMedia.startsWith('http') ? pizzeria.socialMedia : `https://${pizzeria.socialMedia}`;
-        socialLink.target = "_blank";
-        socialLink.rel = "noopener noreferrer";
-        socialLink.className = "leading-tight hover:underline text-purple-600 truncate max-w-[220px] block";
-        socialLink.textContent = "Redes Sociales";
-        socialRow.appendChild(socialLink);
-        infoContainer.appendChild(socialRow);
-      }
-
-      // Distance
-      const dist = userLocation
-        ? (getDistance(
-          { latitude: userLocation.lat, longitude: userLocation.lng },
-          { latitude: pizzeria.lat, longitude: pizzeria.lng }
-
-        ) / 1000).toFixed(1) + ' km'
-        : 'Calculando...';
-
-      const distRow = document.createElement('div');
-      distRow.className = "flex items-center gap-2";
-      distRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-gray-400 shrink-0"><path d="M6 18h12"/><path d="M6 10h12"/><path d="M6 6h12"/><path d="M6 14h12"/></svg>`;
-      const distText = document.createElement('span');
-      distText.textContent = `Distancia: ${dist}`;
-      distRow.appendChild(distText);
-      infoContainer.appendChild(distRow);
-
-      // Rating visualization would be complex to DOM-build manually for all stars, simplifying for robustness
-      if (pizzeria.rating) {
-        const ratingRow = document.createElement('div');
-        ratingRow.className = "flex items-center gap-1";
-        ratingRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-yellow-400 fill-yellow-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
-        const ratingText = document.createElement('span');
-        ratingText.className = "font-medium text-gray-900";
-        ratingText.textContent = `Rating: ${pizzeria.rating.toFixed(1)}`;
-        ratingRow.appendChild(ratingText);
-        infoContainer.appendChild(ratingRow);
-      }
-
-      container.appendChild(infoContainer);
-
-      // Buttons
-      const btnGrid = document.createElement('div');
-      btnGrid.className = "grid grid-cols-2 gap-2 mt-2";
-
-      // View Menu Button
-      const btnMenu = document.createElement('button');
-      btnMenu.type = 'button';
-      btnMenu.className = "bg-red-600 hover:bg-red-700 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors";
-      btnMenu.textContent = "Ver menú";
-
-      // Use Leaflet DomEvent to strictly handle events and stop propagation
-      L.DomEvent.disableClickPropagation(btnMenu);
-      L.DomEvent.on(btnMenu, 'click', (e) => {
-        L.DomEvent.stop(e);
-        if (onViewMenu) onViewMenu(pizzeria);
-      });
-
-      btnGrid.appendChild(btnMenu);
-
-      // Directions Button
-      const btnRoute = document.createElement('button');
-      btnRoute.type = 'button';
-      btnRoute.className = "bg-red-600 hover:bg-red-700 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors";
-      btnRoute.textContent = "Cómo llegar";
-
-      L.DomEvent.disableClickPropagation(btnRoute);
-      L.DomEvent.on(btnRoute, 'click', (e) => {
-        L.DomEvent.stop(e);
-        drawRoute({ lat: pizzeria.lat, lng: pizzeria.lng });
-      });
-
-      btnGrid.appendChild(btnRoute);
-
-      // Rate Button
-      const btnRate = document.createElement('button');
-      btnRate.type = 'button';
-      btnRate.className = "col-span-2 bg-yellow-500 hover:bg-yellow-600 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors flex items-center justify-center gap-2";
-      btnRate.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 fill-current"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Calificar`;
-
-      L.DomEvent.disableClickPropagation(btnRate);
-      L.DomEvent.on(btnRate, 'click', (e) => {
-        L.DomEvent.stop(e);
-        if (onRate) onRate(pizzeria);
-      });
-
-      btnGrid.appendChild(btnRate);
-
-      container.appendChild(btnGrid);
-
-      const popupContent = container;
-      // End Native DOM
-
-      // Determine offset
-      const isMobile = window.innerWidth < 768;
-      const currentOffset = isMobile ? (popupOffsetYMobile ?? -35) : (popupOffsetY ?? -35);
-
-      if (marker.getPopup()) {
-        marker.setPopupContent(popupContent);
-        marker.getPopup()!.options.offset = [0, currentOffset] as any;
-        marker.getPopup()!.update();
-      } else {
-        const popup = L.popup({
-          offset: [0, currentOffset],
-          closeButton: true,
-          className: 'custom-popup',
-          maxWidth: 300
-        }).setContent(popupContent);
-        marker.bindPopup(popup);
-      }
-
-      // If we just selected this, ensure popup is open.
-      if (isSelected && !marker.isPopupOpen()) {
-        marker.openPopup();
-      }
-
-    }); // End visiblePizzerias loop
-
-    // Remove markers that are no longer visible
     markersMapRef.current.forEach((marker, id) => {
       if (!currentIds.has(id)) {
         marker.remove();
         markersMapRef.current.delete(id);
       }
     });
+  };
 
-  }, [visiblePizzerias, selectedPizzeria, onMarkerClick, userLocation, activeRoute, popupOffsetY, popupOffsetYMobile]);
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (isNavigating) return;
+
+    if (selectedPizzeria) {
+      map.easeTo({
+        center: [selectedPizzeria.lng, selectedPizzeria.lat],
+        zoom: 16,
+        offset: [0, mapCenterOffset],
+        duration: 1500
+      });
+    } else if (searchCenter) {
+      map.easeTo({
+        center: [searchCenter.lng, searchCenter.lat],
+        zoom: 16,
+        duration: 1500
+      });
+    } else {
+      if (routeCoordinatesRef.current.length === 0 && !userLocation) {
+        map.easeTo({
+          center: [HERMOSILLO_CENTER[1], HERMOSILLO_CENTER[0]],
+          zoom: 12,
+          duration: 1500
+        });
+      }
+    }
+  }, [selectedPizzeria, searchCenter, userLocation, isNavigating]);
+
+  useEffect(() => {
+    updateSearchMarker();
+  }, [searchCenter]);
+
+  const updateSearchMarker = () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (searchCenter) {
+      if (!searchMarkerRef.current) {
+        const el = document.createElement('div');
+        el.innerHTML = `
+          <div style="
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+          ">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="#ef4444" stroke="#7f1d1d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+              <circle cx="12" cy="10" r="3" fill="white"/>
+            </svg>
+          </div>
+        `;
+        searchMarkerRef.current = new maplibregl.Marker({
+          element: el,
+          anchor: 'bottom'
+        })
+        .setLngLat([searchCenter.lng, searchCenter.lat])
+        .addTo(map);
+      } else {
+        searchMarkerRef.current.setLngLat([searchCenter.lng, searchCenter.lat]);
+      }
+    } else {
+      if (searchMarkerRef.current) {
+        searchMarkerRef.current.remove();
+        searchMarkerRef.current = null;
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (myLocationMarkerRef.current && mapInstanceRef.current) {
+      updateUserMarker(myLocationMarkerRef.current.getLngLat().toArray() as [number, number], true);
+    }
+  }, [isNavigating]);
 
   return (
     <div className="relative h-full w-full z-0 overflow-hidden">
       {/* Map Container Wrapper */}
-      <div className="absolute inset-0 z-10" style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}>
+      <div className="absolute inset-0 z-10">
         <div
           ref={mapContainerRef}
-          className={isNavigating && isLocked ? 'navigation-3d-view' : ''}
-          style={{
-            height: '100%',
-            width: '100%',
-            transform: (isNavigating && isLocked) ? `rotateX(55deg) rotateZ(-${mapRotation}deg) scale(1.8)` : '',
-            transformStyle: (isNavigating && isLocked) ? 'preserve-3d' : 'flat',
-            transition: 'transform 0.5s ease-out',
-            '--map-rotation': `${mapRotation}deg`
-          } as React.CSSProperties}
+          className="h-full w-full"
         />
       </div>
 
       {/* Flat 2D Overlays Wrapper */}
       <div className="absolute inset-0 z-20 pointer-events-none">
-        {/* Map Controls Container - Hide when navigating */}
+        
+        {/* Layer selection control and zoom controls - Hide when navigating */}
         {!isNavigating && (
           <div
             className="absolute right-4 z-[1001] flex flex-col gap-2 transition-all duration-300 top-[var(--buttons-top-mobile,_160px)] md:top-[var(--buttons-top-desktop,_160px)] pointer-events-auto"
           >
+            {/* Locate Me */}
             <Button
               variant="secondary"
               size="icon"
               onClick={handleLocateMe}
-              className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
+              className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white dark:bg-slate-950"
               aria-label="Find my location"
             >
               <LocateFixed className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
 
+            {/* Map Styles Selector */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="secondary" 
+                  size="icon" 
+                  className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white dark:bg-slate-950"
+                  aria-label="Select map style"
+                >
+                  <Layers className="h-4 w-4 md:h-5 md:w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40 bg-white dark:bg-slate-950 p-2 rounded-xl shadow-xl border border-gray-100 dark:border-slate-800 z-[1002]">
+                <DropdownMenuLabel className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 px-2">Tipo de mapa</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleBaseLayerChange('Estándar')} className={cn("flex justify-between items-center px-2 py-1.5 rounded-md text-sm cursor-pointer", currentBaseLayer === 'Estándar' && "bg-primary/10 text-primary font-semibold")}>
+                  <span>Estándar</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBaseLayerChange('Satélite')} className={cn("flex justify-between items-center px-2 py-1.5 rounded-md text-sm cursor-pointer", currentBaseLayer === 'Satélite' && "bg-primary/10 text-primary font-semibold")}>
+                  <span>Satélite</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBaseLayerChange('Relieve')} className={cn("flex justify-between items-center px-2 py-1.5 rounded-md text-sm cursor-pointer", currentBaseLayer === 'Relieve' && "bg-primary/10 text-primary font-semibold")}>
+                  <span>Relieve</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-1 border-t border-gray-100 dark:border-slate-800" />
+                <DropdownMenuItem onClick={handleTrafficToggle} className="flex justify-between items-center px-2 py-1.5 rounded-md text-sm cursor-pointer">
+                  <span>Tránsito (Google)</span>
+                  <span className={cn("w-2 h-2 rounded-full", showTraffic ? "bg-green-500" : "bg-gray-300 dark:bg-gray-700")}></span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Toggle Fullscreen */}
             <Button
               variant="secondary"
               size="icon"
               onClick={onToggleFullscreen}
-              className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10"
+              className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white dark:bg-slate-950"
               aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
             >
               {isFullscreen ? (
@@ -1674,12 +1582,12 @@ function PizzaMap({
                   variant={showAll ? "default" : "secondary"}
                   size="sm"
                   onClick={() => setShowAll(!showAll)}
-                  className="shadow-lg rounded-full h-8 md:h-10 px-3 text-xs md:text-sm font-medium"
+                  className="shadow-lg rounded-full h-8 md:h-10 px-3 text-xs md:text-sm font-medium bg-white dark:bg-slate-950 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-900 border-0"
                 >
                   {showAll ? "Ver cercanas" : "Ver todas"}
                 </Button>
 
-                {/* Manual Location Adjustment - Available on Desktop when location is known */}
+                {/* Manual Location Adjustment */}
                 <div className="hidden md:block">
                   <TooltipProvider>
                     <Tooltip>
@@ -1691,24 +1599,10 @@ function PizzaMap({
                             setIsLocked(false);
                             if (myLocationMarkerRef.current) {
                               const marker = myLocationMarkerRef.current;
-                              if (marker.dragging) marker.dragging.enable();
-
-                              // Re-bind dragend to ensure we catch updates
-                              marker.off('dragend');
-                              marker.on('dragend', (e) => {
-                                const newPos = e.target.getLatLng();
-                                const newLoc = { lat: newPos.lat, lng: newPos.lng };
-                                setUserLocation(newLoc);
-                                try {
-                                  localStorage.setItem('userLocation', JSON.stringify(newLoc));
-                                } catch (err) {
-                                  console.warn("Storage access failed:", err);
-                                }
-                                onLocateUser(newLoc);
-                                toast({ title: 'Ubicación actualizada manualmente' });
-                              });
+                              const el = marker.getElement();
+                              el.style.cursor = 'grab';
+                              toast({ title: "Modo ajuste", description: "Haz clic y arrastra tu icono para ajustar." });
                             }
-                            toast({ title: "Modo ajuste", description: "Arrastra tu icono para corregir la ubicación." });
                           }}
                           className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white/90 text-black hover:bg-white"
                         >
@@ -1753,14 +1647,14 @@ function PizzaMap({
               onClick={startNavigation}
               className="bg-[#4285F4] hover:bg-[#3367d6] text-white shadow-xl rounded-full px-6 h-12 text-base font-semibold border-2 border-white/20"
             >
-              <Navigation className="mr-2 h-5 w-5 fill-current" />
+              <Navigation className="mr-2 h-5 w-5 fill-current animate-bounce" />
               Iniciar viaje
             </Button>
             <Button
               onClick={clearRoute}
               variant="secondary"
               size="icon"
-              className="h-12 w-12 rounded-full shadow-xl bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-100"
+              className="h-12 w-12 rounded-full shadow-xl bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 border-2 border-gray-100 dark:border-slate-800"
               aria-label="Cancelar ruta"
             >
               <X className="h-6 w-6" />
@@ -1772,15 +1666,13 @@ function PizzaMap({
         <TooltipProvider>
           {isNavigating && routeDetails && (
             <>
-              {/* Top Instruction Bar - Green (Google Maps Style - Dynamic) */}
+              {/* Top Instruction Bar - Green (Google Maps Style) */}
               <div className="absolute top-4 left-4 right-4 z-[1002] animate-in slide-in-from-top-4 duration-300 pointer-events-auto">
                 <div className="bg-[#00695C] text-white p-4 rounded-xl shadow-lg flex items-center min-h-[80px] border border-white/10">
-                  {/* Maneuver Icon */}
                   <div className="flex-shrink-0 mr-4 bg-white/10 p-2 rounded-lg">
                     {currentInstruction?.icon || <Navigation className="w-12 h-12 text-white stroke-[3px]" />}
                   </div>
 
-                  {/* Text Content */}
                   <div className="flex flex-col justify-center overflow-hidden">
                     <span className="text-2xl font-black leading-none mb-1 tracking-wide text-teal-200">
                       {currentInstruction?.distanceText || '--- m'}
@@ -1803,23 +1695,20 @@ function PizzaMap({
                       onClick={() => {
                         const map = mapInstanceRef.current;
                         if (map && animatedCoordsRef.current) {
-                          setIsLocked(true); // Re-lock
-                          map.setZoom(18);
-                          
-                          const coords = animatedCoordsRef.current;
-                          const bearing = currentHeadingRef.current;
-                          const offsetCenter = getOffsetLatLng(coords.lat, coords.lng, bearing, 50);
-                          map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: true, duration: 0.5 });
-
-                          if (mapContainerRef.current) {
-                            mapContainerRef.current.style.transform = `rotateX(55deg) rotateZ(-${bearing}deg) scale(1.8)`;
-                          }
+                          setIsLocked(true);
+                          map.easeTo({
+                            zoom: 18,
+                            pitch: 60,
+                            bearing: currentHeadingRef.current,
+                            center: [animatedCoordsRef.current.lng, animatedCoordsRef.current.lat],
+                            duration: 500
+                          });
                         }
                       }}
                     >
                       <div className="relative w-full h-full bg-[#222] flex items-center justify-center">
-                        <div className="w-1.5 h-4 bg-red-500 rounded-t-sm absolute top-2 left-1/2 -translate-x-1/2 z-10 shadow-sm"></div>
-                        <div className="w-1.5 h-4 bg-gray-300 rounded-b-sm absolute bottom-2 left-1/2 -translate-x-1/2 z-10 shadow-sm"></div>
+                        <div className="w-1.5 h-4 bg-red-500 rounded-t-sm absolute top-2 left-1/2 -translate-x-1/2 z-10 shadow-sm" style={{ transform: `rotate(${-mapRotation}deg)`, transformOrigin: '50% 100%' }}></div>
+                        <div className="w-1.5 h-4 bg-gray-300 rounded-b-sm absolute bottom-2 left-1/2 -translate-x-1/2 z-10 shadow-sm" style={{ transform: `rotate(${-mapRotation}deg)`, transformOrigin: '50% 0%' }}></div>
                         <div className="w-8 h-8 rounded-full border-[3px] border-gray-600/60"></div>
                       </div>
                     </Button>
@@ -1836,7 +1725,7 @@ function PizzaMap({
                 <span className="text-white/70 text-[10px] uppercase font-bold">km/h</span>
               </div>
 
-              {/* Recentrar / Decentrar Buttons (Locked / Unlocked navigation state controller) */}
+              {/* Lock / Recenter Navigation Control */}
               {isLocked ? (
                 <div
                   className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto"
@@ -1862,9 +1751,14 @@ function PizzaMap({
                       if (map && animatedCoordsRef.current) {
                         const coords = animatedCoordsRef.current;
                         const bearing = currentHeadingRef.current;
-                        map.setZoom(18);
                         const offsetCenter = getOffsetLatLng(coords.lat, coords.lng, bearing, 50);
-                        map.panTo([offsetCenter.lat, offsetCenter.lng], { animate: true, duration: 0.5 });
+                        map.easeTo({
+                          center: [offsetCenter.lng, offsetCenter.lat],
+                          zoom: 18,
+                          pitch: 60,
+                          bearing: bearing,
+                          duration: 500
+                        });
                       }
                     }}
                     className="bg-[#00897B] hover:bg-[#00695C] text-white shadow-2xl rounded-full px-6 h-12 text-base font-bold flex items-center gap-2 border-2 border-white/20"
@@ -1895,7 +1789,7 @@ function PizzaMap({
                       <Leaf className="w-4 h-4 text-[#4ade80] fill-[#4ade80]" />
                     </div>
                     <div className="text-gray-400 font-medium text-sm mt-1">
-                      {(routeDetails.distance / 1000).toFixed(1)} km • {new Date(Date.now() + routeDetails.duration * 1000 + 180000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (hora estimada de llegada)
+                      {(routeDetails.distance / 1000).toFixed(1)} km • {new Date(Date.now() + routeDetails.duration * 1000 + 180000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (ETA)
                     </div>
                   </div>
 
@@ -1932,81 +1826,66 @@ function PizzaMap({
         )}
       </div>
 
-
-
-
       <style jsx global>{`
-        .leaflet-popup-content-wrapper {
-          border-radius: 12px;
-          padding: 0;
-          overflow: hidden;
-        }
-        /* Global Popup Scale - Applied to wrapper to avoid breaking Leaflet positioning */
-        .leaflet-popup-content-wrapper, .leaflet-popup-tip-container {
-           transform-origin: bottom center;
-           transform: scale(var(--popup-scale-mobile, 1));
-           transition: transform 0.2s ease;
-        }
-        @media (min-width: 768px) {
-           .leaflet-popup-content-wrapper, .leaflet-popup-tip-container {
-              transform: scale(var(--popup-scale-desktop, 1));
-           }
+        /* MapLibre Popup Styling matching our Tailwind design system */
+        .maplibregl-popup-content {
+          border-radius: 16px !important;
+          padding: 14px !important;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.15) !important;
+          border: 1px solid rgba(226, 232, 240, 0.8) !important;
+          background: #ffffff !important;
+          font-family: inherit !important;
+          max-width: 300px;
         }
 
-        /* Content Font Size & Layout */
-        .leaflet-popup-content {
-          margin: 12px;
-          min-width: 200px;
-          width: var(--popup-width-mobile, 260px) !important;
-          font-size: var(--popup-font-size-mobile, 12px) !important;
-          line-height: 1.5;
-        }
-        /* Force font size inheritance for inner elements */
-        .leaflet-popup-content * {
-            font-size: inherit !important;
-        }
-        
-        @media (min-width: 768px) {
-          .leaflet-popup-content {
-            width: var(--popup-width-desktop, 280px) !important;
-            font-size: var(--popup-font-size-desktop, 14px) !important;
-          }
-        }
-        .leaflet-popup-close-button {
-          top: 8px !important;
-          right: 8px !important;
-          color: #9ca3af !important;
+        .dark .maplibregl-popup-content {
+          background: #0b0f19 !important;
+          border: 1px solid rgba(30, 41, 59, 0.7) !important;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
         }
 
-        /* Independent Layer Control Positioning */
-        .leaflet-top.leaflet-right {
-          top: var(--layer-control-top-mobile, 10px);
-          transition: top 0.3s ease;
+        .maplibregl-popup-close-button {
+          top: 10px !important;
+          right: 10px !important;
+          color: #94a3b8 !important;
+          font-size: 18px !important;
+          font-weight: 500 !important;
+          padding: 4px 8px !important;
+          border-radius: 9999px !important;
+          background-color: transparent !important;
+          border: none !important;
+          cursor: pointer !important;
+          transition: background-color 0.2s, color 0.2s !important;
         }
-        @media (min-width: 768px) {
-          .leaflet-top.leaflet-right {
-            top: var(--layer-control-top-desktop, 10px);
-          }
+
+        .maplibregl-popup-close-button:hover {
+          background-color: #f1f5f9 !important;
+          color: #334155 !important;
         }
-        
-        /* Rotate INNER CONTENT of navigation arrow relative to map */
+
+        .dark .maplibregl-popup-close-button:hover {
+          background-color: #1e293b !important;
+          color: #f1f5f9 !important;
+        }
+
+        .maplibregl-popup-tip {
+          border-bottom-color: #ffffff !important;
+        }
+
+        .dark .maplibregl-popup-tip {
+          border-bottom-color: #0b0f19 !important;
+        }
+
+        .maplibregl-popup-content * {
+          font-family: inherit !important;
+        }
+
         .nav-arrow-inner {
-           transform: rotateZ(var(--map-rotation, 0deg));
-           transition: transform 0.1s linear; /* Smooth rotation */
-        }
-        
-        .navigation-3d-view .leaflet-popup,
-        .navigation-3d-view .leaflet-tooltip {
-           /* Popups need to rotate too. They use translate3d, so using transform !important kills position. 
-              Leaflet popups are separate panes. 
-              We can't easily fix popups in CSS-only 3D view without breaking position. 
-              For now, let them rotate with map (users can still read them). 
-              Or we can try to target inner content of popup. 
-           */
+          transition: transform 0.1s linear;
         }
       `}</style>
     </div>
   );
-};
+}
 
 export default memo(PizzaMap);
