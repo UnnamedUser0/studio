@@ -43,6 +43,7 @@ type PizzaMapProps = {
   disableDistanceFilter?: boolean;
   explicitPizzeriasToShow?: Pizzeria[];
   onNavigationStateChange?: (navigating: boolean) => void;
+  onCloseDetail?: () => void;
 };
 
 type Coord = { lat: number; lng: number };
@@ -385,7 +386,8 @@ function PizzaMap({
   disableDistanceFilter = false,
   explicitPizzeriasToShow = [],
   onSettingsChange,
-  onNavigationStateChange
+  onNavigationStateChange,
+  onCloseDetail
 }: PizzaMapProps & { isAdmin?: boolean, onSettingsChange?: (settings: any) => void }) {
   
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -395,6 +397,7 @@ function PizzaMap({
   const searchMarkerRef = useRef<maplibregl.Marker | null>(null);
   const activePopupRef = useRef<maplibregl.Popup | null>(null);
   const routeCoordinatesRef = useRef<[number, number][]>([]);
+  const prevSelectedPizzeriaRef = useRef<Pizzeria | null>(null);
 
   const { toast } = useToast();
   
@@ -1056,6 +1059,13 @@ function PizzaMap({
       
       mapInstanceRef.current = map;
 
+      // Close popup when clicking on empty space of the map
+      map.on('click', () => {
+        if (activePopupRef.current) {
+          activePopupRef.current.remove();
+        }
+      });
+
       let savedBaseLayerName = 'Estándar';
       try {
         const stored = localStorage.getItem('mapBaseLayer');
@@ -1183,12 +1193,9 @@ function PizzaMap({
     let iconUrl = 'https://cdn-icons-png.flaticon.com/128/3595/3595458.png';
     let size = 35;
     
-    if (isSelected) {
-      iconUrl = 'https://cdn-icons-png.flaticon.com/128/1046/1046751.png';
-      size = 45;
-    } else if (isNavigating && isRouteDestination) {
-      iconUrl = 'https://cdn-icons-png.flaticon.com/128/1404/1404945.png';
-      size = 50;
+    if (isSelected || isRouteDestination) {
+      iconUrl = 'https://cdn-icons-png.flaticon.com/128/3595/3595458.png';
+      size = isSelected ? 45 : 50;
     }
 
     el.innerHTML = `<img src="${iconUrl}" style="width: ${size}px; height: ${size}px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));" />`;
@@ -1207,45 +1214,45 @@ function PizzaMap({
     }
 
     const container = document.createElement('div');
-    container.className = "w-[280px] p-1 font-sans text-gray-800 dark:text-gray-100";
+    container.className = "custom-popup-container";
     
     if (pizzeria.imageUrl) {
       const imgContainer = document.createElement('div');
-      imgContainer.className = "mb-3 rounded-lg overflow-hidden h-36 w-full bg-gray-100 relative shadow-sm";
+      imgContainer.className = "custom-popup-img-container";
       const img = document.createElement('img');
       img.src = pizzeria.imageUrl;
       img.alt = pizzeria.name;
-      img.className = "w-full h-full object-cover transform hover:scale-105 transition-transform duration-500";
+      img.className = "custom-popup-img";
       imgContainer.appendChild(img);
       container.appendChild(imgContainer);
     }
 
     const titleContainer = document.createElement('div');
-    titleContainer.className = "flex justify-between items-start mb-2";
+    titleContainer.className = "custom-popup-title-container";
     const title = document.createElement('h3');
-    title.className = "text-lg font-bold text-red-600 leading-tight";
+    title.className = "custom-popup-title";
     title.textContent = pizzeria.name;
     titleContainer.appendChild(title);
     container.appendChild(titleContainer);
 
     const infoContainer = document.createElement('div');
-    infoContainer.className = "space-y-2 mb-4 text-sm text-gray-600 dark:text-gray-300";
+    infoContainer.className = "custom-popup-info";
 
     const addressRow = document.createElement('div');
-    addressRow.className = "flex items-start gap-2";
-    addressRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-pink-500 mt-0.5 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
+    addressRow.className = "custom-popup-row";
+    addressRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
     const addressText = document.createElement('span');
-    addressText.className = "leading-tight text-gray-700 dark:text-gray-300";
+    addressText.className = "custom-popup-text";
     addressText.textContent = pizzeria.address || 'Dirección no disponible';
     addressRow.appendChild(addressText);
     infoContainer.appendChild(addressRow);
 
     if (pizzeria.schedule) {
       const scheduleRow = document.createElement('div');
-      scheduleRow.className = "flex items-start gap-2";
-      scheduleRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-orange-500 mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+      scheduleRow.className = "custom-popup-row";
+      scheduleRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
       const scheduleText = document.createElement('span');
-      scheduleText.className = "leading-tight text-gray-700 dark:text-gray-300";
+      scheduleText.className = "custom-popup-text";
       scheduleText.textContent = pizzeria.schedule;
       scheduleRow.appendChild(scheduleText);
       infoContainer.appendChild(scheduleRow);
@@ -1253,11 +1260,11 @@ function PizzaMap({
 
     if (pizzeria.phoneNumber) {
       const phoneRow = document.createElement('div');
-      phoneRow.className = "flex items-start gap-2";
-      phoneRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-green-600 mt-0.5 shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
+      phoneRow.className = "custom-popup-row";
+      phoneRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
       const phoneLink = document.createElement('a');
       phoneLink.href = `tel:${pizzeria.phoneNumber}`;
-      phoneLink.className = "leading-tight hover:underline text-primary";
+      phoneLink.className = "custom-popup-link";
       phoneLink.textContent = pizzeria.phoneNumber;
       phoneRow.appendChild(phoneLink);
       infoContainer.appendChild(phoneRow);
@@ -1265,13 +1272,13 @@ function PizzaMap({
 
     if (pizzeria.website) {
       const webRow = document.createElement('div');
-      webRow.className = "flex items-start gap-2";
-      webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-blue-500 mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+      webRow.className = "custom-popup-row";
+      webRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
       const webLink = document.createElement('a');
       webLink.href = pizzeria.website;
       webLink.target = "_blank";
       webLink.rel = "noopener noreferrer";
-      webLink.className = "leading-tight hover:underline text-blue-600 truncate max-w-[200px] block";
+      webLink.className = "custom-popup-link";
       webLink.textContent = pizzeria.website.replace(/^https?:\/\//, '');
       webRow.appendChild(webLink);
       infoContainer.appendChild(webRow);
@@ -1285,19 +1292,20 @@ function PizzaMap({
       : 'Calculando...';
 
     const distRow = document.createElement('div');
-    distRow.className = "flex items-center gap-2";
-    distRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-gray-400 shrink-0"><path d="M6 18h12"/><path d="M6 10h12"/><path d="M6 6h12"/><path d="M6 14h12"/></svg>`;
+    distRow.className = "custom-popup-row";
+    distRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 shrink-0"><path d="M6 18h12"/><path d="M6 10h12"/><path d="M6 6h12"/><path d="M6 14h12"/></svg>`;
     const distText = document.createElement('span');
+    distText.className = "custom-popup-text";
     distText.textContent = `Distancia: ${dist}`;
     distRow.appendChild(distText);
     infoContainer.appendChild(distRow);
 
     if (pizzeria.rating) {
       const ratingRow = document.createElement('div');
-      ratingRow.className = "flex items-center gap-1";
-      ratingRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-yellow-400 fill-yellow-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+      ratingRow.className = "custom-popup-row";
+      ratingRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 shrink-0"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
       const ratingText = document.createElement('span');
-      ratingText.className = "font-medium text-gray-900 dark:text-gray-100";
+      ratingText.className = "custom-popup-text font-medium";
       ratingText.textContent = `Rating: ${pizzeria.rating.toFixed(1)}`;
       ratingRow.appendChild(ratingText);
       infoContainer.appendChild(ratingRow);
@@ -1306,11 +1314,21 @@ function PizzaMap({
     container.appendChild(infoContainer);
 
     const btnGrid = document.createElement('div');
-    btnGrid.className = "grid grid-cols-2 gap-2 mt-2";
+    btnGrid.className = "custom-popup-grid";
+
+    const btnInfo = document.createElement('button');
+    btnInfo.type = 'button';
+    btnInfo.className = "custom-popup-btn";
+    btnInfo.textContent = "Información";
+    btnInfo.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onMarkerClick(pizzeria);
+    });
+    btnGrid.appendChild(btnInfo);
 
     const btnMenu = document.createElement('button');
     btnMenu.type = 'button';
-    btnMenu.className = "bg-red-600 hover:bg-red-700 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors";
+    btnMenu.className = "custom-popup-btn";
     btnMenu.textContent = "Ver menú";
     btnMenu.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1320,7 +1338,7 @@ function PizzaMap({
 
     const btnRoute = document.createElement('button');
     btnRoute.type = 'button';
-    btnRoute.className = "bg-red-600 hover:bg-red-700 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors";
+    btnRoute.className = "custom-popup-btn";
     btnRoute.textContent = "Cómo llegar";
     btnRoute.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1330,8 +1348,8 @@ function PizzaMap({
 
     const btnRate = document.createElement('button');
     btnRate.type = 'button';
-    btnRate.className = "col-span-2 bg-yellow-500 hover:bg-yellow-600 text-white h-9 px-4 py-2 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors flex items-center justify-center gap-2";
-    btnRate.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 fill-current"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Calificar`;
+    btnRate.className = "custom-popup-btn-yellow";
+    btnRate.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 fill-current inline-block mr-1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Calificar`;
     btnRate.addEventListener('click', (e) => {
       e.stopPropagation();
       if (onRate) onRate(pizzeria);
@@ -1346,19 +1364,26 @@ function PizzaMap({
     const popup = new maplibregl.Popup({
       offset: [0, currentOffset],
       closeButton: true,
-      closeOnClick: false,
+      closeOnClick: true,
       className: 'custom-popup'
     })
     .setDOMContent(container)
     .setLngLat([pizzeria.lng, pizzeria.lat])
     .addTo(map);
 
+    popup.on('close', () => {
+      activePopupRef.current = null;
+      if (selectedPizzeria?.id === pizzeria.id) {
+        onCloseDetail?.();
+      }
+    });
+
     activePopupRef.current = popup;
   };
 
   useEffect(() => {
     updatePizzeriaMarkers();
-  }, [visiblePizzerias, selectedPizzeria, activeRoute, isNavigating]);
+  }, [visiblePizzerias, selectedPizzeria, activeRoute, isNavigating, iconAnchorX, iconAnchorY]);
 
   const updatePizzeriaMarkers = () => {
     const map = mapInstanceRef.current;
@@ -1375,9 +1400,21 @@ function PizzaMap({
 
       let marker = markersMapRef.current.get(pizzeria.id);
 
+      const S = isSelected ? 45 : (isRouteDestination ? 50 : 35);
+      let ax = S / 2;
+      let ay = S;
+      if (iconAnchorX !== undefined && iconAnchorY !== undefined) {
+        const scale = S / 50;
+        ax = iconAnchorX * scale;
+        ay = iconAnchorY * scale;
+      }
+      const offsetX = S / 2 - ax;
+      const offsetY = S / 2 - ay;
+
       if (marker) {
         const el = marker.getElement();
         updatePizzeriaMarkerElement(el, pizzeria, isSelected, isRouteDestination);
+        marker.setOffset([offsetX, offsetY]);
         
         if (isSelected) {
           openPizzeriaPopup(pizzeria, marker);
@@ -1387,9 +1424,17 @@ function PizzaMap({
         el.className = 'pizzeria-marker';
         updatePizzeriaMarkerElement(el, pizzeria, isSelected, isRouteDestination);
 
+        const newMarker = new maplibregl.Marker({
+          element: el,
+          offset: [offsetX, offsetY]
+        })
+        .setLngLat([pizzeria.lng, pizzeria.lat])
+        .addTo(map);
+
         el.addEventListener('click', (e) => {
           e.stopPropagation();
-          onMarkerClick(pizzeria);
+          // Open the popup directly on the map, do not trigger panel sheet immediately
+          openPizzeriaPopup(pizzeria, newMarker);
           
           map.easeTo({
             center: [pizzeria.lng, pizzeria.lat],
@@ -1398,13 +1443,6 @@ function PizzaMap({
             duration: 1500
           });
         });
-
-        const newMarker = new maplibregl.Marker({
-          element: el,
-          anchor: 'bottom'
-        })
-        .setLngLat([pizzeria.lng, pizzeria.lat])
-        .addTo(map);
 
         markersMapRef.current.set(pizzeria.id, newMarker);
 
@@ -1428,6 +1466,9 @@ function PizzaMap({
 
     if (isNavigating) return;
 
+    const prevSelected = prevSelectedPizzeriaRef.current;
+    prevSelectedPizzeriaRef.current = selectedPizzeria;
+
     if (selectedPizzeria) {
       map.easeTo({
         center: [selectedPizzeria.lng, selectedPizzeria.lat],
@@ -1435,6 +1476,16 @@ function PizzaMap({
         offset: [0, mapCenterOffset],
         duration: 1500
       });
+
+      const marker = markersMapRef.current.get(selectedPizzeria.id);
+      if (marker) {
+        openPizzeriaPopup(selectedPizzeria, marker);
+      }
+    } else if (prevSelected && !selectedPizzeria) {
+      // If selectedPizzeria transitions to null (closed from parent sheet), remove active map popup
+      if (activePopupRef.current) {
+        activePopupRef.current.remove();
+      }
     } else if (searchCenter) {
       map.easeTo({
         center: [searchCenter.lng, searchCenter.lat],
@@ -1450,7 +1501,7 @@ function PizzaMap({
         });
       }
     }
-  }, [selectedPizzeria, searchCenter, userLocation, isNavigating]);
+  }, [selectedPizzeria, searchCenter, userLocation, isNavigating, mapCenterOffset, popupOffsetY, popupOffsetYMobile]);
 
   useEffect(() => {
     updateSearchMarker();
@@ -1514,29 +1565,15 @@ function PizzaMap({
       {/* Flat 2D Overlays Wrapper */}
       <div className="absolute inset-0 z-20 pointer-events-none">
         
-        {/* Layer selection control and zoom controls - Hide when navigating */}
+        {/* Map Styles Selector - Positioned independently using layer-control-top variables */}
         {!isNavigating && (
-          <div
-            className="absolute right-4 z-[1001] flex flex-col gap-2 transition-all duration-300 top-[var(--buttons-top-mobile,_160px)] md:top-[var(--buttons-top-desktop,_160px)] pointer-events-auto"
-          >
-            {/* Locate Me */}
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={handleLocateMe}
-              className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white dark:bg-slate-950"
-              aria-label="Find my location"
-            >
-              <LocateFixed className="h-4 w-4 md:h-5 md:w-5" />
-            </Button>
-
-            {/* Map Styles Selector */}
+          <div className="absolute right-4 z-[1001] transition-all duration-300 pointer-events-auto layer-control-container">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="secondary" 
                   size="icon" 
-                  className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white dark:bg-slate-950"
+                  className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white dark:bg-slate-950 text-gray-800 dark:text-gray-100 border-0"
                   aria-label="Select map style"
                 >
                   <Layers className="h-4 w-4 md:h-5 md:w-5" />
@@ -1560,6 +1597,24 @@ function PizzaMap({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+        )}
+
+        {/* Map Controls Container (Locate Me & Fullscreen) - Positioned with buttons-top variables */}
+        {!isNavigating && (
+          <div
+            className="absolute right-4 z-[1001] flex flex-col gap-2 transition-all duration-300 pointer-events-auto map-controls-container"
+          >
+            {/* Locate Me */}
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleLocateMe}
+              className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white dark:bg-slate-950"
+              aria-label="Find my location"
+            >
+              <LocateFixed className="h-4 w-4 md:h-5 md:w-5" />
+            </Button>
 
             {/* Toggle Fullscreen */}
             <Button
@@ -1827,45 +1882,60 @@ function PizzaMap({
       </div>
 
       <style jsx global>{`
-        /* MapLibre Popup Styling matching our Tailwind design system */
+        /* MapLibre Popup Styling matching our Tailwind design system and Layout Settings */
+        .maplibregl-popup {
+          z-index: 1000 !important;
+        }
+
         .maplibregl-popup-content {
           border-radius: 16px !important;
           padding: 14px !important;
           box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.15) !important;
           border: 1px solid rgba(226, 232, 240, 0.8) !important;
-          background: #ffffff !important;
+          background-color: #ffffff !important;
+          color: #1e293b !important;
           font-family: inherit !important;
-          max-width: 300px;
+          
+          /* Sizing from layout variables */
+          width: var(--popup-width-mobile, 260px) !important;
+          max-width: none !important;
+          font-size: var(--popup-font-size-mobile, 12px) !important;
+          
+          /* Scaling from layout variables */
+          transform-origin: bottom center;
+          transform: scale(var(--popup-scale-mobile, 1)) !important;
+          transition: transform 0.2s ease;
+        }
+
+        @media (min-width: 768px) {
+          .maplibregl-popup-content {
+            width: var(--popup-width-desktop, 280px) !important;
+            font-size: var(--popup-font-size-desktop, 14px) !important;
+            transform: scale(var(--popup-scale-desktop, 1)) !important;
+          }
         }
 
         .dark .maplibregl-popup-content {
-          background: #0b0f19 !important;
-          border: 1px solid rgba(30, 41, 59, 0.7) !important;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+          background-color: #0d1527 !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          color: #cbd5e1 !important;
         }
 
-        .maplibregl-popup-close-button {
-          top: 10px !important;
-          right: 10px !important;
-          color: #94a3b8 !important;
-          font-size: 18px !important;
-          font-weight: 500 !important;
-          padding: 4px 8px !important;
-          border-radius: 9999px !important;
-          background-color: transparent !important;
-          border: none !important;
-          cursor: pointer !important;
-          transition: background-color 0.2s, color 0.2s !important;
+        /* Force element sizes to inherit */
+        .maplibregl-popup-content * {
+          font-family: inherit !important;
+          font-size: inherit !important;
         }
-
-        .maplibregl-popup-close-button:hover {
-          background-color: #f1f5f9 !important;
-          color: #334155 !important;
+        
+        .maplibregl-popup-content h3 {
+          font-size: 1.15em !important;
+          font-weight: 700 !important;
+          margin-bottom: 8px !important;
+          color: #ef4444 !important;
         }
-
-        .dark .maplibregl-popup-close-button:hover {
-          background-color: #1e293b !important;
-          color: #f1f5f9 !important;
+        
+        .maplibregl-popup-content button {
+          font-size: 0.9em !important;
         }
 
         .maplibregl-popup-tip {
@@ -1873,15 +1943,173 @@ function PizzaMap({
         }
 
         .dark .maplibregl-popup-tip {
-          border-bottom-color: #0b0f19 !important;
-        }
-
-        .maplibregl-popup-content * {
-          font-family: inherit !important;
+          border-bottom-color: #0d1527 !important;
         }
 
         .nav-arrow-inner {
           transition: transform 0.1s linear;
+        }
+
+        /* Custom Popup Sizing and Proportions */
+        .custom-popup-container {
+          width: 100%;
+          padding: 4px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .custom-popup-img-container {
+          margin-bottom: 12px;
+          border-radius: 8px;
+          overflow: hidden;
+          height: 144px;
+          width: 100%;
+          background-color: #f3f4f6;
+          position: relative;
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .custom-popup-img {
+          max-width: 100%;
+          max-height: 100%;
+          width: auto;
+          height: auto;
+          object-fit: contain;
+          background-color: #ffffff;
+        }
+
+        .dark .custom-popup-img-container {
+          background-color: #1e293b;
+        }
+        
+        .dark .custom-popup-img {
+          background-color: #0f172a;
+        }
+
+        .custom-popup-title-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 8px;
+        }
+
+        .custom-popup-title {
+          margin: 0 !important;
+          color: #ef4444 !important;
+          font-weight: 700 !important;
+          line-height: 1.25 !important;
+        }
+
+        .custom-popup-info {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+
+        .custom-popup-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          line-height: 1.25;
+        }
+
+        .custom-popup-row svg {
+          width: 16px;
+          height: 16px;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .custom-popup-text {
+          color: #4b5563;
+        }
+
+        .dark .custom-popup-text {
+          color: #cbd5e1;
+        }
+
+        .custom-popup-link {
+          color: #2563eb;
+          text-decoration: none;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          max-width: 200px;
+          display: block;
+        }
+
+        .custom-popup-link:hover {
+          text-decoration: underline;
+        }
+
+        .custom-popup-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 8px;
+        }
+
+        .custom-popup-btn {
+          background-color: #dc2626;
+          color: #ffffff;
+          height: 36px;
+          padding: 8px 16px;
+          font-weight: 500;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          border: none;
+          cursor: pointer;
+          transition: background-color 0.2s;
+          white-space: nowrap;
+        }
+
+        .custom-popup-btn:hover {
+          background-color: #b91c1c;
+        }
+
+        .custom-popup-btn-yellow {
+          background-color: #eab308;
+          color: #ffffff;
+          height: 36px;
+          padding: 8px 16px;
+          font-weight: 500;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          border: none;
+          cursor: pointer;
+          transition: background-color 0.2s;
+          white-space: nowrap;
+        }
+
+        .custom-popup-btn-yellow:hover {
+          background-color: #ca8a04;
+        }
+
+        /* Configured top margins for controls */
+        .layer-control-container {
+          top: var(--layer-control-top-mobile, 10px);
+        }
+        @media (min-width: 768px) {
+          .layer-control-container {
+            top: var(--layer-control-top-desktop, 10px);
+          }
+        }
+
+        .map-controls-container {
+          top: var(--buttons-top-mobile, 160px);
+        }
+        @media (min-width: 768px) {
+          .map-controls-container {
+            top: var(--buttons-top-desktop, 160px);
+          }
         }
       `}</style>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import SmartSearch from '@/components/search/smart-search';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -56,14 +56,36 @@ export default function MapView({
 
   const toggleFullscreen = () => setIsFullscreen(!isFullscreen);
 
-  // Determine popup offset based on device width (React-side heuristic or just pass both)
-  // For simplicity, let's pass both props.
+  const mapHeightStyle = useMemo(() => {
+    if (!layoutSettings) return {};
+    return {
+      '--map-height-mobile': `${layoutSettings.mapHeightMobile || 55}vh`,
+      '--map-height-desktop': `${layoutSettings.mapHeight || 70}vh`,
+      '--search-width-desktop': `${layoutSettings.searchWidth || 50}%`,
+      '--search-width-mobile': `${layoutSettings.searchWidthMobile || 90}%`,
+      '--search-height-desktop': `${(layoutSettings.searchHeight || 12) * 0.25}rem`,
+      '--search-height-mobile': `${(layoutSettings.searchHeightMobile || 10) * 0.25}rem`,
+      '--buttons-top-desktop': `${layoutSettings.buttonsTop || 160}px`,
+      '--buttons-top-mobile': `${layoutSettings.buttonsTopMobile || 160}px`,
+      '--layer-control-top-desktop': `${layoutSettings.layerControlTop || 10}px`,
+      '--layer-control-top-mobile': `${layoutSettings.layerControlTopMobile || 10}px`,
+      '--popup-width-desktop': `${layoutSettings.popupWidth || 280}px`,
+      '--popup-width-mobile': `${layoutSettings.popupWidthMobile || 260}px`,
+      '--popup-scale-desktop': `${layoutSettings.popupScale || 1}`,
+      '--popup-scale-mobile': `${layoutSettings.popupScaleMobile || 1}`,
+      '--popup-font-size-desktop': `${layoutSettings.popupFontSize || 14}px`,
+      '--popup-font-size-mobile': `${layoutSettings.popupFontSizeMobile || 12}px`,
+    } as React.CSSProperties;
+  }, [layoutSettings]);
 
   return (
-    <div className={cn(
-      "transition-all duration-300 ease-in-out",
-      isFullscreen ? "fixed inset-0 z-[2000] h-[100dvh] w-screen bg-background" : "relative h-full w-full"
-    )}>
+    <div 
+      className={cn(
+        "transition-all duration-300 ease-in-out",
+        isFullscreen ? "fixed inset-0 z-[2000] h-[100dvh] w-screen bg-background" : "relative h-full w-full"
+      )}
+      style={mapHeightStyle}
+    >
       <PizzaMap
         pizzerias={visiblePizzerias}
         onMarkerClick={onSelectPizzeria}
@@ -74,13 +96,6 @@ export default function MapView({
         onToggleFullscreen={toggleFullscreen}
         onViewMenu={onViewMenu || onSelectPizzeria}
         onNavigate={(pizzeria) => {
-          // This prop is for the popup button, which handles routing internally in PizzaMap
-          // But we can also open external maps if needed, though the user requested internal routing.
-          // Since PizzaMap handles internal routing via drawRoute when the button is clicked inside the popup,
-          // we might not need to do anything here, or we can use this to trigger the detail view if routing fails.
-          // However, the popup implementation in PizzaMap calls drawRoute directly.
-          // The prop is mainly to satisfy the interface if we want to bubble up the event.
-          // Let's just log it for now or leave it empty as the logic is inside PizzaMap.
           console.log('Navigate to:', pizzeria.name);
         }}
         onRate={onRate || onSelectPizzeria}
@@ -95,6 +110,7 @@ export default function MapView({
         iconAnchorY={layoutSettings?.iconAnchorY ?? 25}
         onSettingsChange={onSettingsChange}
         onNavigationStateChange={setIsNavigating}
+        onCloseDetail={onCloseDetail}
       />
 
       {/* Smart Search Bar */}
