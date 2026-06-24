@@ -1023,6 +1023,7 @@ function PizzaMap({
         const pixelOffset: [number, number] = [0, height * 0.22];
         map.easeTo({
           center: [currentLng, currentLat],
+          zoom: 19.5,
           pitch: 60,
           bearing: currentHeading,
           offset: pixelOffset,
@@ -1076,7 +1077,7 @@ function PizzaMap({
       
       map.easeTo({
         center: [navLoc.lng, navLoc.lat],
-        zoom: 18,
+        zoom: 19.5,
         pitch: 60,
         bearing: bearing,
         offset: pixelOffset,
@@ -1643,7 +1644,7 @@ function PizzaMap({
         center: [selectedPizzeria.lng, selectedPizzeria.lat],
         zoom: 16,
         offset: [0, -offsetPixels],
-        duration: 1500
+        duration: isSettingsOpen ? 0 : 1500
       });
 
       const marker = markersMapRef.current.get(selectedPizzeria.id);
@@ -1949,7 +1950,7 @@ function PizzaMap({
                         if (map && animatedCoordsRef.current) {
                           setIsLocked(true);
                           map.easeTo({
-                            zoom: 18,
+                            zoom: 19.5,
                             pitch: 60,
                             bearing: currentHeadingRef.current,
                             center: [animatedCoordsRef.current.lng, animatedCoordsRef.current.lat],
@@ -2004,7 +2005,7 @@ function PizzaMap({
                         const pixelOffset: [number, number] = [0, height * 0.22];
                         map.easeTo({
                           center: [coords.lng, coords.lat],
-                          zoom: 18,
+                          zoom: 19.5,
                           pitch: 60,
                           bearing: bearing,
                           offset: pixelOffset,
