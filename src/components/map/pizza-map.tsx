@@ -398,6 +398,7 @@ function PizzaMap({
   const activePopupRef = useRef<maplibregl.Popup | null>(null);
   const routeCoordinatesRef = useRef<[number, number][]>([]);
   const prevSelectedPizzeriaRef = useRef<Pizzeria | null>(null);
+  const nextManeuverMarkerRef = useRef<maplibregl.Marker | null>(null);
 
   const { toast } = useToast();
   
@@ -421,6 +422,7 @@ function PizzaMap({
 
   const [isLocked, setIsLocked] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [currentStreet, setCurrentStreet] = useState<string>('');
 
   // Animated and tracking refs for 60fps rendering
   const animatedCoordsRef = useRef<{ lat: number, lng: number } | null>(null);
@@ -438,6 +440,11 @@ function PizzaMap({
   const isNavigatingRef = useRef(isNavigating);
   const isLockedRef = useRef(isLocked);
 
+  const changeLockState = (val: boolean) => {
+    setIsLocked(val);
+    isLockedRef.current = val;
+  };
+
   useEffect(() => {
     isNavigatingRef.current = isNavigating;
   }, [isNavigating]);
@@ -454,7 +461,7 @@ function PizzaMap({
     const result = getCurrentStep(userLatLng, steps);
     if (!result) return;
 
-    const { step, distance } = result;
+    const { step, distance, index } = result;
     const icon = getTurnIcon(step.maneuver?.type || '', step.maneuver?.modifier || '');
     const text = getTurnInstruction(step, destName);
     const distanceText = distance >= 1000
@@ -462,6 +469,42 @@ function PizzaMap({
       : `${Math.round(distance)} m`;
 
     setCurrentInstruction({ icon, text, distanceText });
+
+    // Update current street name
+    const currentStreetName = step?.name || '';
+    setCurrentStreet(currentStreetName);
+
+    // Update next street marker on the map
+    const map = mapInstanceRef.current;
+    if (map) {
+      const nextStep = steps[index + 1];
+      if (nextStep && nextStep.maneuver?.location && nextStep.name) {
+        const nextLoc = nextStep.maneuver.location; // [lng, lat]
+        
+        if (!nextManeuverMarkerRef.current) {
+          const el = document.createElement('div');
+          el.className = 'next-street-label-marker';
+          el.innerHTML = `
+            <div class="next-street-bubble">${nextStep.name}</div>
+          `;
+          nextManeuverMarkerRef.current = new maplibregl.Marker({
+            element: el,
+            anchor: 'bottom'
+          })
+          .setLngLat(nextLoc as [number, number])
+          .addTo(map);
+        } else {
+          nextManeuverMarkerRef.current.setLngLat(nextLoc as [number, number]);
+          const inner = nextManeuverMarkerRef.current.getElement().firstElementChild;
+          if (inner) inner.textContent = nextStep.name;
+        }
+      } else {
+        if (nextManeuverMarkerRef.current) {
+          nextManeuverMarkerRef.current.remove();
+          nextManeuverMarkerRef.current = null;
+        }
+      }
+    }
   };
 
   const updateUserMarkerElement = (el: HTMLElement, navigating: boolean) => {
@@ -569,7 +612,9 @@ function PizzaMap({
         console.warn("Storage access failed:", e);
       }
 
-      updateUserMarker([longitude, latitude]);
+      if (!isNavigatingRef.current) {
+        updateUserMarker([longitude, latitude]);
+      }
 
       animateToLocation(latitude, longitude, speedKmh);
 
@@ -841,7 +886,7 @@ function PizzaMap({
     let finalLat = targetLat;
     let finalLng = targetLng;
 
-    if (isNavigating && routeCoordinatesRef.current.length > 0) {
+    if (isNavigatingRef.current && routeCoordinatesRef.current.length > 0) {
       const snapped = getClosestPointOnPolyline(
         { lat: targetLat, lng: targetLng },
         routeCoordinatesRef.current.map(c => ({ lat: c[0], lng: c[1] }))
@@ -860,7 +905,7 @@ function PizzaMap({
     const startHeading = currentHeadingRef.current;
 
     let targetHeading = startHeading;
-    if (isNavigating) {
+    if (isNavigatingRef.current) {
       targetHeading = getRouteBearing(finalLat, finalLng);
       if (targetHeading === 0 && activeRoute) {
         targetHeading = calculateBearing(finalLat, finalLng, activeRoute.lat, activeRoute.lng);
@@ -892,11 +937,14 @@ function PizzaMap({
       setCurrentSpeed(targetSpeed);
 
       if (isNavigatingRef.current && isLockedRef.current) {
-        const offsetCenter = getOffsetLatLng(currentLat, currentLng, currentHeading, 50);
-        map.jumpTo({
-          center: [offsetCenter.lng, offsetCenter.lat],
+        const height = map.getContainer().clientHeight;
+        const pixelOffset: [number, number] = [0, height * 0.22];
+        map.easeTo({
+          center: [currentLng, currentLat],
           pitch: 60,
-          bearing: currentHeading
+          bearing: currentHeading,
+          offset: pixelOffset,
+          duration: 0
         });
         setMapRotation(currentHeading);
       } else {
@@ -918,7 +966,8 @@ function PizzaMap({
     if (!activeRoute) return;
 
     setIsNavigating(true);
-    setIsLocked(true);
+    isNavigatingRef.current = true;
+    changeLockState(true);
     
     handleLocateMe();
 
@@ -940,13 +989,16 @@ function PizzaMap({
       currentHeadingRef.current = bearing;
       animatedCoordsRef.current = { lat: navLoc.lat, lng: navLoc.lng };
 
-      const offsetCenter = getOffsetLatLng(navLoc.lat, navLoc.lng, bearing, 50);
+      const height = map.getContainer().clientHeight;
+      const pixelOffset: [number, number] = [0, height * 0.22];
       
-      map.jumpTo({
-        center: [offsetCenter.lng, offsetCenter.lat],
+      map.easeTo({
+        center: [navLoc.lng, navLoc.lat],
         zoom: 18,
         pitch: 60,
-        bearing: bearing
+        bearing: bearing,
+        offset: pixelOffset,
+        duration: 0
       });
 
       updateUserMarker([navLoc.lng, navLoc.lat], true);
@@ -971,8 +1023,14 @@ function PizzaMap({
   const exitNavigation = () => {
     cleanupNavigationTimers();
     setIsNavigating(false);
-    setIsLocked(false);
+    isNavigatingRef.current = false;
+    changeLockState(false);
     setCurrentInstruction(null);
+    setCurrentStreet('');
+    if (nextManeuverMarkerRef.current) {
+      nextManeuverMarkerRef.current.remove();
+      nextManeuverMarkerRef.current = null;
+    }
 
     const map = mapInstanceRef.current;
     if (map) {
@@ -1009,6 +1067,11 @@ function PizzaMap({
   const clearRoute = () => {
     cleanupNavigationTimers();
     setCurrentInstruction(null);
+    setCurrentStreet('');
+    if (nextManeuverMarkerRef.current) {
+      nextManeuverMarkerRef.current.remove();
+      nextManeuverMarkerRef.current = null;
+    }
 
     const map = mapInstanceRef.current;
     if (map) {
@@ -1027,7 +1090,8 @@ function PizzaMap({
     routeCoordinatesRef.current = [];
     setActiveRoute(null);
     setIsNavigating(false);
-    setIsLocked(false);
+    isNavigatingRef.current = false;
+    changeLockState(false);
     setRouteDetails(null);
     setRouteSteps([]);
 
@@ -1063,6 +1127,13 @@ function PizzaMap({
       map.on('click', () => {
         if (activePopupRef.current) {
           activePopupRef.current.remove();
+        }
+      });
+
+      // Unlock map center tracking on manual dragging
+      map.on('dragstart', () => {
+        if (isNavigatingRef.current) {
+          changeLockState(false);
         }
       });
 
@@ -1436,10 +1507,15 @@ function PizzaMap({
           // Open the popup directly on the map, do not trigger panel sheet immediately
           openPizzeriaPopup(pizzeria, newMarker);
           
+          const height = map.getContainer().clientHeight;
+          const isMobile = window.innerWidth < 768;
+          const offsetFactor = isMobile ? 0.22 : 0.15;
+          const offsetPixels = height * offsetFactor;
+
           map.easeTo({
             center: [pizzeria.lng, pizzeria.lat],
             zoom: 16,
-            offset: [0, mapCenterOffset],
+            offset: [0, -offsetPixels],
             duration: 1500
           });
         });
@@ -1470,10 +1546,15 @@ function PizzaMap({
     prevSelectedPizzeriaRef.current = selectedPizzeria;
 
     if (selectedPizzeria) {
+      const height = map.getContainer().clientHeight;
+      const isMobile = window.innerWidth < 768;
+      const offsetFactor = isMobile ? 0.22 : 0.15;
+      const offsetPixels = height * offsetFactor;
+
       map.easeTo({
         center: [selectedPizzeria.lng, selectedPizzeria.lat],
         zoom: 16,
-        offset: [0, mapCenterOffset],
+        offset: [0, -offsetPixels],
         duration: 1500
       });
 
@@ -1651,7 +1732,7 @@ function PizzaMap({
                           variant="secondary"
                           size="icon"
                           onClick={() => {
-                            setIsLocked(false);
+                            changeLockState(false);
                             if (myLocationMarkerRef.current) {
                               const marker = myLocationMarkerRef.current;
                               const el = marker.getElement();
@@ -1782,18 +1863,15 @@ function PizzaMap({
 
               {/* Lock / Recenter Navigation Control */}
               {isLocked ? (
-                <div
-                  className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto"
-                  style={{ transform: 'translateX(-50%)' }}
-                >
-                  <Button
-                    onClick={() => setIsLocked(false)}
-                    className="bg-[#ef4444] hover:bg-[#dc2626] text-white shadow-2xl rounded-full px-6 h-12 text-base font-bold flex items-center gap-2 border-2 border-white/20"
+                currentStreet && (
+                  <div
+                    className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 px-4 py-2 rounded-full shadow-xl border border-gray-200 dark:border-slate-800 text-sm font-bold flex items-center gap-1.5"
+                    style={{ transform: 'translateX(-50%)' }}
                   >
-                    <Maximize2 className="w-5 h-5" />
-                    Decentrar
-                  </Button>
-                </div>
+                    <Navigation className="w-4 h-4 text-blue-500 fill-blue-500 rotate-45" />
+                    <span>{currentStreet}</span>
+                  </div>
+                )
               ) : (
                 <div
                   className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto"
@@ -1801,17 +1879,19 @@ function PizzaMap({
                 >
                   <Button
                     onClick={() => {
-                      setIsLocked(true);
+                      changeLockState(true);
                       const map = mapInstanceRef.current;
                       if (map && animatedCoordsRef.current) {
                         const coords = animatedCoordsRef.current;
                         const bearing = currentHeadingRef.current;
-                        const offsetCenter = getOffsetLatLng(coords.lat, coords.lng, bearing, 50);
+                        const height = map.getContainer().clientHeight;
+                        const pixelOffset: [number, number] = [0, height * 0.22];
                         map.easeTo({
-                          center: [offsetCenter.lng, offsetCenter.lat],
+                          center: [coords.lng, coords.lat],
                           zoom: 18,
                           pitch: 60,
                           bearing: bearing,
+                          offset: pixelOffset,
                           duration: 500
                         });
                       }
@@ -2110,6 +2190,46 @@ function PizzaMap({
           .map-controls-container {
             top: var(--buttons-top-desktop, 160px);
           }
+        }
+
+        /* Next Street Speech Bubble */
+        .next-street-bubble {
+          position: relative;
+          background-color: #1a73e8 !important;
+          color: #ffffff !important;
+          padding: 6px 12px !important;
+          border-radius: 12px !important;
+          font-size: 12px !important;
+          font-weight: 700 !important;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
+          border: 2px solid #ffffff !important;
+          white-space: nowrap !important;
+          text-align: center !important;
+        }
+        .next-street-bubble::after {
+          content: '' !important;
+          position: absolute !important;
+          bottom: -8px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          border-width: 8px 6px 0 !important;
+          border-style: solid !important;
+          border-color: #ffffff transparent !important;
+          display: block !important;
+          width: 0 !important;
+        }
+        .next-street-bubble::before {
+          content: '' !important;
+          position: absolute !important;
+          bottom: -5px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          border-width: 6px 4.5px 0 !important;
+          border-style: solid !important;
+          border-color: #1a73e8 transparent !important;
+          display: block !important;
+          width: 0 !important;
+          z-index: 1 !important;
         }
       `}</style>
     </div>

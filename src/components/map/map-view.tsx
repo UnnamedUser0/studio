@@ -82,7 +82,7 @@ export default function MapView({
     <div 
       className={cn(
         "transition-all duration-300 ease-in-out",
-        isFullscreen ? "fixed inset-0 z-[2000] h-[100dvh] w-screen bg-background" : "relative h-full w-full"
+        isFullscreen ? "fixed inset-0 z-[40] h-[100dvh] w-screen bg-background" : "relative h-full w-full"
       )}
       style={mapHeightStyle}
     >
