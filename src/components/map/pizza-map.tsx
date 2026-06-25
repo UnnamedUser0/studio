@@ -1775,7 +1775,12 @@ function PizzaMap({
     const prevSelected = prevSelectedPizzeriaRef.current;
     prevSelectedPizzeriaRef.current = selectedPizzeria;
 
-    if (selectedPizzeria) {
+    let targetPizzeria: Pizzeria | null = selectedPizzeria;
+    if (!targetPizzeria && activePopupRef.current && activePopupPizzeriaIdRef.current) {
+      targetPizzeria = visiblePizzeriasRef.current.find(p => p.id === activePopupPizzeriaIdRef.current) || null;
+    }
+
+    if (targetPizzeria) {
       const isMobile = window.innerWidth < 768;
       const pitch = map.getPitch();
       const offsetPixels = pitch > 20
@@ -1783,14 +1788,14 @@ function PizzaMap({
         : (isMobile ? popupCenterOffset2DMobile : popupCenterOffset2D);
 
       map.easeTo({
-        center: [selectedPizzeria.lng, selectedPizzeria.lat],
+        center: [targetPizzeria.lng, targetPizzeria.lat],
         zoom: 16,
         offset: [0, -offsetPixels],
         duration: isSettingsOpen ? 0 : 1500
       });
 
-      const marker = markersMapRef.current.get(selectedPizzeria.id);
-      if (marker) {
+      const marker = markersMapRef.current.get(targetPizzeria.id);
+      if (marker && targetPizzeria === selectedPizzeria) {
         const isAlreadyOpen = activePopupRef.current && activePopupPizzeriaIdRef.current === selectedPizzeria.id;
         if (!isAlreadyOpen) {
           openPizzeriaPopup(selectedPizzeria, marker);
