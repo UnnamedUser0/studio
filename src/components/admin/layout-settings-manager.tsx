@@ -103,7 +103,11 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
     };
 
     const handleLocalSettingChange = (key: string, value: any) => {
-        setSettings((prev: any) => ({ ...prev, [key]: value }));
+        const newSettings = { ...settings, [key]: value };
+        setSettings(newSettings);
+        if (onSettingsChange) {
+            onSettingsChange(newSettings);
+        }
     };
 
     const handleSettingCommit = (key: string, value: any) => {

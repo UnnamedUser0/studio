@@ -409,6 +409,7 @@ function PizzaMap({
   const nextManeuverMarkerRef = useRef<maplibregl.Marker | null>(null);
   const isManualLocationRef = useRef<boolean>(false);
   const visiblePizzeriasRef = useRef<Pizzeria[]>([]);
+  const activePopupPizzeriaIdRef = useRef<string | null>(null);
 
   const { toast } = useToast();
   
@@ -624,6 +625,7 @@ function PizzaMap({
         
         try {
           localStorage.setItem('userLocation', JSON.stringify(coords));
+          localStorage.setItem('isManualLocationLocked', 'true');
         } catch (e) {
           console.warn("Storage access failed:", e);
         }
@@ -651,6 +653,11 @@ function PizzaMap({
   const handleLocateMe = (clearManual = false) => {
     if (clearManual) {
       isManualLocationRef.current = false;
+      try {
+        localStorage.removeItem('isManualLocationLocked');
+      } catch (e) {
+        console.warn("Storage access failed:", e);
+      }
     }
 
     const map = mapInstanceRef.current;
@@ -1317,10 +1324,15 @@ function PizzaMap({
         updateLayersVisibility(map, savedBaseLayerName, showTraffic);
 
         let savedLoc = null;
+        let savedManualLock = null;
         try {
           savedLoc = localStorage.getItem('userLocation');
+          savedManualLock = localStorage.getItem('isManualLocationLocked');
         } catch (e) {
           console.warn("Storage access failed:", e);
+        }
+        if (savedManualLock === 'true') {
+          isManualLocationRef.current = true;
         }
         if (savedLoc) {
           try {
@@ -1656,12 +1668,14 @@ function PizzaMap({
     popup.on('close', () => {
       if (isProgrammaticCloseRef.current) return;
       activePopupRef.current = null;
+      activePopupPizzeriaIdRef.current = null;
       if (selectedPizzeria?.id === pizzeria.id) {
         onCloseDetail?.();
       }
     });
 
     activePopupRef.current = popup;
+    activePopupPizzeriaIdRef.current = pizzeria.id;
   };
 
   useEffect(() => {
@@ -1777,7 +1791,10 @@ function PizzaMap({
 
       const marker = markersMapRef.current.get(selectedPizzeria.id);
       if (marker) {
-        openPizzeriaPopup(selectedPizzeria, marker);
+        const isAlreadyOpen = activePopupRef.current && activePopupPizzeriaIdRef.current === selectedPizzeria.id;
+        if (!isAlreadyOpen) {
+          openPizzeriaPopup(selectedPizzeria, marker);
+        }
       }
     } else if (prevSelected && !selectedPizzeria) {
       // If selectedPizzeria transitions to null (closed from parent sheet), remove active map popup
