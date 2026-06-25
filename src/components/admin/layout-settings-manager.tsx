@@ -42,6 +42,10 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
         mapHeight: 70,
         mapHeightMobile: 55,
         mapCenterOffset: 150,
+        popupCenterOffset2D: 180,
+        popupCenterOffset2DMobile: 150,
+        popupCenterOffset3D: 250,
+        popupCenterOffset3DMobile: 200,
         iconAnchorX: 25,
         iconAnchorY: 25
     })
@@ -361,18 +365,34 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Desplazamiento de Centrado de Cámara (Offset vertical)</Label>
-                                        <span className="text-xs font-bold text-primary">{settings.mapCenterOffset || 150}px</span>
+                                        <Label className="text-xs font-medium">Offset de Centrado del Popup (Vista 2D Escritorio)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupCenterOffset2D || 180}px</span>
                                     </div>
                                     <Slider
-                                        value={[settings.mapCenterOffset || 150]}
+                                        value={[settings.popupCenterOffset2D || 180]}
                                         min={0}
                                         max={400}
                                         step={10}
-                                        onValueChange={([val]) => handleLocalSettingChange('mapCenterOffset', val)} onValueCommit={([val]) => handleSettingCommit('mapCenterOffset', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupCenterOffset2D', val)} onValueCommit={([val]) => handleSettingCommit('popupCenterOffset2D', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Número de píxeles que la cámara baja el mapa al enfocar una coordenada. Ayuda a evitar que los popups altos queden debajo del buscador.
+                                        Ajusta el desplazamiento vertical para centrar el popup en vista estándar 2D (Escritorio).
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Offset de Centrado del Popup (Vista 3D Escritorio)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupCenterOffset3D || 250}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.popupCenterOffset3D || 250]}
+                                        min={0}
+                                        max={400}
+                                        step={10}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupCenterOffset3D', val)} onValueCommit={([val]) => handleSettingCommit('popupCenterOffset3D', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta el desplazamiento vertical para centrar el popup en vista inclinada 3D (Escritorio).
                                     </p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 pt-3 border-t border-dashed">
@@ -615,6 +635,45 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Ajuste de separación vertical del popup móvil con respecto al icono de la pizzería.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Advanced Map Settings (Mobile) */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                            <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Cámara Avanzada (Móvil)</h4>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Offset de Centrado del Popup (Vista 2D Móvil)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupCenterOffset2DMobile || 150}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.popupCenterOffset2DMobile || 150]}
+                                        min={0}
+                                        max={400}
+                                        step={10}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupCenterOffset2DMobile', val)} onValueCommit={([val]) => handleSettingCommit('popupCenterOffset2DMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta el desplazamiento vertical para centrar el popup en vista estándar 2D (Móvil).
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Offset de Centrado del Popup (Vista 3D Móvil)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.popupCenterOffset3DMobile || 200}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.popupCenterOffset3DMobile || 200]}
+                                        min={0}
+                                        max={400}
+                                        step={10}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupCenterOffset3DMobile', val)} onValueCommit={([val]) => handleSettingCommit('popupCenterOffset3DMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta el desplazamiento vertical para centrar el popup en vista inclinada 3D (Móvil).
                                     </p>
                                 </div>
                             </div>

@@ -294,6 +294,10 @@ export async function getLayoutSettings() {
         mapHeight: 70,
         mapHeightMobile: 55,
         mapCenterOffset: 150,
+        popupCenterOffset2D: 180,
+        popupCenterOffset2DMobile: 150,
+        popupCenterOffset3D: 250,
+        popupCenterOffset3DMobile: 200,
         iconAnchorX: 25,
         iconAnchorY: 25
     }

@@ -38,6 +38,10 @@ type PizzaMapProps = {
   popupOffsetY?: number;
   popupOffsetYMobile?: number;
   mapCenterOffset?: number;
+  popupCenterOffset2D?: number;
+  popupCenterOffset2DMobile?: number;
+  popupCenterOffset3D?: number;
+  popupCenterOffset3DMobile?: number;
   iconAnchorX?: number;
   iconAnchorY?: number;
   disableDistanceFilter?: boolean;
@@ -381,6 +385,10 @@ function PizzaMap({
   popupOffsetY = -35,
   popupOffsetYMobile = -35,
   mapCenterOffset = 150,
+  popupCenterOffset2D = 180,
+  popupCenterOffset2DMobile = 150,
+  popupCenterOffset3D = 250,
+  popupCenterOffset3DMobile = 200,
   iconAnchorX = 25,
   iconAnchorY = 25,
   disableDistanceFilter = false,
@@ -1714,12 +1722,11 @@ function PizzaMap({
           // Open the popup directly on the map, do not trigger panel sheet immediately
           openPizzeriaPopup(latestPizzeria, newMarker);
           
-          const height = map.getContainer().clientHeight;
           const isMobile = window.innerWidth < 768;
           const pitch = map.getPitch();
-          const pitchFactor = pitch > 0 ? (1 + (pitch / 90) * 0.25) : 1.0;
-          const offsetFactor = isMobile ? 0.22 : 0.28;
-          const offsetPixels = Math.max(mapCenterOffset, height * offsetFactor * pitchFactor);
+          const offsetPixels = pitch > 20
+            ? (isMobile ? popupCenterOffset3DMobile : popupCenterOffset3D)
+            : (isMobile ? popupCenterOffset2DMobile : popupCenterOffset2D);
 
           map.easeTo({
             center: [latestPizzeria.lng, latestPizzeria.lat],
@@ -1755,12 +1762,11 @@ function PizzaMap({
     prevSelectedPizzeriaRef.current = selectedPizzeria;
 
     if (selectedPizzeria) {
-      const height = map.getContainer().clientHeight;
       const isMobile = window.innerWidth < 768;
       const pitch = map.getPitch();
-      const pitchFactor = pitch > 0 ? (1 + (pitch / 90) * 0.25) : 1.0;
-      const offsetFactor = isMobile ? 0.22 : 0.28;
-      const offsetPixels = Math.max(mapCenterOffset, height * offsetFactor * pitchFactor);
+      const offsetPixels = pitch > 20
+        ? (isMobile ? popupCenterOffset3DMobile : popupCenterOffset3D)
+        : (isMobile ? popupCenterOffset2DMobile : popupCenterOffset2D);
 
       map.easeTo({
         center: [selectedPizzeria.lng, selectedPizzeria.lat],
@@ -1795,7 +1801,7 @@ function PizzaMap({
         });
       }
     }
-  }, [selectedPizzeria, searchCenter, userLocation, isNavigating, mapCenterOffset, popupOffsetY, popupOffsetYMobile]);
+  }, [selectedPizzeria, searchCenter, userLocation, isNavigating, mapCenterOffset, popupOffsetY, popupOffsetYMobile, popupCenterOffset2D, popupCenterOffset2DMobile, popupCenterOffset3D, popupCenterOffset3DMobile]);
 
   useEffect(() => {
     updateSearchMarker();

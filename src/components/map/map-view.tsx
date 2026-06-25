@@ -117,6 +117,10 @@ export default function MapView({
         popupOffsetY={layoutSettings?.popupOffsetY ?? -35}
         popupOffsetYMobile={layoutSettings?.popupOffsetYMobile ?? -35}
         mapCenterOffset={layoutSettings?.mapCenterOffset ?? 150}
+        popupCenterOffset2D={layoutSettings?.popupCenterOffset2D ?? 180}
+        popupCenterOffset2DMobile={layoutSettings?.popupCenterOffset2DMobile ?? 150}
+        popupCenterOffset3D={layoutSettings?.popupCenterOffset3D ?? 250}
+        popupCenterOffset3DMobile={layoutSettings?.popupCenterOffset3DMobile ?? 200}
         iconAnchorX={layoutSettings?.iconAnchorX ?? 25}
         iconAnchorY={layoutSettings?.iconAnchorY ?? 25}
         onSettingsChange={onSettingsChange}
