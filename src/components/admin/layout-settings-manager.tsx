@@ -374,8 +374,8 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     </div>
                                     <Slider
                                         value={[settings.popupCenterOffset2D || 180]}
-                                        min={0}
-                                        max={400}
+                                        min={-500}
+                                        max={1500}
                                         step={10}
                                         onValueChange={([val]) => handleLocalSettingChange('popupCenterOffset2D', val)} onValueCommit={([val]) => handleSettingCommit('popupCenterOffset2D', val)}
                                     />
@@ -390,8 +390,8 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     </div>
                                     <Slider
                                         value={[settings.popupCenterOffset3D || 250]}
-                                        min={0}
-                                        max={400}
+                                        min={-500}
+                                        max={1500}
                                         step={10}
                                         onValueChange={([val]) => handleLocalSettingChange('popupCenterOffset3D', val)} onValueCommit={([val]) => handleSettingCommit('popupCenterOffset3D', val)}
                                     />
@@ -655,8 +655,8 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     </div>
                                     <Slider
                                         value={[settings.popupCenterOffset2DMobile || 150]}
-                                        min={0}
-                                        max={400}
+                                        min={-500}
+                                        max={1500}
                                         step={10}
                                         onValueChange={([val]) => handleLocalSettingChange('popupCenterOffset2DMobile', val)} onValueCommit={([val]) => handleSettingCommit('popupCenterOffset2DMobile', val)}
                                     />
@@ -671,8 +671,8 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     </div>
                                     <Slider
                                         value={[settings.popupCenterOffset3DMobile || 200]}
-                                        min={0}
-                                        max={400}
+                                        min={-500}
+                                        max={1500}
                                         step={10}
                                         onValueChange={([val]) => handleLocalSettingChange('popupCenterOffset3DMobile', val)} onValueCommit={([val]) => handleSettingCommit('popupCenterOffset3DMobile', val)}
                                     />

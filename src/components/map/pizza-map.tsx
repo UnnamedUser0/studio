@@ -411,6 +411,16 @@ function PizzaMap({
   const visiblePizzeriasRef = useRef<Pizzeria[]>([]);
   const activePopupPizzeriaIdRef = useRef<string | null>(null);
 
+  const popupCenterOffset2DRef = useRef(popupCenterOffset2D);
+  const popupCenterOffset2DMobileRef = useRef(popupCenterOffset2DMobile);
+  const popupCenterOffset3DRef = useRef(popupCenterOffset3D);
+  const popupCenterOffset3DMobileRef = useRef(popupCenterOffset3DMobile);
+
+  popupCenterOffset2DRef.current = popupCenterOffset2D;
+  popupCenterOffset2DMobileRef.current = popupCenterOffset2DMobile;
+  popupCenterOffset3DRef.current = popupCenterOffset3D;
+  popupCenterOffset3DMobileRef.current = popupCenterOffset3DMobile;
+
   const { toast } = useToast();
   
   // Base style layers state
@@ -1739,8 +1749,8 @@ function PizzaMap({
           const isMobile = window.innerWidth < 768;
           const pitch = map.getPitch();
           const offsetPixels = pitch > 20
-            ? (isMobile ? popupCenterOffset3DMobile : popupCenterOffset3D)
-            : (isMobile ? popupCenterOffset2DMobile : popupCenterOffset2D);
+            ? (isMobile ? popupCenterOffset3DMobileRef.current : popupCenterOffset3DRef.current)
+            : (isMobile ? popupCenterOffset2DMobileRef.current : popupCenterOffset2DRef.current);
 
           map.easeTo({
             center: [latestPizzeria.lng, latestPizzeria.lat],
