@@ -830,8 +830,44 @@ function PizzaMap({
 
   const drawRoute = async (destination: { lat: number, lng: number }, originOverride?: { lat: number, lng: number }) => {
     const map = mapInstanceRef.current;
-    const origin = originOverride || userLocation;
-    if (!map || !origin) {
+    if (!map) return;
+
+    let origin = originOverride || userLocation;
+
+    // Try to get fresh location if not overridden and not manual location
+    if (!originOverride && !isManualLocationRef.current && navigator.geolocation) {
+      try {
+        const freshPos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 3000,
+            maximumAge: 10000
+          });
+        });
+        const { latitude, longitude } = freshPos.coords;
+        const distFromCenter = getDistance(
+          { latitude, longitude },
+          { latitude: HERMOSILLO_CENTER[0], longitude: HERMOSILLO_CENTER[1] }
+        );
+        if (distFromCenter <= 30000) {
+          origin = { lat: latitude, lng: longitude };
+          setUserLocation(origin);
+          updateUserMarker([longitude, latitude], true);
+          if (onLocateUser) {
+            onLocateUser(origin);
+          }
+          try {
+            localStorage.setItem('userLocation', JSON.stringify(origin));
+          } catch (e) {
+            console.warn("Storage access failed:", e);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not get fresh geolocation on drawRoute, using fallback:", err);
+      }
+    }
+
+    if (!origin) {
       toast({
         variant: 'destructive',
         title: 'Ubicación no disponible',
@@ -1292,6 +1328,35 @@ function PizzaMap({
           }
         }
 
+        // Proactively request current geolocation on load to ensure accurate user location
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              if (isManualLocationRef.current) return;
+              const { latitude, longitude } = position.coords;
+              const distFromCenter = getDistance(
+                { latitude, longitude },
+                { latitude: HERMOSILLO_CENTER[0], longitude: HERMOSILLO_CENTER[1] }
+              );
+              if (distFromCenter <= 30000) {
+                const freshLoc = { lat: latitude, lng: longitude };
+                setUserLocation(freshLoc);
+                updateUserMarker([longitude, latitude], true);
+                if (onLocateUser) {
+                  onLocateUser(freshLoc);
+                }
+                try {
+                  localStorage.setItem('userLocation', JSON.stringify(freshLoc));
+                } catch (e) {
+                  console.warn("Storage access failed:", e);
+                }
+              }
+            },
+            (error) => console.log('Initial location request failed:', error.message),
+            { enableHighAccuracy: false, timeout: 5000, maximumAge: 30000 }
+          );
+        }
+
         if (routeDestination) {
           drawRoute(routeDestination);
         }
@@ -1651,8 +1716,10 @@ function PizzaMap({
           
           const height = map.getContainer().clientHeight;
           const isMobile = window.innerWidth < 768;
-          const offsetFactor = isMobile ? 0.22 : 0.15;
-          const offsetPixels = height * offsetFactor;
+          const pitch = map.getPitch();
+          const pitchFactor = pitch > 0 ? (1 + (pitch / 90) * 0.25) : 1.0;
+          const offsetFactor = isMobile ? 0.22 : 0.28;
+          const offsetPixels = Math.max(mapCenterOffset, height * offsetFactor * pitchFactor);
 
           map.easeTo({
             center: [latestPizzeria.lng, latestPizzeria.lat],
@@ -1688,7 +1755,12 @@ function PizzaMap({
     prevSelectedPizzeriaRef.current = selectedPizzeria;
 
     if (selectedPizzeria) {
-      const offsetPixels = mapCenterOffset;
+      const height = map.getContainer().clientHeight;
+      const isMobile = window.innerWidth < 768;
+      const pitch = map.getPitch();
+      const pitchFactor = pitch > 0 ? (1 + (pitch / 90) * 0.25) : 1.0;
+      const offsetFactor = isMobile ? 0.22 : 0.28;
+      const offsetPixels = Math.max(mapCenterOffset, height * offsetFactor * pitchFactor);
 
       map.easeTo({
         center: [selectedPizzeria.lng, selectedPizzeria.lat],
@@ -1950,7 +2022,7 @@ function PizzaMap({
               onClick={startNavigation}
               className="bg-[#4285F4] hover:bg-[#3367d6] text-white shadow-xl rounded-full px-6 h-12 text-base font-semibold border-2 border-white/20"
             >
-              <Navigation className="mr-2 h-5 w-5 fill-current animate-bounce" />
+              <Navigation className="mr-2 h-5 w-5 fill-current" />
               Iniciar viaje
             </Button>
             <Button
