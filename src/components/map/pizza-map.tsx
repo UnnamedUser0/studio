@@ -400,6 +400,7 @@ function PizzaMap({
   const prevSelectedPizzeriaRef = useRef<Pizzeria | null>(null);
   const nextManeuverMarkerRef = useRef<maplibregl.Marker | null>(null);
   const isManualLocationRef = useRef<boolean>(false);
+  const visiblePizzeriasRef = useRef<Pizzeria[]>([]);
 
   const { toast } = useToast();
   
@@ -519,8 +520,8 @@ function PizzaMap({
     if (navigating) {
       el.innerHTML = `
         <div class="nav-arrow-inner" style="
-          width: 64px;
-          height: 64px;
+          width: 80px;
+          height: 80px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -529,8 +530,8 @@ function PizzaMap({
           <!-- Pulse Halo (GPS Accuracy) -->
           <div style="
             position: absolute;
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             background-color: rgba(37, 99, 235, 0.15);
             border: 1.5px solid rgba(37, 99, 235, 0.3);
@@ -541,25 +542,25 @@ function PizzaMap({
           <!-- White Circle Base -->
           <div style="
             position: absolute;
-            width: 38px;
-            height: 38px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             background-color: #ffffff;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
             pointer-events: none;
           ">
             <!-- Blue Chevron Arrow pointing straight UP -->
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2L22 22L12 17L2 22L12 2Z" fill="#1A73E8" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/>
             </svg>
           </div>
         </div>
       `;
-      el.style.width = '64px';
-      el.style.height = '64px';
+      el.style.width = '80px';
+      el.style.height = '80px';
     } else {
       el.innerHTML = `
         <div style="
@@ -893,9 +894,16 @@ function PizzaMap({
               'line-cap': 'round'
             },
             paint: {
-              'line-color': '#4285F4',
-              'line-width': 6,
-              'line-opacity': 0.9
+              'line-color': '#002CF3', // Deep intense blue
+              'line-width': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                12, 6,
+                16, 14,
+                20, 22
+              ] as any,
+              'line-opacity': 0.95
             }
           });
         }
@@ -1239,8 +1247,8 @@ function PizzaMap({
       });
 
       // Unlock map center tracking on manual interactions (drag, zoom, rotate, pitch)
-      const unlockMap = () => {
-        if (isNavigatingRef.current) {
+      const unlockMap = (e: any) => {
+        if (isNavigatingRef.current && e?.originalEvent) {
           changeLockState(false);
         }
       };
@@ -1372,6 +1380,8 @@ function PizzaMap({
       return false;
     });
   }, [pizzerias, selectedPizzeria, showAll, searchCenter, userLocation, routeDestination, activeRoute, disableDistanceFilter, explicitPizzeriasToShow]);
+
+  visiblePizzeriasRef.current = visiblePizzerias;
 
   const updatePizzeriaMarkerElement = (el: HTMLElement, pizzeria: Pizzeria, isSelected: boolean, isRouteDestination: boolean) => {
     let iconUrl = 'https://cdn-icons-png.flaticon.com/128/3595/3595458.png';
@@ -1633,8 +1643,11 @@ function PizzaMap({
 
         el.addEventListener('click', (e) => {
           e.stopPropagation();
+          // Always look up the latest pizzeria data by ID to avoid stale closure references
+          const latestPizzeria = visiblePizzeriasRef.current.find(p => p.id === pizzeria.id) || pizzeria;
+
           // Open the popup directly on the map, do not trigger panel sheet immediately
-          openPizzeriaPopup(pizzeria, newMarker);
+          openPizzeriaPopup(latestPizzeria, newMarker);
           
           const height = map.getContainer().clientHeight;
           const isMobile = window.innerWidth < 768;
@@ -1642,7 +1655,7 @@ function PizzaMap({
           const offsetPixels = height * offsetFactor;
 
           map.easeTo({
-            center: [pizzeria.lng, pizzeria.lat],
+            center: [latestPizzeria.lng, latestPizzeria.lat],
             zoom: 16,
             offset: [0, -offsetPixels],
             duration: 1500

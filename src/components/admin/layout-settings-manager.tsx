@@ -98,6 +98,18 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
         }
     };
 
+    const handleLocalSettingChange = (key: string, value: any) => {
+        setSettings((prev: any) => ({ ...prev, [key]: value }));
+    };
+
+    const handleSettingCommit = (key: string, value: any) => {
+        const newSettings = { ...settings, [key]: value };
+        setSettings(newSettings);
+        if (onSettingsChange) {
+            onSettingsChange(newSettings);
+        }
+    };
+
     return (
         <Card className="border-0 shadow-none bg-transparent">
             <CardHeader className="px-0 pt-0 pb-4">
@@ -142,7 +154,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     min={40}
                                     max={100}
                                     step={5}
-                                    onValueChange={([val]) => handleSettingChange('mapHeight', val)}
+                                    onValueChange={([val]) => handleLocalSettingChange('mapHeight', val)} onValueCommit={([val]) => handleSettingCommit('mapHeight', val)}
                                 />
                                 <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                     Establece la altura vertical del mapa en relación con el alto total de la ventana gráfica en ordenadores.
@@ -162,7 +174,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     min={30}
                                     max={100}
                                     step={5}
-                                    onValueChange={([val]) => handleSettingChange('sheetWidth', val)}
+                                    onValueChange={([val]) => handleLocalSettingChange('sheetWidth', val)} onValueCommit={([val]) => handleSettingCommit('sheetWidth', val)}
                                 />
                                 <div className="flex justify-between text-[10px] text-muted-foreground">
                                     <span>Más espacio para el mapa</span>
@@ -186,7 +198,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     min={0.8}
                                     max={1.2}
                                     step={0.05}
-                                    onValueChange={([val]) => handleSettingChange('cardScale', val)}
+                                    onValueChange={([val]) => handleLocalSettingChange('cardScale', val)} onValueCommit={([val]) => handleSettingCommit('cardScale', val)}
                                 />
                                 <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                     Ajusta el factor de escala global para el tamaño físico de las tarjetas informativas dentro del listado.
@@ -208,7 +220,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={20}
                                         max={100}
                                         step={5}
-                                        onValueChange={([val]) => handleSettingChange('searchWidth', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('searchWidth', val)} onValueCommit={([val]) => handleSettingCommit('searchWidth', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Porcentaje del ancho de la pantalla que ocupará la barra flotante de búsqueda.
@@ -224,7 +236,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={8}
                                         max={20}
                                         step={1}
-                                        onValueChange={([val]) => handleSettingChange('searchHeight', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('searchHeight', val)} onValueCommit={([val]) => handleSettingCommit('searchHeight', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Multiplicador de altura vertical y tamaño de fuente tipográfica de la caja de texto del buscador.
@@ -247,7 +259,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={50}
                                         max={500}
                                         step={10}
-                                        onValueChange={([val]) => handleSettingChange('buttonsTop', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('buttonsTop', val)} onValueCommit={([val]) => handleSettingCommit('buttonsTop', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Posición en píxeles desde el borde superior para botones de acción rápida flotantes a la derecha (Brújula, Geolocalización, Fullscreen).
@@ -263,7 +275,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={0}
                                         max={300}
                                         step={5}
-                                        onValueChange={([val]) => handleSettingChange('layerControlTop', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('layerControlTop', val)} onValueCommit={([val]) => handleSettingCommit('layerControlTop', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Margen vertical superior en píxeles para el selector flotante de tipos de mapa (Satélite, Relieve, Tránsito).
@@ -286,7 +298,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={200}
                                         max={500}
                                         step={10}
-                                        onValueChange={([val]) => handleSettingChange('popupWidth', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupWidth', val)} onValueCommit={([val]) => handleSettingCommit('popupWidth', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Ancho fijo en píxeles para los globos de previsualización al seleccionar pizzerías.
@@ -302,7 +314,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={0.5}
                                         max={1.5}
                                         step={0.05}
-                                        onValueChange={([val]) => handleSettingChange('popupScale', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupScale', val)} onValueCommit={([val]) => handleSettingCommit('popupScale', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Multiplicador de tamaño en escala 2D para ajustar la proporción visual del globo.
@@ -318,7 +330,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={10}
                                         max={24}
                                         step={1}
-                                        onValueChange={([val]) => handleSettingChange('popupFontSize', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupFontSize', val)} onValueCommit={([val]) => handleSettingCommit('popupFontSize', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Tamaño de letra en píxeles de las descripciones del globo emergente.
@@ -334,7 +346,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={-100}
                                         max={0}
                                         step={1}
-                                        onValueChange={([val]) => handleSettingChange('popupOffsetY', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupOffsetY', val)} onValueCommit={([val]) => handleSettingCommit('popupOffsetY', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Ajusta qué tan arriba del marcador de pizza se dibuja el globo de diálogo (valores negativos indican mayor distancia hacia arriba).
@@ -357,7 +369,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={0}
                                         max={400}
                                         step={10}
-                                        onValueChange={([val]) => handleSettingChange('mapCenterOffset', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('mapCenterOffset', val)} onValueCommit={([val]) => handleSettingCommit('mapCenterOffset', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Número de píxeles que la cámara baja el mapa al enfocar una coordenada. Ayuda a evitar que los popups altos queden debajo del buscador.
@@ -374,7 +386,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                             min={0}
                                             max={50}
                                             step={1}
-                                            onValueChange={([val]) => handleSettingChange('iconAnchorX', val)}
+                                            onValueChange={([val]) => handleLocalSettingChange('iconAnchorX', val)} onValueCommit={([val]) => handleSettingCommit('iconAnchorX', val)}
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -387,7 +399,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                             min={0}
                                             max={50}
                                             step={1}
-                                            onValueChange={([val]) => handleSettingChange('iconAnchorY', val)}
+                                            onValueChange={([val]) => handleLocalSettingChange('iconAnchorY', val)} onValueCommit={([val]) => handleSettingCommit('iconAnchorY', val)}
                                         />
                                     </div>
                                 </div>
@@ -411,7 +423,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     min={30}
                                     max={100}
                                     step={5}
-                                    onValueChange={([val]) => handleSettingChange('mapHeightMobile', val)}
+                                    onValueChange={([val]) => handleLocalSettingChange('mapHeightMobile', val)} onValueCommit={([val]) => handleSettingCommit('mapHeightMobile', val)}
                                 />
                                 <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                     Altura del mapa para dispositivos móviles expresada en porcentaje respecto a la altura útil de la pantalla móvil.
@@ -431,7 +443,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     min={50}
                                     max={100}
                                     step={5}
-                                    onValueChange={([val]) => handleSettingChange('sheetWidthMobile', val)}
+                                    onValueChange={([val]) => handleLocalSettingChange('sheetWidthMobile', val)} onValueCommit={([val]) => handleSettingCommit('sheetWidthMobile', val)}
                                 />
                                 <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                     Ancho que abarca la lista de pizzerías deslizable en móviles. Un 100% cubre el ancho total.
@@ -451,7 +463,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     min={0.5}
                                     max={1.2}
                                     step={0.05}
-                                    onValueChange={([val]) => handleSettingChange('cardScaleMobile', val)}
+                                    onValueChange={([val]) => handleLocalSettingChange('cardScaleMobile', val)} onValueCommit={([val]) => handleSettingCommit('cardScaleMobile', val)}
                                 />
                                 <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                     Ajuste de escala de tamaño físico para los contenedores de pizzería en dispositivos celulares.
@@ -473,7 +485,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={50}
                                         max={100}
                                         step={5}
-                                        onValueChange={([val]) => handleSettingChange('searchWidthMobile', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('searchWidthMobile', val)} onValueCommit={([val]) => handleSettingCommit('searchWidthMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Define qué porcentaje del ancho disponible ocupa el buscador flotante en la vista celular.
@@ -489,7 +501,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={8}
                                         max={16}
                                         step={1}
-                                        onValueChange={([val]) => handleSettingChange('searchHeightMobile', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('searchHeightMobile', val)} onValueCommit={([val]) => handleSettingCommit('searchHeightMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Tamaño de altura del input de búsqueda e iconos en dispositivos táctiles.
@@ -512,7 +524,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={50}
                                         max={500}
                                         step={10}
-                                        onValueChange={([val]) => handleSettingChange('buttonsTopMobile', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('buttonsTopMobile', val)} onValueCommit={([val]) => handleSettingCommit('buttonsTopMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Margen vertical en píxeles para los botones flotantes laterales en dispositivos móviles.
@@ -528,7 +540,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={0}
                                         max={300}
                                         step={5}
-                                        onValueChange={([val]) => handleSettingChange('layerControlTopMobile', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('layerControlTopMobile', val)} onValueCommit={([val]) => handleSettingCommit('layerControlTopMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Margen vertical superior del control selector de estilo de mapa en dispositivos móviles.
@@ -551,7 +563,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={150}
                                         max={350}
                                         step={10}
-                                        onValueChange={([val]) => handleSettingChange('popupWidthMobile', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupWidthMobile', val)} onValueCommit={([val]) => handleSettingCommit('popupWidthMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Ajusta el ancho del popup al tocar un marcador en celulares.
@@ -567,7 +579,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={0.5}
                                         max={1.5}
                                         step={0.05}
-                                        onValueChange={([val]) => handleSettingChange('popupScaleMobile', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupScaleMobile', val)} onValueCommit={([val]) => handleSettingCommit('popupScaleMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Escalado visual 2D del popup emergente en dispositivos móviles.
@@ -583,7 +595,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={10}
                                         max={24}
                                         step={1}
-                                        onValueChange={([val]) => handleSettingChange('popupFontSizeMobile', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupFontSizeMobile', val)} onValueCommit={([val]) => handleSettingCommit('popupFontSizeMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Tamaño de letra en píxeles del popup emergente al usar móviles.
@@ -599,7 +611,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         min={-100}
                                         max={0}
                                         step={1}
-                                        onValueChange={([val]) => handleSettingChange('popupOffsetYMobile', val)}
+                                        onValueChange={([val]) => handleLocalSettingChange('popupOffsetYMobile', val)} onValueCommit={([val]) => handleSettingCommit('popupOffsetYMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Ajuste de separación vertical del popup móvil con respecto al icono de la pizzería.
