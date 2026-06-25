@@ -415,11 +415,15 @@ function PizzaMap({
   const popupCenterOffset2DMobileRef = useRef(popupCenterOffset2DMobile);
   const popupCenterOffset3DRef = useRef(popupCenterOffset3D);
   const popupCenterOffset3DMobileRef = useRef(popupCenterOffset3DMobile);
+  const popupOffsetYRef = useRef(popupOffsetY);
+  const popupOffsetYMobileRef = useRef(popupOffsetYMobile);
 
   popupCenterOffset2DRef.current = popupCenterOffset2D;
   popupCenterOffset2DMobileRef.current = popupCenterOffset2DMobile;
   popupCenterOffset3DRef.current = popupCenterOffset3D;
   popupCenterOffset3DMobileRef.current = popupCenterOffset3DMobile;
+  popupOffsetYRef.current = popupOffsetY;
+  popupOffsetYMobileRef.current = popupOffsetYMobile;
 
   const { toast } = useToast();
   
@@ -1662,7 +1666,7 @@ function PizzaMap({
     container.appendChild(btnGrid);
 
     const isMobile = window.innerWidth < 768;
-    const currentOffset = isMobile ? (popupOffsetYMobile ?? -35) : (popupOffsetY ?? -35);
+    const currentOffset = isMobile ? (popupOffsetYMobileRef.current ?? -35) : (popupOffsetYRef.current ?? -35);
 
     const popup = new maplibregl.Popup({
       offset: [0, currentOffset],
@@ -1781,6 +1785,13 @@ function PizzaMap({
     if (!map) return;
 
     if (isNavigating) return;
+
+    // Update active popup offset in real-time if it exists
+    if (activePopupRef.current) {
+      const isMobile = window.innerWidth < 768;
+      const currentOffset = isMobile ? (popupOffsetYMobile ?? -35) : (popupOffsetY ?? -35);
+      activePopupRef.current.setOffset([0, currentOffset]);
+    }
 
     const prevSelected = prevSelectedPizzeriaRef.current;
     prevSelectedPizzeriaRef.current = selectedPizzeria;
