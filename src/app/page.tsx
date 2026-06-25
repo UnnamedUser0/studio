@@ -565,7 +565,7 @@ function HomeContent() {
                             style={{ width: `${rankingStyles.cardWidth}px` }}
                           >
                             <div className="relative">
-                              <div className="hidden md:block absolute -inset-1 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-lg blur opacity-50 animate-pulse"></div>
+                              <div className="hidden md:block absolute -inset-1 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-lg blur opacity-50"></div>
                               {/* Mobile Card: Centered and Scaled */}
                               <div className="md:hidden absolute bottom-0 left-1/2 -translate-x-1/2 origin-bottom transition-transform duration-300"
                                 style={{ width: `${rankingStyles.mobileCardWidth ?? 280}px`, maxWidth: '90vw' }}>

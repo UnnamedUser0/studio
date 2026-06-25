@@ -399,6 +399,7 @@ function PizzaMap({
   const routeCoordinatesRef = useRef<[number, number][]>([]);
   const prevSelectedPizzeriaRef = useRef<Pizzeria | null>(null);
   const nextManeuverMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const isManualLocationRef = useRef<boolean>(false);
 
   const { toast } = useToast();
   
@@ -599,6 +600,7 @@ function PizzaMap({
         const newLngLat = marker.getLngLat();
         const coords = { lat: newLngLat.lat, lng: newLngLat.lng };
         
+        isManualLocationRef.current = true; // Mark as manually adjusted
         setUserLocation(coords);
         if (onLocateUser) {
           onLocateUser(coords);
@@ -637,7 +639,11 @@ function PizzaMap({
     }
   };
 
-  const handleLocateMe = () => {
+  const handleLocateMe = (clearManual = false) => {
+    if (clearManual) {
+      isManualLocationRef.current = false;
+    }
+
     const map = mapInstanceRef.current;
     if (!map) return;
 
@@ -653,6 +659,8 @@ function PizzaMap({
     toast({ title: 'Obteniendo ubicación...' });
 
     const onLocationSuccess = (position: GeolocationPosition) => {
+      if (isManualLocationRef.current) return; // Ignore if manual location is active
+
       let { latitude, longitude, accuracy, speed } = position.coords;
 
       const distFromCenter = getDistance(
@@ -664,8 +672,9 @@ function PizzaMap({
         console.warn("Location outside Hermosillo detected.", { latitude, longitude });
         toast({
           title: 'Ubicación lejana detectada',
-          description: 'Tu ubicación parece estar fuera de Hermosillo.',
+          description: 'Tu ubicación está fuera de Hermosillo y no será utilizada.',
         });
+        return; // Ignore locations outside Hermosillo
       }
 
       const speedKmh = speed ? Math.round(speed * 3.6) : 0;
@@ -698,8 +707,19 @@ function PizzaMap({
 
       const watchId = navigator.geolocation.watchPosition(
         (betterPosition) => {
+          if (isManualLocationRef.current) return; // Ignore if manual location is active
+
           let { latitude: lat, longitude: lng, accuracy: acc, speed: newSpeed } = betterPosition.coords;
           const speedKmh = newSpeed ? Math.round(newSpeed * 3.6) : 0;
+
+          const distFromCenter = getDistance(
+            { latitude: lat, longitude: lng },
+            { latitude: HERMOSILLO_CENTER[0], longitude: HERMOSILLO_CENTER[1] }
+          );
+
+          if (distFromCenter > 30000) {
+            return; // Ignore coordinates outside Hermosillo
+          }
 
           if (acc < bestAccuracy || isNavigating) {
             bestAccuracy = acc;
@@ -759,6 +779,8 @@ function PizzaMap({
     };
 
     const onLocationError = async (error: GeolocationPositionError) => {
+      if (isManualLocationRef.current) return; // Ignore if manual location is active
+
       console.warn("Geolocation error:", error.code, error.message);
       toast({
         title: 'Usando ubicación aproximada (IP)',
@@ -1052,7 +1074,9 @@ function PizzaMap({
     isNavigatingRef.current = true;
     changeLockState(true);
     
-    handleLocateMe();
+    if (!isManualLocationRef.current) {
+      handleLocateMe();
+    }
 
     const map = mapInstanceRef.current;
     if (map && userLocation) {
@@ -1201,6 +1225,7 @@ function PizzaMap({
         zoom: 12,
         pitch: 0,
         bearing: 0,
+        maxZoom: 22,
         attributionControl: false
       });
       
@@ -1470,6 +1495,18 @@ function PizzaMap({
       ratingText.textContent = `Rating: ${pizzeria.rating.toFixed(1)}`;
       ratingRow.appendChild(ratingText);
       infoContainer.appendChild(ratingRow);
+    }
+
+    if (pizzeria.description) {
+      const descRow = document.createElement('div');
+      descRow.className = "custom-popup-row";
+      descRow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 shrink-0"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`;
+      const descText = document.createElement('span');
+      descText.className = "custom-popup-text";
+      descText.style.fontStyle = "italic";
+      descText.textContent = pizzeria.description;
+      descRow.appendChild(descText);
+      infoContainer.appendChild(descRow);
     }
 
     container.appendChild(infoContainer);
@@ -1781,7 +1818,7 @@ function PizzaMap({
             <Button
               variant="secondary"
               size="icon"
-              onClick={handleLocateMe}
+              onClick={() => handleLocateMe(true)}
               className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white dark:bg-slate-950"
               aria-label="Find my location"
             >
