@@ -333,7 +333,17 @@ export async function getLayoutSettings() {
         navInstructionFontSize: 24,
         navInstructionFontSizeMobile: 18,
         navDashboardFontSize: 30,
-        navDashboardFontSizeMobile: 22
+        navDashboardFontSizeMobile: 22,
+        navNextLeft: 0,
+        navNextLeftMobile: 0,
+        navNextTop: 0,
+        navNextTopMobile: 0,
+        navNextScale: 1.0,
+        navNextScaleMobile: 1.0,
+        navNextWidth: 100,
+        navNextWidthMobile: 100,
+        navNextFontSize: 14,
+        navNextFontSizeMobile: 14
     }
     if (!setting) return defaultSettings;
     try {

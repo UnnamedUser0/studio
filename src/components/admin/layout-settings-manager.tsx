@@ -81,7 +81,17 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
         navInstructionFontSize: 24,
         navInstructionFontSizeMobile: 18,
         navDashboardFontSize: 30,
-        navDashboardFontSizeMobile: 22
+        navDashboardFontSizeMobile: 22,
+        navNextLeft: 0,
+        navNextLeftMobile: 0,
+        navNextTop: 0,
+        navNextTopMobile: 0,
+        navNextScale: 1.0,
+        navNextScaleMobile: 1.0,
+        navNextWidth: 100,
+        navNextWidthMobile: 100,
+        navNextFontSize: 14,
+        navNextFontSizeMobile: 14
     })
 
     useEffect(() => {
@@ -555,6 +565,84 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Modifica el tamaño de la tipografía de la barra verde de indicaciones.
                                     </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed bg-muted/10 p-2 rounded">
+                                    <h5 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Sub-panel "Luego" (Maniobra Siguiente)</h5>
+                                    
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[11px] font-medium">Desplazamiento Lateral "Luego"</Label>
+                                            <span className="text-[11px] font-bold text-primary">{settings.navNextLeft ?? 0}px</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.navNextLeft ?? 0]}
+                                            min={-300}
+                                            max={300}
+                                            step={2}
+                                            onValueChange={([val]) => handleLocalSettingChange('navNextLeft', val)}
+                                            onValueCommit={([val]) => handleSettingCommit('navNextLeft', val)}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[11px] font-medium">Desplazamiento Vertical "Luego"</Label>
+                                            <span className="text-[11px] font-bold text-primary">{settings.navNextTop ?? 0}px</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.navNextTop ?? 0]}
+                                            min={-200}
+                                            max={200}
+                                            step={2}
+                                            onValueChange={([val]) => handleLocalSettingChange('navNextTop', val)}
+                                            onValueCommit={([val]) => handleSettingCommit('navNextTop', val)}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[11px] font-medium">Escala "Luego" (Tamaño)</Label>
+                                            <span className="text-[11px] font-bold text-primary">{settings.navNextScale ?? 1.0}x</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.navNextScale ?? 1.0]}
+                                            min={0.5}
+                                            max={2.0}
+                                            step={0.05}
+                                            onValueChange={([val]) => handleLocalSettingChange('navNextScale', val)}
+                                            onValueCommit={([val]) => handleSettingCommit('navNextScale', val)}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[11px] font-medium">Ancho "Luego" (%)</Label>
+                                            <span className="text-[11px] font-bold text-primary">{settings.navNextWidth ?? 100}%</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.navNextWidth ?? 100]}
+                                            min={20}
+                                            max={100}
+                                            step={1}
+                                            onValueChange={([val]) => handleLocalSettingChange('navNextWidth', val)}
+                                            onValueCommit={([val]) => handleSettingCommit('navNextWidth', val)}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[11px] font-medium">Tamaño de Letra "Luego"</Label>
+                                            <span className="text-[11px] font-bold text-primary">{settings.navNextFontSize ?? 14}px</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.navNextFontSize ?? 14]}
+                                            min={8}
+                                            max={24}
+                                            step={1}
+                                            onValueChange={([val]) => handleLocalSettingChange('navNextFontSize', val)}
+                                            onValueCommit={([val]) => handleSettingCommit('navNextFontSize', val)}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
@@ -1051,6 +1139,84 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Modifica el tamaño de la tipografía de la barra verde de indicaciones en móviles.
                                     </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed bg-muted/10 p-2 rounded">
+                                    <h5 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Sub-panel "Luego" (Maniobra Siguiente Móvil)</h5>
+                                    
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[11px] font-medium">Desplazamiento Lateral "Luego" Móvil</Label>
+                                            <span className="text-[11px] font-bold text-primary">{settings.navNextLeftMobile ?? 0}px</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.navNextLeftMobile ?? 0]}
+                                            min={-300}
+                                            max={300}
+                                            step={2}
+                                            onValueChange={([val]) => handleLocalSettingChange('navNextLeftMobile', val)}
+                                            onValueCommit={([val]) => handleSettingCommit('navNextLeftMobile', val)}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[11px] font-medium">Desplazamiento Vertical "Luego" Móvil</Label>
+                                            <span className="text-[11px] font-bold text-primary">{settings.navNextTopMobile ?? 0}px</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.navNextTopMobile ?? 0]}
+                                            min={-200}
+                                            max={200}
+                                            step={2}
+                                            onValueChange={([val]) => handleLocalSettingChange('navNextTopMobile', val)}
+                                            onValueCommit={([val]) => handleSettingCommit('navNextTopMobile', val)}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[11px] font-medium">Escala "Luego" Móvil (Tamaño)</Label>
+                                            <span className="text-[11px] font-bold text-primary">{settings.navNextScaleMobile ?? 1.0}x</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.navNextScaleMobile ?? 1.0]}
+                                            min={0.5}
+                                            max={2.0}
+                                            step={0.05}
+                                            onValueChange={([val]) => handleLocalSettingChange('navNextScaleMobile', val)}
+                                            onValueCommit={([val]) => handleSettingCommit('navNextScaleMobile', val)}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[11px] font-medium">Ancho "Luego" Móvil (%)</Label>
+                                            <span className="text-[11px] font-bold text-primary">{settings.navNextWidthMobile ?? 100}%</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.navNextWidthMobile ?? 100]}
+                                            min={20}
+                                            max={100}
+                                            step={1}
+                                            onValueChange={([val]) => handleLocalSettingChange('navNextWidthMobile', val)}
+                                            onValueCommit={([val]) => handleSettingCommit('navNextWidthMobile', val)}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-[11px] font-medium">Tamaño de Letra "Luego" Móvil</Label>
+                                            <span className="text-[11px] font-bold text-primary">{settings.navNextFontSizeMobile ?? 14}px</span>
+                                        </div>
+                                        <Slider
+                                            value={[settings.navNextFontSizeMobile ?? 14]}
+                                            min={8}
+                                            max={24}
+                                            step={1}
+                                            onValueChange={([val]) => handleLocalSettingChange('navNextFontSizeMobile', val)}
+                                            onValueCommit={([val]) => handleSettingCommit('navNextFontSizeMobile', val)}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">

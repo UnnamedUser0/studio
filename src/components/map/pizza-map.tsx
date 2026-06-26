@@ -1388,7 +1388,7 @@ function PizzaMap({
     if (routeDestination) {
       drawRoute(routeDestination);
     }
-  }, [routeDestination]);
+  }, [routeDestination, userLocation]);
 
   useEffect(() => {
     if (mapContainerRef.current && !mapInstanceRef.current) {
@@ -2230,7 +2230,7 @@ function PizzaMap({
 
                 {/* "Luego" (Then) Next Maneuver sub-bar */}
                 {currentInstruction?.next && (
-                  <div className="bg-[#004D40] text-white/90 px-4 py-2.5 rounded-b-xl shadow-lg flex items-center gap-2 border-t border-white/10 w-full min-h-[40px] animate-in slide-in-from-top-2 duration-200">
+                  <div className="bg-[#004D40] text-white/90 px-4 py-2.5 rounded-b-xl shadow-lg flex items-center gap-2 border-t border-white/10 w-full min-h-[40px] animate-in slide-in-from-top-2 duration-200 nav-next-sub-bar">
                     <span className="text-xs font-bold text-teal-300 uppercase tracking-wider shrink-0">Luego:</span>
                     <div className="flex-shrink-0 bg-white/15 p-1 rounded-md text-white">
                       {currentInstruction.next.icon}
@@ -2715,6 +2715,26 @@ function PizzaMap({
           }
           .nav-dashboard-container .text-sm {
             font-size: calc(var(--nav-dashboard-font-size-desktop, 30px) * 0.6) !important;
+          }
+        }
+
+        .nav-next-sub-bar {
+          transform: translate(var(--nav-next-left-mobile, 0px), var(--nav-next-top-mobile, 0px)) scale(var(--nav-next-scale-mobile, 1));
+          transform-origin: top center;
+          width: var(--nav-next-width-mobile, 100%) !important;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .nav-next-sub-bar span, .nav-next-sub-bar div {
+          font-size: var(--nav-next-font-size-mobile, 14px) !important;
+        }
+        @media (min-width: 768px) {
+          .nav-next-sub-bar {
+            transform: translate(var(--nav-next-left-desktop, 0px), var(--nav-next-top-desktop, 0px)) scale(var(--nav-next-scale-desktop, 1));
+            width: var(--nav-next-width-desktop, 100%) !important;
+          }
+          .nav-next-sub-bar span, .nav-next-sub-bar div {
+            font-size: var(--nav-next-font-size-desktop, 14px) !important;
           }
         }
       `}</style>

@@ -431,6 +431,16 @@ function HomeContent() {
       '--nav-instruction-font-size-mobile': `${layoutSettings.navInstructionFontSizeMobile ?? 18}px`,
       '--nav-dashboard-font-size-desktop': `${layoutSettings.navDashboardFontSize ?? 30}px`,
       '--nav-dashboard-font-size-mobile': `${layoutSettings.navDashboardFontSizeMobile ?? 22}px`,
+      '--nav-next-left-desktop': `${layoutSettings.navNextLeft ?? 0}px`,
+      '--nav-next-left-mobile': `${layoutSettings.navNextLeftMobile ?? 0}px`,
+      '--nav-next-top-desktop': `${layoutSettings.navNextTop ?? 0}px`,
+      '--nav-next-top-mobile': `${layoutSettings.navNextTopMobile ?? 0}px`,
+      '--nav-next-scale-desktop': `${layoutSettings.navNextScale ?? 1}`,
+      '--nav-next-scale-mobile': `${layoutSettings.navNextScaleMobile ?? 1}`,
+      '--nav-next-width-desktop': `${layoutSettings.navNextWidth ?? 100}%`,
+      '--nav-next-width-mobile': `${layoutSettings.navNextWidthMobile ?? 100}%`,
+      '--nav-next-font-size-desktop': `${layoutSettings.navNextFontSize ?? 14}px`,
+      '--nav-next-font-size-mobile': `${layoutSettings.navNextFontSizeMobile ?? 14}px`,
     } as React.CSSProperties;
   }, [layoutSettings]);
 
