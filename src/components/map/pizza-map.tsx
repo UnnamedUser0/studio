@@ -2530,14 +2530,14 @@ function PizzaMap({
         /* Navigation UI custom styling */
         .nav-instruction-container {
           left: 50%;
-          width: calc(var(--nav-instruction-width-mobile, 100%) - 2rem);
+          width: calc((var(--nav-instruction-width-mobile, 100%) - 2rem) / var(--nav-instruction-scale-mobile, 1));
           top: var(--nav-instruction-top-mobile, 16px);
           transform: translateX(calc(-50% + var(--nav-instruction-left-mobile, 0px))) scale(var(--nav-instruction-scale-mobile, 1));
           transform-origin: top center;
         }
         @media (min-width: 768px) {
           .nav-instruction-container {
-            width: calc(var(--nav-instruction-width-desktop, 100%) - 2rem);
+            width: calc((var(--nav-instruction-width-desktop, 100%) - 2rem) / var(--nav-instruction-scale-desktop, 1));
             top: var(--nav-instruction-top-desktop, 16px);
             transform: translateX(calc(-50% + var(--nav-instruction-left-desktop, 0px))) scale(var(--nav-instruction-scale-desktop, 1));
           }
@@ -2545,14 +2545,14 @@ function PizzaMap({
 
         .nav-dashboard-container {
           left: 50%;
-          width: var(--nav-dashboard-width-mobile, 100%);
+          width: calc(var(--nav-dashboard-width-mobile, 100%) / var(--nav-dashboard-scale-mobile, 1));
           bottom: var(--nav-dashboard-bottom-mobile, 0px);
           transform: translateX(calc(-50% + var(--nav-dashboard-left-mobile, 0px))) scale(var(--nav-dashboard-scale-mobile, 1));
           transform-origin: bottom center;
         }
         @media (min-width: 768px) {
           .nav-dashboard-container {
-            width: var(--nav-dashboard-width-desktop, 100%);
+            width: calc(var(--nav-dashboard-width-desktop, 100%) / var(--nav-dashboard-scale-desktop, 1));
             bottom: var(--nav-dashboard-bottom-desktop, 0px);
             transform: translateX(calc(-50% + var(--nav-dashboard-left-desktop, 0px))) scale(var(--nav-dashboard-scale-desktop, 1));
           }
