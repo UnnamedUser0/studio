@@ -1283,6 +1283,9 @@ function PizzaMap({
       if (myLocationMarkerRef.current) {
         myLocationMarkerRef.current.setRotation(bearing);
       }
+      if (routeSteps.length > 0) {
+        updateNavigationInstructions(navLoc, routeSteps, destinationNameRef.current);
+      }
     }
 
     toast({
@@ -1546,7 +1549,22 @@ function PizzaMap({
       if (showAll) return true;
       if (disableDistanceFilter) return true;
 
-      if (searchCenter && typeof pizzeria.lat === 'number' && typeof pizzeria.lng === 'number') {
+      if (typeof pizzeria.lat !== 'number' || typeof pizzeria.lng !== 'number') return false;
+
+      // Always show active route destination
+      if (routeDestination &&
+        Math.abs(pizzeria.lat - routeDestination.lat) < 0.0001 &&
+        Math.abs(pizzeria.lng - routeDestination.lng) < 0.0001) {
+        return true;
+      }
+
+      if (activeRoute &&
+        Math.abs(pizzeria.lat - activeRoute.lat) < 0.0001 &&
+        Math.abs(pizzeria.lng - activeRoute.lng) < 0.0001) {
+        return true;
+      }
+
+      if (searchCenter) {
         const distToSearch = getDistance(
           { latitude: searchCenter.lat, longitude: searchCenter.lng },
           { latitude: pizzeria.lat, longitude: pizzeria.lng }
@@ -1554,19 +1572,7 @@ function PizzaMap({
         if (distToSearch <= 2500) return true;
       }
 
-      if (userLocation && typeof pizzeria.lat === 'number' && typeof pizzeria.lng === 'number') {
-        if (routeDestination &&
-          Math.abs(pizzeria.lat - routeDestination.lat) < 0.0001 &&
-          Math.abs(pizzeria.lng - routeDestination.lng) < 0.0001) {
-          return true;
-        }
-
-        if (activeRoute &&
-          Math.abs(pizzeria.lat - activeRoute.lat) < 0.0001 &&
-          Math.abs(pizzeria.lng - activeRoute.lng) < 0.0001) {
-          return true;
-        }
-
+      if (userLocation) {
         const distance = getDistance(
           { latitude: userLocation.lat, longitude: userLocation.lng },
           { latitude: pizzeria.lat, longitude: pizzeria.lng }
@@ -1805,7 +1811,10 @@ function PizzaMap({
       currentIds.add(pizzeria.id);
 
       const isSelected = selectedPizzeria?.id === pizzeria.id;
-      const isRouteDestination = !!(activeRoute && Math.abs(activeRoute.lat - pizzeria.lat) < 0.0001 && Math.abs(activeRoute.lng - pizzeria.lng) < 0.0001);
+      const isRouteDestination = !!(
+        (activeRoute && Math.abs(activeRoute.lat - pizzeria.lat) < 0.0001 && Math.abs(activeRoute.lng - pizzeria.lng) < 0.0001) ||
+        (routeDestination && Math.abs(routeDestination.lat - pizzeria.lat) < 0.0001 && Math.abs(routeDestination.lng - pizzeria.lng) < 0.0001)
+      );
 
       let marker = markersMapRef.current.get(pizzeria.id);
 
@@ -1992,6 +2001,12 @@ function PizzaMap({
       updateUserMarker(myLocationMarkerRef.current.getLngLat().toArray() as [number, number], true);
     }
   }, [isNavigating]);
+
+  useEffect(() => {
+    if (userLocation) {
+      updateUserMarker([userLocation.lng, userLocation.lat]);
+    }
+  }, [userLocation]);
 
   return (
     <div className="relative h-full w-full z-0 overflow-hidden">
@@ -2189,8 +2204,11 @@ function PizzaMap({
           {isNavigating && routeDetails && (
             <>
               {/* Top Instruction Bar - Green (Google Maps Style) */}
-              <div className="absolute z-[1002] animate-in slide-in-from-top-4 duration-300 pointer-events-auto nav-instruction-container flex flex-col items-start gap-1">
-                <div className="bg-[#00695C] text-white p-4 rounded-xl shadow-lg flex items-center min-h-[80px] border border-white/10 w-full">
+              <div className="absolute z-[1002] animate-in slide-in-from-top-4 duration-300 pointer-events-auto nav-instruction-container flex flex-col items-stretch gap-0">
+                <div className={cn(
+                  "bg-[#00695C] text-white p-4 shadow-lg flex items-center min-h-[80px] border border-white/10 w-full transition-all duration-200",
+                  currentInstruction?.next ? "rounded-t-xl rounded-b-none" : "rounded-xl"
+                )}>
                   <div className="flex-shrink-0 mr-4 bg-white/10 p-3 rounded-xl">
                     {currentInstruction?.icon || <Navigation className="w-12 h-12 text-white stroke-[3px]" />}
                   </div>
@@ -2210,12 +2228,16 @@ function PizzaMap({
                   </div>
                 </div>
 
-                {/* "Luego" (Then) Next Maneuver sub-pill */}
+                {/* "Luego" (Then) Next Maneuver sub-bar */}
                 {currentInstruction?.next && (
-                  <div className="bg-[#004D40] text-white/95 px-4 py-1.5 rounded-full shadow-md text-xs font-bold flex items-center gap-1.5 ml-4 border border-white/5 animate-in slide-in-from-top-2 duration-200">
-                    <span className="text-teal-200">Luego</span>
-                    {currentInstruction.next.icon}
-                    <span className="truncate max-w-[150px]">{currentInstruction.next.text}</span>
+                  <div className="bg-[#004D40] text-white/90 px-4 py-2.5 rounded-b-xl shadow-lg flex items-center gap-2 border-t border-white/10 w-full min-h-[40px] animate-in slide-in-from-top-2 duration-200">
+                    <span className="text-xs font-bold text-teal-300 uppercase tracking-wider shrink-0">Luego:</span>
+                    <div className="flex-shrink-0 bg-white/15 p-1 rounded-md text-white">
+                      {currentInstruction.next.icon}
+                    </div>
+                    <span className="text-sm font-bold truncate flex-grow text-teal-50">
+                      {currentInstruction.next.text}
+                    </span>
                   </div>
                 )}
               </div>

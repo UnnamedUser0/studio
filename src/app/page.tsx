@@ -370,9 +370,10 @@ function HomeContent() {
 
   const handleNavigate = useCallback((pizzeria: Pizzeria) => {
     if (!pizzeria.lat || !pizzeria.lng) return;
+    setSelectedPizzeria(pizzeria);
     setRouteDestination({ lat: pizzeria.lat, lng: pizzeria.lng });
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  }, [setSelectedPizzeria]);
 
   const pizzeriasToShowInList = isSearching ? visiblePizzerias : (pizzeriasForRanking || []);
 
