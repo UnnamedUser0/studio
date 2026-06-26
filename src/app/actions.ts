@@ -281,6 +281,8 @@ export async function getLayoutSettings() {
         searchHeightMobile: 10,
         buttonsTop: 160,
         buttonsTopMobile: 160,
+        buttonsRight: 16,
+        buttonsRightMobile: 16,
         layerControlTop: 10,
         layerControlTopMobile: 10,
         popupWidth: 280,

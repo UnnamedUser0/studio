@@ -91,7 +91,9 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
         navNextWidth: 100,
         navNextWidthMobile: 100,
         navNextFontSize: 14,
-        navNextFontSizeMobile: 14
+        navNextFontSizeMobile: 14,
+        buttonsRight: 16,
+        buttonsRightMobile: 16
     })
 
     useEffect(() => {
@@ -302,19 +304,68 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                             <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Ubicación de Controles del Mapa</h4>
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <div className="flex justify-between">
+                                    <div className="flex justify-between items-center">
                                         <Label className="text-xs font-medium">Desplazamiento Superior de Botones de Control</Label>
-                                        <span className="text-xs font-bold text-primary">{settings.buttonsTop || 160}px</span>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.buttonsTop ?? 160}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('buttonsTop', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('buttonsTop', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
                                     </div>
                                     <Slider
-                                        value={[settings.buttonsTop || 160]}
-                                        min={50}
-                                        max={500}
-                                        step={10}
-                                        onValueChange={([val]) => handleLocalSettingChange('buttonsTop', val)} onValueCommit={([val]) => handleSettingCommit('buttonsTop', val)}
+                                        value={[settings.buttonsTop ?? 160]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('buttonsTop', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('buttonsTop', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Posición en píxeles desde el borde superior para botones de acción rápida flotantes a la derecha (Brújula, Geolocalización, Fullscreen).
+                                        Posición vertical en píxeles desde el borde superior para botones de acción rápida flotantes a la derecha (Brújula, Geolocalización, Fullscreen).
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Lateral de Botones de Control</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.buttonsRight ?? 16}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('buttonsRight', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('buttonsRight', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.buttonsRight ?? 16]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('buttonsRight', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('buttonsRight', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Posición horizontal en píxeles desde el borde derecho para los botones de control de acción rápida.
                                     </p>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
@@ -570,44 +621,90 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     <h5 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Sub-panel "Luego" (Maniobra Siguiente)</h5>
                                     
                                     <div className="space-y-2">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <Label className="text-[11px] font-medium">Desplazamiento Lateral "Luego"</Label>
-                                            <span className="text-[11px] font-bold text-primary">{settings.navNextLeft ?? 0}px</span>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="number"
+                                                    className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    value={settings.navNextLeft ?? 0}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleLocalSettingChange('navNextLeft', val);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleSettingCommit('navNextLeft', val);
+                                                    }}
+                                                />
+                                                <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                            </div>
                                         </div>
                                         <Slider
                                             value={[settings.navNextLeft ?? 0]}
-                                            min={-300}
-                                            max={300}
-                                            step={2}
+                                            min={-5000}
+                                            max={5000}
+                                            step={1}
                                             onValueChange={([val]) => handleLocalSettingChange('navNextLeft', val)}
                                             onValueCommit={([val]) => handleSettingCommit('navNextLeft', val)}
                                         />
                                     </div>
 
                                     <div className="space-y-2 pt-2">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <Label className="text-[11px] font-medium">Desplazamiento Vertical "Luego"</Label>
-                                            <span className="text-[11px] font-bold text-primary">{settings.navNextTop ?? 0}px</span>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="number"
+                                                    className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    value={settings.navNextTop ?? 0}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleLocalSettingChange('navNextTop', val);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleSettingCommit('navNextTop', val);
+                                                    }}
+                                                />
+                                                <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                            </div>
                                         </div>
                                         <Slider
                                             value={[settings.navNextTop ?? 0]}
-                                            min={-200}
-                                            max={200}
-                                            step={2}
+                                            min={-5000}
+                                            max={5000}
+                                            step={1}
                                             onValueChange={([val]) => handleLocalSettingChange('navNextTop', val)}
                                             onValueCommit={([val]) => handleSettingCommit('navNextTop', val)}
                                         />
                                     </div>
 
                                     <div className="space-y-2 pt-2">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <Label className="text-[11px] font-medium">Escala "Luego" (Tamaño)</Label>
-                                            <span className="text-[11px] font-bold text-primary">{settings.navNextScale ?? 1.0}x</span>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="number"
+                                                    className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    value={settings.navNextScale ?? 1.0}
+                                                    step={0.05}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleLocalSettingChange('navNextScale', val);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleSettingCommit('navNextScale', val);
+                                                    }}
+                                                />
+                                                <span className="text-[11px] font-medium text-muted-foreground">x</span>
+                                            </div>
                                         </div>
                                         <Slider
                                             value={[settings.navNextScale ?? 1.0]}
-                                            min={0.5}
-                                            max={2.0}
+                                            min={0.05}
+                                            max={10.0}
                                             step={0.05}
                                             onValueChange={([val]) => handleLocalSettingChange('navNextScale', val)}
                                             onValueCommit={([val]) => handleSettingCommit('navNextScale', val)}
@@ -615,14 +712,29 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     </div>
 
                                     <div className="space-y-2 pt-2">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <Label className="text-[11px] font-medium">Ancho "Luego" (%)</Label>
-                                            <span className="text-[11px] font-bold text-primary">{settings.navNextWidth ?? 100}%</span>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="number"
+                                                    className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    value={settings.navNextWidth ?? 100}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleLocalSettingChange('navNextWidth', val);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleSettingCommit('navNextWidth', val);
+                                                    }}
+                                                />
+                                                <span className="text-[11px] font-medium text-muted-foreground">%</span>
+                                            </div>
                                         </div>
                                         <Slider
                                             value={[settings.navNextWidth ?? 100]}
-                                            min={20}
-                                            max={100}
+                                            min={1}
+                                            max={1000}
                                             step={1}
                                             onValueChange={([val]) => handleLocalSettingChange('navNextWidth', val)}
                                             onValueCommit={([val]) => handleSettingCommit('navNextWidth', val)}
@@ -630,14 +742,29 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     </div>
 
                                     <div className="space-y-2 pt-2">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <Label className="text-[11px] font-medium">Tamaño de Letra "Luego"</Label>
-                                            <span className="text-[11px] font-bold text-primary">{settings.navNextFontSize ?? 14}px</span>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="number"
+                                                    className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    value={settings.navNextFontSize ?? 14}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleLocalSettingChange('navNextFontSize', val);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleSettingCommit('navNextFontSize', val);
+                                                    }}
+                                                />
+                                                <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                            </div>
                                         </div>
                                         <Slider
                                             value={[settings.navNextFontSize ?? 14]}
-                                            min={8}
-                                            max={24}
+                                            min={1}
+                                            max={200}
                                             step={1}
                                             onValueChange={([val]) => handleLocalSettingChange('navNextFontSize', val)}
                                             onValueCommit={([val]) => handleSettingCommit('navNextFontSize', val)}
@@ -907,19 +1034,68 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                             <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Ubicación de Controles (Móvil)</h4>
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <div className="flex justify-between">
+                                    <div className="flex justify-between items-center">
                                         <Label className="text-xs font-medium">Desplazamiento Superior de Botones de Control (Vista Móvil)</Label>
-                                        <span className="text-xs font-bold text-primary">{settings.buttonsTopMobile || 160}px</span>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.buttonsTopMobile ?? 160}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('buttonsTopMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('buttonsTopMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
                                     </div>
                                     <Slider
-                                        value={[settings.buttonsTopMobile || 160]}
-                                        min={50}
-                                        max={500}
-                                        step={10}
-                                        onValueChange={([val]) => handleLocalSettingChange('buttonsTopMobile', val)} onValueCommit={([val]) => handleSettingCommit('buttonsTopMobile', val)}
+                                        value={[settings.buttonsTopMobile ?? 160]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('buttonsTopMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('buttonsTopMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Margen vertical en píxeles para los botones flotantes laterales en dispositivos móviles.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Lateral de Botones de Control (Vista Móvil)</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.buttonsRightMobile ?? 16}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('buttonsRightMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('buttonsRightMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.buttonsRightMobile ?? 16]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('buttonsRightMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('buttonsRightMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Posición horizontal (distancia desde el borde derecho) para los botones de control flotantes en móviles.
                                     </p>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
@@ -1144,44 +1320,90 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     <h5 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Sub-panel "Luego" (Maniobra Siguiente Móvil)</h5>
                                     
                                     <div className="space-y-2">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <Label className="text-[11px] font-medium">Desplazamiento Lateral "Luego" Móvil</Label>
-                                            <span className="text-[11px] font-bold text-primary">{settings.navNextLeftMobile ?? 0}px</span>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="number"
+                                                    className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    value={settings.navNextLeftMobile ?? 0}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleLocalSettingChange('navNextLeftMobile', val);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleSettingCommit('navNextLeftMobile', val);
+                                                    }}
+                                                />
+                                                <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                            </div>
                                         </div>
                                         <Slider
                                             value={[settings.navNextLeftMobile ?? 0]}
-                                            min={-300}
-                                            max={300}
-                                            step={2}
+                                            min={-5000}
+                                            max={5000}
+                                            step={1}
                                             onValueChange={([val]) => handleLocalSettingChange('navNextLeftMobile', val)}
                                             onValueCommit={([val]) => handleSettingCommit('navNextLeftMobile', val)}
                                         />
                                     </div>
 
                                     <div className="space-y-2 pt-2">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <Label className="text-[11px] font-medium">Desplazamiento Vertical "Luego" Móvil</Label>
-                                            <span className="text-[11px] font-bold text-primary">{settings.navNextTopMobile ?? 0}px</span>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="number"
+                                                    className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    value={settings.navNextTopMobile ?? 0}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleLocalSettingChange('navNextTopMobile', val);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleSettingCommit('navNextTopMobile', val);
+                                                    }}
+                                                />
+                                                <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                            </div>
                                         </div>
                                         <Slider
                                             value={[settings.navNextTopMobile ?? 0]}
-                                            min={-200}
-                                            max={200}
-                                            step={2}
+                                            min={-5000}
+                                            max={5000}
+                                            step={1}
                                             onValueChange={([val]) => handleLocalSettingChange('navNextTopMobile', val)}
                                             onValueCommit={([val]) => handleSettingCommit('navNextTopMobile', val)}
                                         />
                                     </div>
 
                                     <div className="space-y-2 pt-2">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <Label className="text-[11px] font-medium">Escala "Luego" Móvil (Tamaño)</Label>
-                                            <span className="text-[11px] font-bold text-primary">{settings.navNextScaleMobile ?? 1.0}x</span>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="number"
+                                                    className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    value={settings.navNextScaleMobile ?? 1.0}
+                                                    step={0.05}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleLocalSettingChange('navNextScaleMobile', val);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleSettingCommit('navNextScaleMobile', val);
+                                                    }}
+                                                />
+                                                <span className="text-[11px] font-medium text-muted-foreground">x</span>
+                                            </div>
                                         </div>
                                         <Slider
                                             value={[settings.navNextScaleMobile ?? 1.0]}
-                                            min={0.5}
-                                            max={2.0}
+                                            min={0.05}
+                                            max={10.0}
                                             step={0.05}
                                             onValueChange={([val]) => handleLocalSettingChange('navNextScaleMobile', val)}
                                             onValueCommit={([val]) => handleSettingCommit('navNextScaleMobile', val)}
@@ -1189,14 +1411,29 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     </div>
 
                                     <div className="space-y-2 pt-2">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <Label className="text-[11px] font-medium">Ancho "Luego" Móvil (%)</Label>
-                                            <span className="text-[11px] font-bold text-primary">{settings.navNextWidthMobile ?? 100}%</span>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="number"
+                                                    className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    value={settings.navNextWidthMobile ?? 100}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleLocalSettingChange('navNextWidthMobile', val);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleSettingCommit('navNextWidthMobile', val);
+                                                    }}
+                                                />
+                                                <span className="text-[11px] font-medium text-muted-foreground">%</span>
+                                            </div>
                                         </div>
                                         <Slider
                                             value={[settings.navNextWidthMobile ?? 100]}
-                                            min={20}
-                                            max={100}
+                                            min={1}
+                                            max={1000}
                                             step={1}
                                             onValueChange={([val]) => handleLocalSettingChange('navNextWidthMobile', val)}
                                             onValueCommit={([val]) => handleSettingCommit('navNextWidthMobile', val)}
@@ -1204,14 +1441,29 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     </div>
 
                                     <div className="space-y-2 pt-2">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                             <Label className="text-[11px] font-medium">Tamaño de Letra "Luego" Móvil</Label>
-                                            <span className="text-[11px] font-bold text-primary">{settings.navNextFontSizeMobile ?? 14}px</span>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    type="number"
+                                                    className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    value={settings.navNextFontSizeMobile ?? 14}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleLocalSettingChange('navNextFontSizeMobile', val);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        handleSettingCommit('navNextFontSizeMobile', val);
+                                                    }}
+                                                />
+                                                <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                            </div>
                                         </div>
                                         <Slider
                                             value={[settings.navNextFontSizeMobile ?? 14]}
-                                            min={8}
-                                            max={24}
+                                            min={1}
+                                            max={200}
                                             step={1}
                                             onValueChange={([val]) => handleLocalSettingChange('navNextFontSizeMobile', val)}
                                             onValueCommit={([val]) => handleSettingCommit('navNextFontSizeMobile', val)}

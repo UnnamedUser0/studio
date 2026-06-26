@@ -2565,10 +2565,12 @@ function PizzaMap({
 
         .map-controls-container {
           top: var(--buttons-top-mobile, 160px);
+          right: var(--buttons-right-mobile, 16px) !important;
         }
         @media (min-width: 768px) {
           .map-controls-container {
             top: var(--buttons-top-desktop, 160px);
+            right: var(--buttons-right-desktop, 16px) !important;
           }
         }
 
