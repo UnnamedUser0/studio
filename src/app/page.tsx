@@ -396,6 +396,18 @@ function HomeContent() {
       '--popup-scale-mobile': `${layoutSettings.popupScaleMobile || 1}`,
       '--popup-font-size-desktop': `${layoutSettings.popupFontSize || 14}px`,
       '--popup-font-size-mobile': `${layoutSettings.popupFontSizeMobile || 12}px`,
+      '--nav-instruction-top-desktop': `${layoutSettings.navInstructionTop ?? 16}px`,
+      '--nav-instruction-top-mobile': `${layoutSettings.navInstructionTopMobile ?? 16}px`,
+      '--nav-instruction-scale-desktop': `${layoutSettings.navInstructionScale ?? 1}`,
+      '--nav-instruction-scale-mobile': `${layoutSettings.navInstructionScaleMobile ?? 1}`,
+      '--nav-dashboard-bottom-desktop': `${layoutSettings.navDashboardBottom ?? 0}px`,
+      '--nav-dashboard-bottom-mobile': `${layoutSettings.navDashboardBottomMobile ?? 0}px`,
+      '--nav-dashboard-scale-desktop': `${layoutSettings.navDashboardScale ?? 1}`,
+      '--nav-dashboard-scale-mobile': `${layoutSettings.navDashboardScaleMobile ?? 1}`,
+      '--nav-street-bottom-desktop': `${layoutSettings.navStreetBottom ?? 112}px`,
+      '--nav-street-bottom-mobile': `${layoutSettings.navStreetBottomMobile ?? 112}px`,
+      '--nav-street-scale-desktop': `${layoutSettings.navStreetScale ?? 1}`,
+      '--nav-street-scale-mobile': `${layoutSettings.navStreetScaleMobile ?? 1}`,
     } as React.CSSProperties;
   }, [layoutSettings]);
 

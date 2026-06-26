@@ -299,7 +299,19 @@ export async function getLayoutSettings() {
         popupCenterOffset3D: 250,
         popupCenterOffset3DMobile: 200,
         iconAnchorX: 25,
-        iconAnchorY: 25
+        iconAnchorY: 25,
+        navInstructionTop: 16,
+        navInstructionTopMobile: 16,
+        navInstructionScale: 1.0,
+        navInstructionScaleMobile: 1.0,
+        navDashboardBottom: 0,
+        navDashboardBottomMobile: 0,
+        navDashboardScale: 1.0,
+        navDashboardScaleMobile: 1.0,
+        navStreetBottom: 112,
+        navStreetBottomMobile: 112,
+        navStreetScale: 1.0,
+        navStreetScaleMobile: 1.0
     }
     if (!setting) return defaultSettings;
     try {

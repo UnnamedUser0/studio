@@ -47,7 +47,19 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
         popupCenterOffset3D: 250,
         popupCenterOffset3DMobile: 200,
         iconAnchorX: 25,
-        iconAnchorY: 25
+        iconAnchorY: 25,
+        navInstructionTop: 16,
+        navInstructionTopMobile: 16,
+        navInstructionScale: 1.0,
+        navInstructionScaleMobile: 1.0,
+        navDashboardBottom: 0,
+        navDashboardBottomMobile: 0,
+        navDashboardScale: 1.0,
+        navDashboardScaleMobile: 1.0,
+        navStreetBottom: 112,
+        navStreetBottomMobile: 112,
+        navStreetScale: 1.0,
+        navStreetScaleMobile: 1.0
     })
 
     useEffect(() => {
@@ -432,6 +444,115 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                 </p>
                             </div>
                         </div>
+
+                        {/* Navigation Settings (Desktop) */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                            <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Interfaz de Navegación (Durante viaje)</h4>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Superior de Indicaciones (Ruta)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navInstructionTop ?? 16}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navInstructionTop ?? 16]}
+                                        min={0}
+                                        max={200}
+                                        step={2}
+                                        onValueChange={([val]) => handleLocalSettingChange('navInstructionTop', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navInstructionTop', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Posición vertical en píxeles para la barra superior verde de indicaciones.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala de Indicaciones (Ruta)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navInstructionScale ?? 1.0}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navInstructionScale ?? 1.0]}
+                                        min={0.5}
+                                        max={2.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('navInstructionScale', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navInstructionScale', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta la escala física global de la barra de indicaciones superior.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Inferior del Tablero (Tiempo/ETA)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navDashboardBottom ?? 0}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navDashboardBottom ?? 0]}
+                                        min={-100}
+                                        max={200}
+                                        step={2}
+                                        onValueChange={([val]) => handleLocalSettingChange('navDashboardBottom', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navDashboardBottom', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajuste vertical de la posición del panel de control de tiempo y distancia inferior.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala del Tablero (Tiempo/ETA)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navDashboardScale ?? 1.0}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navDashboardScale ?? 1.0]}
+                                        min={0.5}
+                                        max={2.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('navDashboardScale', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navDashboardScale', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Escala el panel inferior de información y tiempo estimado.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Inferior de Calle/Velocímetro</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navStreetBottom ?? 112}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navStreetBottom ?? 112]}
+                                        min={20}
+                                        max={400}
+                                        step={5}
+                                        onValueChange={([val]) => handleLocalSettingChange('navStreetBottom', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navStreetBottom', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Desplazamiento vertical desde el borde inferior para el indicador de calle y velocímetro.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala de Calle/Velocímetro</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navStreetScale ?? 1.0}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navStreetScale ?? 1.0]}
+                                        min={0.5}
+                                        max={2.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('navStreetScale', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navStreetScale', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Modifica el tamaño del velocímetro y la etiqueta flotante de calle.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 ) : (
                     <div className="space-y-5 animate-in fade-in duration-300">
@@ -678,6 +799,115 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Ajusta el desplazamiento vertical para centrar el popup en vista inclinada 3D (Móvil).
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Navigation Settings (Mobile) */}
+                        <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                            <h4 className="font-bold text-sm text-foreground/90 border-b pb-1.5 mb-2">Interfaz de Navegación (Durante viaje Móvil)</h4>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Superior de Indicaciones Móvil</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navInstructionTopMobile ?? 16}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navInstructionTopMobile ?? 16]}
+                                        min={0}
+                                        max={200}
+                                        step={2}
+                                        onValueChange={([val]) => handleLocalSettingChange('navInstructionTopMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navInstructionTopMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Posición vertical en píxeles para la barra superior verde de indicaciones en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala de Indicaciones Móvil</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navInstructionScaleMobile ?? 1.0}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navInstructionScaleMobile ?? 1.0]}
+                                        min={0.5}
+                                        max={2.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('navInstructionScaleMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navInstructionScaleMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta la escala física global de la barra de indicaciones superior en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Inferior del Tablero Móvil (Tiempo/ETA)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navDashboardBottomMobile ?? 0}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navDashboardBottomMobile ?? 0]}
+                                        min={-100}
+                                        max={200}
+                                        step={2}
+                                        onValueChange={([val]) => handleLocalSettingChange('navDashboardBottomMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navDashboardBottomMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajuste vertical de la posición del panel de control de tiempo y distancia inferior en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala del Tablero Móvil (Tiempo/ETA)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navDashboardScaleMobile ?? 1.0}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navDashboardScaleMobile ?? 1.0]}
+                                        min={0.5}
+                                        max={2.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('navDashboardScaleMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navDashboardScaleMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Escala el panel inferior de información y tiempo estimado en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Inferior de Calle/Velocímetro Móvil</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navStreetBottomMobile ?? 112}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navStreetBottomMobile ?? 112]}
+                                        min={20}
+                                        max={400}
+                                        step={5}
+                                        onValueChange={([val]) => handleLocalSettingChange('navStreetBottomMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navStreetBottomMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Desplazamiento vertical desde el borde inferior para la calle y velocímetro en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala de Calle/Velocímetro Móvil</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navStreetScaleMobile ?? 1.0}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navStreetScaleMobile ?? 1.0]}
+                                        min={0.5}
+                                        max={2.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('navStreetScaleMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navStreetScaleMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Modifica el tamaño del velocímetro y etiqueta flotante de calle en móviles.
                                     </p>
                                 </div>
                             </div>

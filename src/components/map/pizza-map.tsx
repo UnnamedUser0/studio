@@ -929,7 +929,26 @@ function PizzaMap({
         }
 
         const route = data.routes[0];
-        const coordinates = route.geometry.coordinates;
+        let coordinates = [...route.geometry.coordinates];
+
+        const startCoord = [origin.lng, origin.lat];
+        const endCoord = [destination.lng, destination.lat];
+
+        const distToStart = getDistance(
+          { latitude: origin.lat, longitude: origin.lng },
+          { latitude: coordinates[0][1], longitude: coordinates[0][0] }
+        );
+        if (distToStart > 2) {
+          coordinates = [startCoord, ...coordinates];
+        }
+
+        const distToEnd = getDistance(
+          { latitude: destination.lat, longitude: destination.lng },
+          { latitude: coordinates[coordinates.length - 1][1], longitude: coordinates[coordinates.length - 1][0] }
+        );
+        if (distToEnd > 2) {
+          coordinates = [...coordinates, endCoord];
+        }
 
         routeCoordinatesRef.current = coordinates.map((c: any) => [c[1], c[0]]); // [lat, lng]
 
@@ -938,7 +957,10 @@ function PizzaMap({
           source.setData({
             type: 'Feature',
             properties: {},
-            geometry: route.geometry
+            geometry: {
+              ...route.geometry,
+              coordinates: coordinates
+            }
           });
         } else {
           map.addSource('route', {
@@ -946,7 +968,10 @@ function PizzaMap({
             data: {
               type: 'Feature',
               properties: {},
-              geometry: route.geometry
+              geometry: {
+                ...route.geometry,
+                coordinates: coordinates
+              }
             }
           });
 
@@ -2091,7 +2116,7 @@ function PizzaMap({
           {isNavigating && routeDetails && (
             <>
               {/* Top Instruction Bar - Green (Google Maps Style) */}
-              <div className="absolute top-4 left-4 right-4 z-[1002] animate-in slide-in-from-top-4 duration-300 pointer-events-auto">
+              <div className="absolute left-4 right-4 z-[1002] animate-in slide-in-from-top-4 duration-300 pointer-events-auto nav-instruction-container">
                 <div className="bg-[#00695C] text-white p-4 rounded-xl shadow-lg flex items-center min-h-[80px] border border-white/10">
                   <div className="flex-shrink-0 mr-4 bg-white/10 p-2 rounded-lg">
                     {currentInstruction?.icon || <Navigation className="w-12 h-12 text-white stroke-[3px]" />}
@@ -2144,7 +2169,7 @@ function PizzaMap({
               </div>
 
               {/* Floating Speed Bubble */}
-              <div className="absolute bottom-28 left-4 z-[1001] w-16 h-16 bg-black/80 rounded-full flex flex-col items-center justify-center border-2 border-white/10 shadow-xl backdrop-blur-sm pointer-events-auto">
+              <div className="absolute left-4 z-[1001] w-16 h-16 bg-black/80 rounded-full flex flex-col items-center justify-center border-2 border-white/10 shadow-xl backdrop-blur-sm pointer-events-auto nav-speed-bubble">
                 <span className="text-white font-bold text-xl leading-none">{currentSpeed}</span>
                 <span className="text-white/70 text-[10px] uppercase font-bold">km/h</span>
               </div>
@@ -2153,8 +2178,7 @@ function PizzaMap({
               {isLocked ? (
                 currentStreet && (
                   <div
-                    className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 px-4 py-2 rounded-full shadow-xl border border-gray-200 dark:border-slate-800 text-sm font-bold flex items-center gap-1.5"
-                    style={{ transform: 'translateX(-50%)' }}
+                    className="absolute left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 px-4 py-2 rounded-full shadow-xl border border-gray-200 dark:border-slate-800 text-sm font-bold flex items-center gap-1.5 nav-street-bubble"
                   >
                     <Navigation className="w-4 h-4 text-blue-500 fill-blue-500 rotate-45" />
                     <span>{currentStreet}</span>
@@ -2162,8 +2186,7 @@ function PizzaMap({
                 )
               ) : (
                 <div
-                  className="absolute bottom-28 left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto"
-                  style={{ transform: 'translateX(-50%)' }}
+                  className="absolute left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto nav-street-bubble"
                 >
                   <Button
                     onClick={() => {
@@ -2193,7 +2216,7 @@ function PizzaMap({
               )}
 
               {/* Bottom Status Bar - Black */}
-              <div className="absolute bottom-0 left-0 right-0 z-[1002] bg-[#111111] p-4 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 text-white pb-8 pointer-events-auto">
+              <div className="absolute left-0 right-0 z-[1002] bg-[#111111] p-4 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 text-white pb-8 pointer-events-auto nav-dashboard-container">
                 <div className="flex items-center justify-between">
                   <Button
                     onClick={exitNavigation}
@@ -2533,6 +2556,54 @@ function PizzaMap({
           100% {
             transform: scale(0.85);
             opacity: 0.9;
+          }
+        }
+        /* Navigation UI custom styling */
+        .nav-instruction-container {
+          top: var(--nav-instruction-top-mobile, 16px);
+          transform: scale(var(--nav-instruction-scale-mobile, 1));
+          transform-origin: top center;
+        }
+        @media (min-width: 768px) {
+          .nav-instruction-container {
+            top: var(--nav-instruction-top-desktop, 16px);
+            transform: scale(var(--nav-instruction-scale-desktop, 1));
+          }
+        }
+
+        .nav-dashboard-container {
+          bottom: var(--nav-dashboard-bottom-mobile, 0px);
+          transform: scale(var(--nav-dashboard-scale-mobile, 1));
+          transform-origin: bottom center;
+        }
+        @media (min-width: 768px) {
+          .nav-dashboard-container {
+            bottom: var(--nav-dashboard-bottom-desktop, 0px);
+            transform: scale(var(--nav-dashboard-scale-desktop, 1));
+          }
+        }
+
+        .nav-street-bubble {
+          bottom: var(--nav-street-bottom-mobile, 112px);
+          transform: translateX(-50%) scale(var(--nav-street-scale-mobile, 1));
+          transform-origin: bottom center;
+        }
+        @media (min-width: 768px) {
+          .nav-street-bubble {
+            bottom: var(--nav-street-bottom-desktop, 112px);
+            transform: translateX(-50%) scale(var(--nav-street-scale-desktop, 1));
+          }
+        }
+
+        .nav-speed-bubble {
+          bottom: var(--nav-street-bottom-mobile, 112px);
+          transform: scale(var(--nav-street-scale-mobile, 1));
+          transform-origin: bottom center;
+        }
+        @media (min-width: 768px) {
+          .nav-speed-bubble {
+            bottom: var(--nav-street-bottom-desktop, 112px);
+            transform: scale(var(--nav-street-scale-desktop, 1));
           }
         }
       `}</style>
