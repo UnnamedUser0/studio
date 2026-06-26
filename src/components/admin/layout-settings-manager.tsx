@@ -65,7 +65,11 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
         navDashboardLeft: 0,
         navDashboardLeftMobile: 0,
         navStreetLeft: 0,
-        navStreetLeftMobile: 0
+        navStreetLeftMobile: 0,
+        navInstructionWidth: 100,
+        navInstructionWidthMobile: 100,
+        navDashboardWidth: 100,
+        navDashboardWidthMobile: 100
     })
 
     useEffect(() => {
@@ -508,6 +512,23 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Ancho de Indicaciones (Ruta)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navInstructionWidth ?? 100}%</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navInstructionWidth ?? 100]}
+                                        min={30}
+                                        max={100}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('navInstructionWidth', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navInstructionWidth', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta el ancho de la barra de indicaciones superior en porcentaje de pantalla.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
                                         <Label className="text-xs font-medium">Margen Inferior del Tablero (Tiempo/ETA)</Label>
                                         <span className="text-xs font-bold text-primary">{settings.navDashboardBottom ?? 0}px</span>
                                     </div>
@@ -555,6 +576,23 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Desplazamiento horizontal (izquierda/derecha) para el tablero.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Ancho del Tablero (Tiempo/ETA)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navDashboardWidth ?? 100}%</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navDashboardWidth ?? 100]}
+                                        min={30}
+                                        max={100}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('navDashboardWidth', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navDashboardWidth', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta el ancho del panel inferior en porcentaje de pantalla.
                                     </p>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
@@ -918,6 +956,23 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Ancho de Indicaciones Móvil (Ruta)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navInstructionWidthMobile ?? 100}%</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navInstructionWidthMobile ?? 100]}
+                                        min={30}
+                                        max={100}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('navInstructionWidthMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navInstructionWidthMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta el ancho de la barra de indicaciones superior en móviles en porcentaje de pantalla.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
                                         <Label className="text-xs font-medium">Margen Inferior del Tablero Móvil (Tiempo/ETA)</Label>
                                         <span className="text-xs font-bold text-primary">{settings.navDashboardBottomMobile ?? 0}px</span>
                                     </div>
@@ -965,6 +1020,23 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Desplazamiento horizontal (izquierda/derecha) para el tablero en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Ancho del Tablero Móvil (Tiempo/ETA)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navDashboardWidthMobile ?? 100}%</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navDashboardWidthMobile ?? 100]}
+                                        min={30}
+                                        max={100}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('navDashboardWidthMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navDashboardWidthMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta el ancho del panel inferior en móviles en porcentaje de pantalla.
                                     </p>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">

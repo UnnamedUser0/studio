@@ -2116,7 +2116,7 @@ function PizzaMap({
           {isNavigating && routeDetails && (
             <>
               {/* Top Instruction Bar - Green (Google Maps Style) */}
-              <div className="absolute left-4 right-4 z-[1002] animate-in slide-in-from-top-4 duration-300 pointer-events-auto nav-instruction-container">
+              <div className="absolute z-[1002] animate-in slide-in-from-top-4 duration-300 pointer-events-auto nav-instruction-container">
                 <div className="bg-[#00695C] text-white p-4 rounded-xl shadow-lg flex items-center min-h-[80px] border border-white/10">
                   <div className="flex-shrink-0 mr-4 bg-white/10 p-2 rounded-lg">
                     {currentInstruction?.icon || <Navigation className="w-12 h-12 text-white stroke-[3px]" />}
@@ -2185,7 +2185,7 @@ function PizzaMap({
               )}
 
               {/* Bottom Status Bar - Black */}
-              <div className="absolute left-0 right-0 z-[1002] bg-[#111111] p-4 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 text-white pb-8 pointer-events-auto nav-dashboard-container">
+              <div className="absolute z-[1002] bg-[#111111] p-4 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 text-white pb-8 pointer-events-auto nav-dashboard-container">
                 <div className="flex items-center justify-between">
                   <Button
                     onClick={exitNavigation}
@@ -2529,26 +2529,32 @@ function PizzaMap({
         }
         /* Navigation UI custom styling */
         .nav-instruction-container {
+          left: 50%;
+          width: calc(var(--nav-instruction-width-mobile, 100%) - 2rem);
           top: var(--nav-instruction-top-mobile, 16px);
-          transform: translateX(var(--nav-instruction-left-mobile, 0px)) scale(var(--nav-instruction-scale-mobile, 1));
+          transform: translateX(calc(-50% + var(--nav-instruction-left-mobile, 0px))) scale(var(--nav-instruction-scale-mobile, 1));
           transform-origin: top center;
         }
         @media (min-width: 768px) {
           .nav-instruction-container {
+            width: calc(var(--nav-instruction-width-desktop, 100%) - 2rem);
             top: var(--nav-instruction-top-desktop, 16px);
-            transform: translateX(var(--nav-instruction-left-desktop, 0px)) scale(var(--nav-instruction-scale-desktop, 1));
+            transform: translateX(calc(-50% + var(--nav-instruction-left-desktop, 0px))) scale(var(--nav-instruction-scale-desktop, 1));
           }
         }
 
         .nav-dashboard-container {
+          left: 50%;
+          width: var(--nav-dashboard-width-mobile, 100%);
           bottom: var(--nav-dashboard-bottom-mobile, 0px);
-          transform: translateX(var(--nav-dashboard-left-mobile, 0px)) scale(var(--nav-dashboard-scale-mobile, 1));
+          transform: translateX(calc(-50% + var(--nav-dashboard-left-mobile, 0px))) scale(var(--nav-dashboard-scale-mobile, 1));
           transform-origin: bottom center;
         }
         @media (min-width: 768px) {
           .nav-dashboard-container {
+            width: var(--nav-dashboard-width-desktop, 100%);
             bottom: var(--nav-dashboard-bottom-desktop, 0px);
-            transform: translateX(var(--nav-dashboard-left-desktop, 0px)) scale(var(--nav-dashboard-scale-desktop, 1));
+            transform: translateX(calc(-50% + var(--nav-dashboard-left-desktop, 0px))) scale(var(--nav-dashboard-scale-desktop, 1));
           }
         }
 

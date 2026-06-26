@@ -104,6 +104,10 @@ export default function MapView({
       '--nav-dashboard-left-mobile': `${layoutSettings.navDashboardLeftMobile ?? 0}px`,
       '--nav-street-left-desktop': `${layoutSettings.navStreetLeft ?? 0}px`,
       '--nav-street-left-mobile': `${layoutSettings.navStreetLeftMobile ?? 0}px`,
+      '--nav-instruction-width-desktop': `${layoutSettings.navInstructionWidth ?? 100}%`,
+      '--nav-instruction-width-mobile': `${layoutSettings.navInstructionWidthMobile ?? 100}%`,
+      '--nav-dashboard-width-desktop': `${layoutSettings.navDashboardWidth ?? 100}%`,
+      '--nav-dashboard-width-mobile': `${layoutSettings.navDashboardWidthMobile ?? 100}%`,
     } as React.CSSProperties;
   }, [layoutSettings]);
 
