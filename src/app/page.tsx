@@ -408,6 +408,12 @@ function HomeContent() {
       '--nav-street-bottom-mobile': `${layoutSettings.navStreetBottomMobile ?? 112}px`,
       '--nav-street-scale-desktop': `${layoutSettings.navStreetScale ?? 1}`,
       '--nav-street-scale-mobile': `${layoutSettings.navStreetScaleMobile ?? 1}`,
+      '--nav-instruction-left-desktop': `${layoutSettings.navInstructionLeft ?? 0}px`,
+      '--nav-instruction-left-mobile': `${layoutSettings.navInstructionLeftMobile ?? 0}px`,
+      '--nav-dashboard-left-desktop': `${layoutSettings.navDashboardLeft ?? 0}px`,
+      '--nav-dashboard-left-mobile': `${layoutSettings.navDashboardLeftMobile ?? 0}px`,
+      '--nav-street-left-desktop': `${layoutSettings.navStreetLeft ?? 0}px`,
+      '--nav-street-left-mobile': `${layoutSettings.navStreetLeftMobile ?? 0}px`,
     } as React.CSSProperties;
   }, [layoutSettings]);
 

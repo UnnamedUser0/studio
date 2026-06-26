@@ -2174,44 +2174,13 @@ function PizzaMap({
                 <span className="text-white/70 text-[10px] uppercase font-bold">km/h</span>
               </div>
 
-              {/* Lock / Recenter Navigation Control */}
-              {isLocked ? (
-                currentStreet && (
-                  <div
-                    className="absolute left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 px-4 py-2 rounded-full shadow-xl border border-gray-200 dark:border-slate-800 text-sm font-bold flex items-center gap-1.5 nav-street-bubble"
-                  >
-                    <Navigation className="w-4 h-4 text-blue-500 fill-blue-500 rotate-45" />
-                    <span>{currentStreet}</span>
-                  </div>
-                )
-              ) : (
+              {/* Current Street Indicator (Locked state only) */}
+              {isLocked && currentStreet && (
                 <div
-                  className="absolute left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto nav-street-bubble"
+                  className="absolute left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 px-4 py-2 rounded-full shadow-xl border border-gray-200 dark:border-slate-800 text-sm font-bold flex items-center gap-1.5 nav-street-bubble"
                 >
-                  <Button
-                    onClick={() => {
-                      changeLockState(true);
-                      const map = mapInstanceRef.current;
-                      if (map && animatedCoordsRef.current) {
-                        const coords = animatedCoordsRef.current;
-                        const bearing = currentHeadingRef.current;
-                        const height = map.getContainer().clientHeight;
-                        const pixelOffset: [number, number] = [0, height * 0.22];
-                        map.easeTo({
-                          center: [coords.lng, coords.lat],
-                          zoom: 19.5,
-                          pitch: 60,
-                          bearing: bearing,
-                          offset: pixelOffset,
-                          duration: 500
-                        });
-                      }
-                    }}
-                    className="bg-[#00897B] hover:bg-[#00695C] text-white shadow-2xl rounded-full px-6 h-12 text-base font-bold flex items-center gap-2 border-2 border-white/20"
-                  >
-                    <Compass className="w-5 h-5" />
-                    Recentrar
-                  </Button>
+                  <Navigation className="w-4 h-4 text-blue-500 fill-blue-500 rotate-45" />
+                  <span>{currentStreet}</span>
                 </div>
               )}
 
@@ -2561,49 +2530,49 @@ function PizzaMap({
         /* Navigation UI custom styling */
         .nav-instruction-container {
           top: var(--nav-instruction-top-mobile, 16px);
-          transform: scale(var(--nav-instruction-scale-mobile, 1));
+          transform: translateX(var(--nav-instruction-left-mobile, 0px)) scale(var(--nav-instruction-scale-mobile, 1));
           transform-origin: top center;
         }
         @media (min-width: 768px) {
           .nav-instruction-container {
             top: var(--nav-instruction-top-desktop, 16px);
-            transform: scale(var(--nav-instruction-scale-desktop, 1));
+            transform: translateX(var(--nav-instruction-left-desktop, 0px)) scale(var(--nav-instruction-scale-desktop, 1));
           }
         }
 
         .nav-dashboard-container {
           bottom: var(--nav-dashboard-bottom-mobile, 0px);
-          transform: scale(var(--nav-dashboard-scale-mobile, 1));
+          transform: translateX(var(--nav-dashboard-left-mobile, 0px)) scale(var(--nav-dashboard-scale-mobile, 1));
           transform-origin: bottom center;
         }
         @media (min-width: 768px) {
           .nav-dashboard-container {
             bottom: var(--nav-dashboard-bottom-desktop, 0px);
-            transform: scale(var(--nav-dashboard-scale-desktop, 1));
+            transform: translateX(var(--nav-dashboard-left-desktop, 0px)) scale(var(--nav-dashboard-scale-desktop, 1));
           }
         }
 
         .nav-street-bubble {
           bottom: var(--nav-street-bottom-mobile, 112px);
-          transform: translateX(-50%) scale(var(--nav-street-scale-mobile, 1));
+          transform: translateX(calc(-50% + var(--nav-street-left-mobile, 0px))) scale(var(--nav-street-scale-mobile, 1));
           transform-origin: bottom center;
         }
         @media (min-width: 768px) {
           .nav-street-bubble {
             bottom: var(--nav-street-bottom-desktop, 112px);
-            transform: translateX(-50%) scale(var(--nav-street-scale-desktop, 1));
+            transform: translateX(calc(-50% + var(--nav-street-left-desktop, 0px))) scale(var(--nav-street-scale-desktop, 1));
           }
         }
 
         .nav-speed-bubble {
           bottom: var(--nav-street-bottom-mobile, 112px);
-          transform: scale(var(--nav-street-scale-mobile, 1));
+          transform: translateX(var(--nav-street-left-mobile, 0px)) scale(var(--nav-street-scale-mobile, 1));
           transform-origin: bottom center;
         }
         @media (min-width: 768px) {
           .nav-speed-bubble {
             bottom: var(--nav-street-bottom-desktop, 112px);
-            transform: scale(var(--nav-street-scale-desktop, 1));
+            transform: translateX(var(--nav-street-left-desktop, 0px)) scale(var(--nav-street-scale-desktop, 1));
           }
         }
       `}</style>

@@ -311,7 +311,13 @@ export async function getLayoutSettings() {
         navStreetBottom: 112,
         navStreetBottomMobile: 112,
         navStreetScale: 1.0,
-        navStreetScaleMobile: 1.0
+        navStreetScaleMobile: 1.0,
+        navInstructionLeft: 0,
+        navInstructionLeftMobile: 0,
+        navDashboardLeft: 0,
+        navDashboardLeftMobile: 0,
+        navStreetLeft: 0,
+        navStreetLeftMobile: 0
     }
     if (!setting) return defaultSettings;
     try {
