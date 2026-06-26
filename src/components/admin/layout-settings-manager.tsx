@@ -641,57 +641,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         Modifica el tamaño de la tipografía del panel negro de tiempo y distancia.
                                     </p>
                                 </div>
-                                <div className="space-y-2 pt-2 border-t border-dashed">
-                                    <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Margen Inferior de Calle Actual</Label>
-                                        <span className="text-xs font-bold text-primary">{settings.navStreetBottom ?? 112}px</span>
-                                    </div>
-                                    <Slider
-                                        value={[settings.navStreetBottom ?? 112]}
-                                        min={20}
-                                        max={400}
-                                        step={5}
-                                        onValueChange={([val]) => handleLocalSettingChange('navStreetBottom', val)}
-                                        onValueCommit={([val]) => handleSettingCommit('navStreetBottom', val)}
-                                    />
-                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Desplazamiento vertical desde el borde inferior para el indicador de calle actual.
-                                    </p>
-                                </div>
-                                <div className="space-y-2 pt-2 border-t border-dashed">
-                                    <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Escala de Calle Actual</Label>
-                                        <span className="text-xs font-bold text-primary">{settings.navStreetScale ?? 1.0}x</span>
-                                    </div>
-                                    <Slider
-                                        value={[settings.navStreetScale ?? 1.0]}
-                                        min={0.5}
-                                        max={2.0}
-                                        step={0.05}
-                                        onValueChange={([val]) => handleLocalSettingChange('navStreetScale', val)}
-                                        onValueCommit={([val]) => handleSettingCommit('navStreetScale', val)}
-                                    />
-                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Modifica el tamaño de la etiqueta flotante de calle.
-                                    </p>
-                                </div>
-                                <div className="space-y-2 pt-2 border-t border-dashed">
-                                    <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Margen Lateral de Calle Actual</Label>
-                                        <span className="text-xs font-bold text-primary">{settings.navStreetLeft ?? 0}px</span>
-                                    </div>
-                                    <Slider
-                                        value={[settings.navStreetLeft ?? 0]}
-                                        min={-300}
-                                        max={300}
-                                        step={2}
-                                        onValueChange={([val]) => handleLocalSettingChange('navStreetLeft', val)}
-                                        onValueCommit={([val]) => handleSettingCommit('navStreetLeft', val)}
-                                    />
-                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Desplazamiento horizontal (izquierda/derecha) para la calle actual.
-                                    </p>
-                                </div>
+
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
                                         <Label className="text-xs font-medium">Margen Inferior del Velocímetro</Label>
@@ -1187,57 +1137,7 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         Modifica el tamaño de la tipografía del panel negro de tiempo y distancia en móviles.
                                     </p>
                                 </div>
-                                <div className="space-y-2 pt-2 border-t border-dashed">
-                                    <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Margen Inferior de Calle Actual Móvil</Label>
-                                        <span className="text-xs font-bold text-primary">{settings.navStreetBottomMobile ?? 112}px</span>
-                                    </div>
-                                    <Slider
-                                        value={[settings.navStreetBottomMobile ?? 112]}
-                                        min={20}
-                                        max={400}
-                                        step={5}
-                                        onValueChange={([val]) => handleLocalSettingChange('navStreetBottomMobile', val)}
-                                        onValueCommit={([val]) => handleSettingCommit('navStreetBottomMobile', val)}
-                                    />
-                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Desplazamiento vertical desde el borde inferior para el indicador de calle en móviles.
-                                    </p>
-                                </div>
-                                <div className="space-y-2 pt-2 border-t border-dashed">
-                                    <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Escala de Calle Actual Móvil</Label>
-                                        <span className="text-xs font-bold text-primary">{settings.navStreetScaleMobile ?? 1.0}x</span>
-                                    </div>
-                                    <Slider
-                                        value={[settings.navStreetScaleMobile ?? 1.0]}
-                                        min={0.5}
-                                        max={2.0}
-                                        step={0.05}
-                                        onValueChange={([val]) => handleLocalSettingChange('navStreetScaleMobile', val)}
-                                        onValueCommit={([val]) => handleSettingCommit('navStreetScaleMobile', val)}
-                                    />
-                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Modifica el tamaño de la etiqueta flotante de calle en móviles.
-                                    </p>
-                                </div>
-                                <div className="space-y-2 pt-2 border-t border-dashed">
-                                    <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Margen Lateral de Calle Actual Móvil</Label>
-                                        <span className="text-xs font-bold text-primary">{settings.navStreetLeftMobile ?? 0}px</span>
-                                    </div>
-                                    <Slider
-                                        value={[settings.navStreetLeftMobile ?? 0]}
-                                        min={-300}
-                                        max={300}
-                                        step={2}
-                                        onValueChange={([val]) => handleLocalSettingChange('navStreetLeftMobile', val)}
-                                        onValueCommit={([val]) => handleSettingCommit('navStreetLeftMobile', val)}
-                                    />
-                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Desplazamiento horizontal (izquierda/derecha) para la calle en móviles.
-                                    </p>
-                                </div>
+
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
                                         <Label className="text-xs font-medium">Margen Inferior del Velocímetro Móvil</Label>

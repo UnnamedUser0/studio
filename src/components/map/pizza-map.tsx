@@ -326,20 +326,47 @@ const getCurrentStep = (userLatLng: Coord, steps: any[]) => {
   };
 };
 
-const getTurnIcon = (type: string, modifier: string) => {
+const getTurnIcon = (type: string, modifier: string, sizeClass = "w-12 h-12") => {
   const mod = modifier?.toLowerCase() || '';
   const t = type?.toLowerCase() || '';
 
-  if (t === 'arrive') return <MapPin className="w-12 h-12 text-white stroke-[3px]" />;
-  if (t === 'depart') return <Navigation className="w-12 h-12 text-white stroke-[3px] rotate-45" />;
+  if (t === 'arrive') return <MapPin className={`${sizeClass} text-white stroke-[3px]`} />;
+  if (t === 'depart') return <Navigation className={`${sizeClass} text-white stroke-[3px] rotate-45`} />;
 
   if (mod.includes('left')) {
-    return <CornerUpLeft className="w-12 h-12 text-white stroke-[3px]" />;
+    return <CornerUpLeft className={`${sizeClass} text-white stroke-[3px]`} />;
   }
   if (mod.includes('right')) {
-    return <CornerUpRight className="w-12 h-12 text-white stroke-[3px]" />;
+    return <CornerUpRight className={`${sizeClass} text-white stroke-[3px]`} />;
   }
-  return <ArrowUp className="w-12 h-12 text-white stroke-[3px]" />;
+  return <ArrowUp className={`${sizeClass} text-white stroke-[3px]`} />;
+};
+
+const getTurnInstructionParts = (step: any, destinationName: string) => {
+  if (!step) return { action: 'Continúa por', street: 'la ruta' };
+  const type = step.maneuver.type?.toLowerCase();
+  const modifier = step.maneuver.modifier;
+  const name = step.name || '';
+
+  if (type === 'arrive') {
+    return { action: 'Llegarás a', street: destinationName };
+  }
+  if (type === 'depart') {
+    return { action: 'Inicia el viaje en', street: name || 'la ruta' };
+  }
+
+  const spanishModifier = modifier === 'left' ? 'Gira a la izquierda en' :
+                          modifier === 'right' ? 'Gira a la derecha en' :
+                          modifier === 'slight left' ? 'Ligeramente a la izquierda en' :
+                          modifier === 'slight right' ? 'Ligeramente a la derecha en' :
+                          modifier === 'sharp left' ? 'Giro cerrado a la izquierda en' :
+                          modifier === 'sharp right' ? 'Giro cerrado a la derecha en' : '';
+
+  if (spanishModifier) {
+    return { action: spanishModifier, street: name || 'la siguiente calle' };
+  }
+
+  return { action: 'Continúa en', street: name || 'la ruta' };
 };
 
 const getTurnInstruction = (step: any, destinationName: string) => {
@@ -441,8 +468,13 @@ function PizzaMap({
   const [routeSteps, setRouteSteps] = useState<any[]>([]);
   const [currentInstruction, setCurrentInstruction] = useState<{
     icon: React.ReactNode;
-    text: string;
+    action: string;
+    street: string;
     distanceText: string;
+    next?: {
+      icon: React.ReactNode;
+      text: string;
+    } | null;
   } | null>(null);
 
   const [isLocked, setIsLocked] = useState(true);
@@ -486,6 +518,13 @@ function PizzaMap({
   }, [isLocked]);
 
   useEffect(() => {
+    if (myLocationMarkerRef.current) {
+      const el = myLocationMarkerRef.current.getElement();
+      updateUserMarkerElement(el, isNavigating);
+    }
+  }, [currentStreet, isNavigating]);
+
+  useEffect(() => {
     onNavigationStateChange?.(isNavigating);
   }, [isNavigating, onNavigationStateChange]);
 
@@ -495,12 +534,22 @@ function PizzaMap({
 
     const { step, distance, index } = result;
     const icon = getTurnIcon(step.maneuver?.type || '', step.maneuver?.modifier || '');
-    const text = getTurnInstruction(step, destName);
+    const { action, street } = getTurnInstructionParts(step, destName);
     const distanceText = distance >= 1000
       ? `${(distance / 1000).toFixed(1)} km`
       : `${Math.round(distance)} m`;
 
-    setCurrentInstruction({ icon, text, distanceText });
+    const nextStep = steps[index + 1];
+    let next = null;
+    if (nextStep && nextStep.maneuver?.type) {
+      const nextIcon = getTurnIcon(nextStep.maneuver?.type || '', nextStep.maneuver?.modifier || '', 'w-4 h-4');
+      next = {
+        icon: nextIcon,
+        text: nextStep.name || 'Siguiente calle'
+      };
+    }
+
+    setCurrentInstruction({ icon, action, street, distanceText, next });
 
     // Update current street name
     const currentStreetName = step?.name || '';
@@ -580,6 +629,30 @@ function PizzaMap({
               <path d="M12 2L22 22L12 17L2 22L12 2Z" fill="#1A73E8" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/>
             </svg>
           </div>
+          
+          <!-- Street Banner Pill directly attached below the White Circle -->
+          ${currentStreet ? `
+            <div style="
+              position: absolute;
+              bottom: -16px;
+              left: 50%;
+              transform: translateX(-50%);
+              white-space: nowrap;
+              background-color: #ffffff;
+              color: #1a73e8;
+              padding: 4px 12px;
+              border-radius: 9999px;
+              font-size: 12px;
+              font-weight: 800;
+              box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+              border: 1px solid rgba(0,0,0,0.1);
+              pointer-events: none;
+              font-family: inherit;
+              z-index: 1000;
+            ">
+              ${currentStreet}
+            </div>
+          ` : ''}
         </div>
       `;
       el.style.width = '80px';
@@ -2116,21 +2189,35 @@ function PizzaMap({
           {isNavigating && routeDetails && (
             <>
               {/* Top Instruction Bar - Green (Google Maps Style) */}
-              <div className="absolute z-[1002] animate-in slide-in-from-top-4 duration-300 pointer-events-auto nav-instruction-container">
-                <div className="bg-[#00695C] text-white p-4 rounded-xl shadow-lg flex items-center min-h-[80px] border border-white/10">
-                  <div className="flex-shrink-0 mr-4 bg-white/10 p-2 rounded-lg">
+              <div className="absolute z-[1002] animate-in slide-in-from-top-4 duration-300 pointer-events-auto nav-instruction-container flex flex-col items-start gap-1">
+                <div className="bg-[#00695C] text-white p-4 rounded-xl shadow-lg flex items-center min-h-[80px] border border-white/10 w-full">
+                  <div className="flex-shrink-0 mr-4 bg-white/10 p-3 rounded-xl">
                     {currentInstruction?.icon || <Navigation className="w-12 h-12 text-white stroke-[3px]" />}
                   </div>
 
-                  <div className="flex flex-col justify-center overflow-hidden">
-                    <span className="text-2xl font-black leading-none mb-1 tracking-wide text-teal-200">
-                      {currentInstruction?.distanceText || '--- m'}
-                    </span>
-                    <h3 className="text-xl md:text-2xl font-bold leading-tight truncate">
-                      {currentInstruction?.text || 'Continúa por la ruta seleccionada'}
+                  <div className="flex flex-col justify-center overflow-hidden flex-grow">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-black leading-none tracking-wide text-teal-200">
+                        {currentInstruction?.distanceText || '--- m'}
+                      </span>
+                      <span className="text-sm font-semibold text-teal-100 uppercase tracking-wider opacity-90">
+                        {currentInstruction?.action || 'Continúa en'}
+                      </span>
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold leading-tight truncate mt-1">
+                      {currentInstruction?.street || 'la ruta seleccionada'}
                     </h3>
                   </div>
                 </div>
+
+                {/* "Luego" (Then) Next Maneuver sub-pill */}
+                {currentInstruction?.next && (
+                  <div className="bg-[#004D40] text-white/95 px-4 py-1.5 rounded-full shadow-md text-xs font-bold flex items-center gap-1.5 ml-4 border border-white/5 animate-in slide-in-from-top-2 duration-200">
+                    <span className="text-teal-200">Luego</span>
+                    {currentInstruction.next.icon}
+                    <span className="truncate max-w-[150px]">{currentInstruction.next.text}</span>
+                  </div>
+                )}
               </div>
 
               {/* Compass / Recenter control */}
@@ -2174,15 +2261,6 @@ function PizzaMap({
                 <span className="text-white/70 text-[10px] uppercase font-bold">km/h</span>
               </div>
 
-              {/* Current Street Indicator (Locked state only) */}
-              {isLocked && currentStreet && (
-                <div
-                  className="absolute left-1/2 z-[1002] animate-in fade-in-0 slide-in-from-bottom-2 duration-200 pointer-events-auto bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 px-4 py-2 rounded-full shadow-xl border border-gray-200 dark:border-slate-800 text-sm font-bold flex items-center gap-1.5 nav-street-bubble"
-                >
-                  <Navigation className="w-4 h-4 text-blue-500 fill-blue-500 rotate-45" />
-                  <span>{currentStreet}</span>
-                </div>
-              )}
 
               {/* Bottom Status Bar - Black */}
               <div className="absolute z-[1002] bg-[#111111] p-4 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 text-white pb-8 pointer-events-auto nav-dashboard-container">
@@ -2558,17 +2636,6 @@ function PizzaMap({
           }
         }
 
-        .nav-street-bubble {
-          bottom: var(--nav-street-bottom-mobile, 112px);
-          transform: translateX(calc(-50% + var(--nav-street-left-mobile, 0px))) scale(var(--nav-street-scale-mobile, 1));
-          transform-origin: bottom center;
-        }
-        @media (min-width: 768px) {
-          .nav-street-bubble {
-            bottom: var(--nav-street-bottom-desktop, 112px);
-            transform: translateX(calc(-50% + var(--nav-street-left-desktop, 0px))) scale(var(--nav-street-scale-desktop, 1));
-          }
-        }
 
         .nav-speed-bubble {
           bottom: var(--nav-speed-bottom-mobile, 112px);
