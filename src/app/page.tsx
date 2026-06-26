@@ -420,6 +420,16 @@ function HomeContent() {
       '--nav-dashboard-width-mobile': `${layoutSettings.navDashboardWidthMobile ?? 100}%`,
       '--user-marker-scale-desktop': `${layoutSettings.userMarkerScale ?? 1}`,
       '--user-marker-scale-mobile': `${layoutSettings.userMarkerScaleMobile ?? 1}`,
+      '--nav-speed-bottom-desktop': `${layoutSettings.navSpeedBottom ?? 112}px`,
+      '--nav-speed-bottom-mobile': `${layoutSettings.navSpeedBottomMobile ?? 112}px`,
+      '--nav-speed-left-desktop': `${layoutSettings.navSpeedLeft ?? 0}px`,
+      '--nav-speed-left-mobile': `${layoutSettings.navSpeedLeftMobile ?? 0}px`,
+      '--nav-speed-scale-desktop': `${layoutSettings.navSpeedScale ?? 1}`,
+      '--nav-speed-scale-mobile': `${layoutSettings.navSpeedScaleMobile ?? 1}`,
+      '--nav-instruction-font-size-desktop': `${layoutSettings.navInstructionFontSize ?? 24}px`,
+      '--nav-instruction-font-size-mobile': `${layoutSettings.navInstructionFontSizeMobile ?? 18}px`,
+      '--nav-dashboard-font-size-desktop': `${layoutSettings.navDashboardFontSize ?? 30}px`,
+      '--nav-dashboard-font-size-mobile': `${layoutSettings.navDashboardFontSizeMobile ?? 22}px`,
     } as React.CSSProperties;
   }, [layoutSettings]);
 

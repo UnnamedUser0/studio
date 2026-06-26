@@ -71,7 +71,17 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
         navDashboardWidth: 100,
         navDashboardWidthMobile: 100,
         userMarkerScale: 1.0,
-        userMarkerScaleMobile: 1.0
+        userMarkerScaleMobile: 1.0,
+        navSpeedBottom: 112,
+        navSpeedBottomMobile: 112,
+        navSpeedLeft: 0,
+        navSpeedLeftMobile: 0,
+        navSpeedScale: 1.0,
+        navSpeedScaleMobile: 1.0,
+        navInstructionFontSize: 24,
+        navInstructionFontSizeMobile: 18,
+        navDashboardFontSize: 30,
+        navDashboardFontSizeMobile: 22
     })
 
     useEffect(() => {
@@ -531,6 +541,23 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Tamaño de Letra de Indicaciones</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navInstructionFontSize ?? 24}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navInstructionFontSize ?? 24]}
+                                        min={12}
+                                        max={40}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('navInstructionFontSize', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navInstructionFontSize', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Modifica el tamaño de la tipografía de la barra verde de indicaciones.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
                                         <Label className="text-xs font-medium">Margen Inferior del Tablero (Tiempo/ETA)</Label>
                                         <span className="text-xs font-bold text-primary">{settings.navDashboardBottom ?? 0}px</span>
                                     </div>
@@ -599,7 +626,24 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Margen Inferior de Calle/Velocímetro</Label>
+                                        <Label className="text-xs font-medium">Tamaño de Letra del Tablero (Tiempo/ETA)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navDashboardFontSize ?? 30}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navDashboardFontSize ?? 30]}
+                                        min={12}
+                                        max={50}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('navDashboardFontSize', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navDashboardFontSize', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Modifica el tamaño de la tipografía del panel negro de tiempo y distancia.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Inferior de Calle Actual</Label>
                                         <span className="text-xs font-bold text-primary">{settings.navStreetBottom ?? 112}px</span>
                                     </div>
                                     <Slider
@@ -611,12 +655,12 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         onValueCommit={([val]) => handleSettingCommit('navStreetBottom', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Desplazamiento vertical desde el borde inferior para el indicador de calle y velocímetro.
+                                        Desplazamiento vertical desde el borde inferior para el indicador de calle actual.
                                     </p>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Escala de Calle/Velocímetro</Label>
+                                        <Label className="text-xs font-medium">Escala de Calle Actual</Label>
                                         <span className="text-xs font-bold text-primary">{settings.navStreetScale ?? 1.0}x</span>
                                     </div>
                                     <Slider
@@ -628,12 +672,12 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         onValueCommit={([val]) => handleSettingCommit('navStreetScale', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Modifica el tamaño del velocímetro y la etiqueta flotante de calle.
+                                        Modifica el tamaño de la etiqueta flotante de calle.
                                     </p>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Margen Lateral de Calle/Velocímetro</Label>
+                                        <Label className="text-xs font-medium">Margen Lateral de Calle Actual</Label>
                                         <span className="text-xs font-bold text-primary">{settings.navStreetLeft ?? 0}px</span>
                                     </div>
                                     <Slider
@@ -645,7 +689,58 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         onValueCommit={([val]) => handleSettingCommit('navStreetLeft', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Desplazamiento horizontal (izquierda/derecha) para la calle y velocímetro.
+                                        Desplazamiento horizontal (izquierda/derecha) para la calle actual.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Inferior del Velocímetro</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navSpeedBottom ?? 112}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navSpeedBottom ?? 112]}
+                                        min={20}
+                                        max={400}
+                                        step={5}
+                                        onValueChange={([val]) => handleLocalSettingChange('navSpeedBottom', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navSpeedBottom', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Desplazamiento vertical desde el borde inferior para el indicador de velocidad.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala del Velocímetro</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navSpeedScale ?? 1.0}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navSpeedScale ?? 1.0]}
+                                        min={0.5}
+                                        max={2.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('navSpeedScale', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navSpeedScale', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Modifica el tamaño (escala) del indicador de velocidad.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Lateral del Velocímetro</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navSpeedLeft ?? 0}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navSpeedLeft ?? 0]}
+                                        min={-300}
+                                        max={300}
+                                        step={2}
+                                        onValueChange={([val]) => handleLocalSettingChange('navSpeedLeft', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navSpeedLeft', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Desplazamiento horizontal (izquierda/derecha) para el velocímetro.
                                     </p>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
@@ -992,6 +1087,23 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Tamaño de Letra de Indicaciones Móvil</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navInstructionFontSizeMobile ?? 18}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navInstructionFontSizeMobile ?? 18]}
+                                        min={10}
+                                        max={30}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('navInstructionFontSizeMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navInstructionFontSizeMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Modifica el tamaño de la tipografía de la barra verde de indicaciones en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
                                         <Label className="text-xs font-medium">Margen Inferior del Tablero Móvil (Tiempo/ETA)</Label>
                                         <span className="text-xs font-bold text-primary">{settings.navDashboardBottomMobile ?? 0}px</span>
                                     </div>
@@ -1060,7 +1172,24 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Margen Inferior de Calle/Velocímetro Móvil</Label>
+                                        <Label className="text-xs font-medium">Tamaño de Letra del Tablero Móvil (Tiempo/ETA)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navDashboardFontSizeMobile ?? 22}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navDashboardFontSizeMobile ?? 22]}
+                                        min={10}
+                                        max={32}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('navDashboardFontSizeMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navDashboardFontSizeMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Modifica el tamaño de la tipografía del panel negro de tiempo y distancia en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Inferior de Calle Actual Móvil</Label>
                                         <span className="text-xs font-bold text-primary">{settings.navStreetBottomMobile ?? 112}px</span>
                                     </div>
                                     <Slider
@@ -1072,12 +1201,12 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         onValueCommit={([val]) => handleSettingCommit('navStreetBottomMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Desplazamiento vertical desde el borde inferior para la calle y velocímetro en móviles.
+                                        Desplazamiento vertical desde el borde inferior para el indicador de calle en móviles.
                                     </p>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Escala de Calle/Velocímetro Móvil</Label>
+                                        <Label className="text-xs font-medium">Escala de Calle Actual Móvil</Label>
                                         <span className="text-xs font-bold text-primary">{settings.navStreetScaleMobile ?? 1.0}x</span>
                                     </div>
                                     <Slider
@@ -1089,12 +1218,12 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         onValueCommit={([val]) => handleSettingCommit('navStreetScaleMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Modifica el tamaño del velocímetro y etiqueta flotante de calle en móviles.
+                                        Modifica el tamaño de la etiqueta flotante de calle en móviles.
                                     </p>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between">
-                                        <Label className="text-xs font-medium">Margen Lateral de Calle/Velocímetro Móvil</Label>
+                                        <Label className="text-xs font-medium">Margen Lateral de Calle Actual Móvil</Label>
                                         <span className="text-xs font-bold text-primary">{settings.navStreetLeftMobile ?? 0}px</span>
                                     </div>
                                     <Slider
@@ -1106,7 +1235,58 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         onValueCommit={([val]) => handleSettingCommit('navStreetLeftMobile', val)}
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
-                                        Desplazamiento horizontal (izquierda/derecha) para la calle y velocímetro en móviles.
+                                        Desplazamiento horizontal (izquierda/derecha) para la calle en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Inferior del Velocímetro Móvil</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navSpeedBottomMobile ?? 112}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navSpeedBottomMobile ?? 112]}
+                                        min={20}
+                                        max={400}
+                                        step={5}
+                                        onValueChange={([val]) => handleLocalSettingChange('navSpeedBottomMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navSpeedBottomMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Desplazamiento vertical desde el borde inferior para el velocímetro en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala del Velocímetro Móvil</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navSpeedScaleMobile ?? 1.0}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navSpeedScaleMobile ?? 1.0]}
+                                        min={0.5}
+                                        max={2.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('navSpeedScaleMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navSpeedScaleMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Modifica el tamaño del velocímetro en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Margen Lateral del Velocímetro Móvil</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.navSpeedLeftMobile ?? 0}px</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.navSpeedLeftMobile ?? 0]}
+                                        min={-300}
+                                        max={300}
+                                        step={2}
+                                        onValueChange={([val]) => handleLocalSettingChange('navSpeedLeftMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('navSpeedLeftMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Desplazamiento horizontal (izquierda/derecha) para el velocímetro en móviles.
                                     </p>
                                 </div>
                                 <div className="space-y-2 pt-2 border-t border-dashed">

@@ -2571,14 +2571,14 @@ function PizzaMap({
         }
 
         .nav-speed-bubble {
-          bottom: var(--nav-street-bottom-mobile, 112px);
-          transform: translateX(var(--nav-street-left-mobile, 0px)) scale(var(--nav-street-scale-mobile, 1));
+          bottom: var(--nav-speed-bottom-mobile, 112px);
+          transform: translateX(var(--nav-speed-left-mobile, 0px)) scale(var(--nav-speed-scale-mobile, 1));
           transform-origin: bottom center;
         }
         @media (min-width: 768px) {
           .nav-speed-bubble {
-            bottom: var(--nav-street-bottom-desktop, 112px);
-            transform: translateX(var(--nav-street-left-desktop, 0px)) scale(var(--nav-street-scale-desktop, 1));
+            bottom: var(--nav-speed-bottom-desktop, 112px);
+            transform: translateX(var(--nav-speed-left-desktop, 0px)) scale(var(--nav-speed-scale-desktop, 1));
           }
         }
 
@@ -2589,6 +2589,43 @@ function PizzaMap({
         @media (min-width: 768px) {
           .user-marker-inner {
             transform: scale(var(--user-marker-scale-desktop, 1.0));
+          }
+        }
+
+        /* Custom Font Sizes */
+        .nav-instruction-container h3 {
+          font-size: var(--nav-instruction-font-size-mobile, 18px) !important;
+        }
+        .nav-instruction-container span.text-2xl {
+          font-size: calc(var(--nav-instruction-font-size-mobile, 18px) * 1.2) !important;
+        }
+        @media (min-width: 768px) {
+          .nav-instruction-container h3 {
+            font-size: var(--nav-instruction-font-size-desktop, 24px) !important;
+          }
+          .nav-instruction-container span.text-2xl {
+            font-size: calc(var(--nav-instruction-font-size-desktop, 24px) * 1.2) !important;
+          }
+        }
+
+        .nav-dashboard-container .text-3xl {
+          font-size: var(--nav-dashboard-font-size-mobile, 22px) !important;
+        }
+        .nav-dashboard-container .text-xl {
+          font-size: calc(var(--nav-dashboard-font-size-mobile, 22px) * 0.75) !important;
+        }
+        .nav-dashboard-container .text-sm {
+          font-size: calc(var(--nav-dashboard-font-size-mobile, 22px) * 0.6) !important;
+        }
+        @media (min-width: 768px) {
+          .nav-dashboard-container .text-3xl {
+            font-size: var(--nav-dashboard-font-size-desktop, 30px) !important;
+          }
+          .nav-dashboard-container .text-xl {
+            font-size: calc(var(--nav-dashboard-font-size-desktop, 30px) * 0.75) !important;
+          }
+          .nav-dashboard-container .text-sm {
+            font-size: calc(var(--nav-dashboard-font-size-desktop, 30px) * 0.6) !important;
           }
         }
       `}</style>

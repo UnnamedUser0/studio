@@ -323,7 +323,17 @@ export async function getLayoutSettings() {
         navDashboardWidth: 100,
         navDashboardWidthMobile: 100,
         userMarkerScale: 1.0,
-        userMarkerScaleMobile: 1.0
+        userMarkerScaleMobile: 1.0,
+        navSpeedBottom: 112,
+        navSpeedBottomMobile: 112,
+        navSpeedLeft: 0,
+        navSpeedLeftMobile: 0,
+        navSpeedScale: 1.0,
+        navSpeedScaleMobile: 1.0,
+        navInstructionFontSize: 24,
+        navInstructionFontSizeMobile: 18,
+        navDashboardFontSize: 30,
+        navDashboardFontSizeMobile: 22
     }
     if (!setting) return defaultSettings;
     try {
