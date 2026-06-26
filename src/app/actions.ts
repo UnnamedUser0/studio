@@ -321,7 +321,9 @@ export async function getLayoutSettings() {
         navInstructionWidth: 100,
         navInstructionWidthMobile: 100,
         navDashboardWidth: 100,
-        navDashboardWidthMobile: 100
+        navDashboardWidthMobile: 100,
+        userMarkerScale: 1.0,
+        userMarkerScaleMobile: 1.0
     }
     if (!setting) return defaultSettings;
     try {

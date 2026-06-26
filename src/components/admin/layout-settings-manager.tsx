@@ -69,7 +69,9 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
         navInstructionWidth: 100,
         navInstructionWidthMobile: 100,
         navDashboardWidth: 100,
-        navDashboardWidthMobile: 100
+        navDashboardWidthMobile: 100,
+        userMarkerScale: 1.0,
+        userMarkerScaleMobile: 1.0
     })
 
     useEffect(() => {
@@ -646,6 +648,23 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         Desplazamiento horizontal (izquierda/derecha) para la calle y velocímetro.
                                     </p>
                                 </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala de Indicador de Ubicación (Usuario/Flecha)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.userMarkerScale ?? 1.0}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.userMarkerScale ?? 1.0]}
+                                        min={0.5}
+                                        max={4.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('userMarkerScale', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('userMarkerScale', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta el tamaño (escala) del indicador de ubicación del usuario (y flecha de navegación).
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1088,6 +1107,23 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Desplazamiento horizontal (izquierda/derecha) para la calle y velocímetro en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between">
+                                        <Label className="text-xs font-medium">Escala de Indicador de Ubicación Móvil (Usuario/Flecha)</Label>
+                                        <span className="text-xs font-bold text-primary">{settings.userMarkerScaleMobile ?? 1.0}x</span>
+                                    </div>
+                                    <Slider
+                                        value={[settings.userMarkerScaleMobile ?? 1.0]}
+                                        min={0.5}
+                                        max={4.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('userMarkerScaleMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('userMarkerScaleMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta el tamaño (escala) del indicador de ubicación del usuario (y flecha de navegación) en móviles.
                                     </p>
                                 </div>
                             </div>

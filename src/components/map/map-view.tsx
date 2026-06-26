@@ -108,6 +108,8 @@ export default function MapView({
       '--nav-instruction-width-mobile': `${layoutSettings.navInstructionWidthMobile ?? 100}%`,
       '--nav-dashboard-width-desktop': `${layoutSettings.navDashboardWidth ?? 100}%`,
       '--nav-dashboard-width-mobile': `${layoutSettings.navDashboardWidthMobile ?? 100}%`,
+      '--user-marker-scale-desktop': `${layoutSettings.userMarkerScale ?? 1}`,
+      '--user-marker-scale-mobile': `${layoutSettings.userMarkerScaleMobile ?? 1}`,
     } as React.CSSProperties;
   }, [layoutSettings]);
 

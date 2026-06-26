@@ -542,7 +542,7 @@ function PizzaMap({
   const updateUserMarkerElement = (el: HTMLElement, navigating: boolean) => {
     if (navigating) {
       el.innerHTML = `
-        <div class="nav-arrow-inner" style="
+        <div class="user-marker-inner nav-arrow-inner" style="
           width: 80px;
           height: 80px;
           display: flex;
@@ -586,7 +586,7 @@ function PizzaMap({
       el.style.height = '80px';
     } else {
       el.innerHTML = `
-        <div style="
+        <div class="user-marker-inner" style="
           width: 40px;
           height: 40px;
           border-radius: 50%;
@@ -2579,6 +2579,16 @@ function PizzaMap({
           .nav-speed-bubble {
             bottom: var(--nav-street-bottom-desktop, 112px);
             transform: translateX(var(--nav-street-left-desktop, 0px)) scale(var(--nav-street-scale-desktop, 1));
+          }
+        }
+
+        .user-marker-inner {
+          transform-origin: center;
+          transform: scale(var(--user-marker-scale-mobile, 1.0));
+        }
+        @media (min-width: 768px) {
+          .user-marker-inner {
+            transform: scale(var(--user-marker-scale-desktop, 1.0));
           }
         }
       `}</style>
