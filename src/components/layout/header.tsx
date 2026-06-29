@@ -109,6 +109,13 @@ export default function Header() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [layoutSettings, setLayoutSettings] = useState<any>(null);
+
+  useEffect(() => {
+    import('@/app/actions').then(({ getLayoutSettings }) => {
+      getLayoutSettings().then(setLayoutSettings);
+    });
+  }, []);
 
   useEffect(() => {
     if (user?.id) {
@@ -131,7 +138,19 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-[1001] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-16">
-      <div className="absolute left-4 md:left-8 top-0 h-full flex items-center z-20">
+      <div 
+        className="absolute left-4 md:left-8 top-0 h-full flex items-center z-20 header-logo-container"
+        style={{
+          '--logo-left-desktop': `${layoutSettings?.logoLeft ?? 16}px`,
+          '--logo-left-mobile': `${layoutSettings?.logoLeftMobile ?? 16}px`,
+          '--logo-top-desktop': `${layoutSettings?.logoTop ?? 0}px`,
+          '--logo-top-mobile': `${layoutSettings?.logoTopMobile ?? 0}px`,
+          '--logo-scale-desktop': `${layoutSettings?.logoScale ?? 1.0}`,
+          '--logo-scale-mobile': `${layoutSettings?.logoScaleMobile ?? 1.0}`,
+          '--logo-width-desktop': layoutSettings?.logoWidth ? `${layoutSettings.logoWidth}px` : 'auto',
+          '--logo-width-mobile': layoutSettings?.logoWidthMobile ? `${layoutSettings.logoWidthMobile}px` : 'auto',
+        } as React.CSSProperties}
+      >
         <Link href="/" className="flex items-center space-x-2">
           <Pizza className="h-7 w-7 text-primary" />
           <div className="w-[7ch]">
@@ -278,6 +297,23 @@ export default function Header() {
           )}
         </div>
       </div>
+      <style jsx global>{`
+        .header-logo-container {
+          left: var(--logo-left-mobile, 16px) !important;
+          top: var(--logo-top-mobile, 0px) !important;
+          transform: scale(var(--logo-scale-mobile, 1.0)) !important;
+          transform-origin: left center !important;
+          width: var(--logo-width-mobile, auto) !important;
+        }
+        @media (min-width: 768px) {
+          .header-logo-container {
+            left: var(--logo-left-desktop, 16px) !important;
+            top: var(--logo-top-desktop, 0px) !important;
+            transform: scale(var(--logo-scale-desktop, 1.0)) !important;
+            width: var(--logo-width-desktop, auto) !important;
+          }
+        }
+      `}</style>
     </header >
   );
 }

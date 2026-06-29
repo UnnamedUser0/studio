@@ -2089,15 +2089,6 @@ function PizzaMap({
 
             {userLocation && (
               <div className="flex flex-col gap-2">
-                <Button
-                  variant={showAll ? "default" : "secondary"}
-                  size="sm"
-                  onClick={() => setShowAll(!showAll)}
-                  className="shadow-lg rounded-full h-8 md:h-10 px-3 text-xs md:text-sm font-medium bg-white dark:bg-slate-950 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-900 border-0"
-                >
-                  {showAll ? "Ver cercanas" : "Ver todas"}
-                </Button>
-
                 {/* Manual Location Adjustment */}
                 <TooltipProvider>
                   <Tooltip>
@@ -2174,6 +2165,20 @@ function PizzaMap({
                 </DialogContent>
               </Dialog>
             )}
+          </div>
+        )}
+
+        {/* Independent "Ver todas/cercanas" button */}
+        {!isNavigating && userLocation && (
+          <div className="absolute z-[1001] pointer-events-auto map-view-all-container">
+            <Button
+              variant={showAll ? "default" : "secondary"}
+              size="sm"
+              onClick={() => setShowAll(!showAll)}
+              className="shadow-lg rounded-full h-8 md:h-10 px-3 text-xs md:text-sm font-medium bg-white dark:bg-slate-950 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-900 border-0"
+            >
+              {showAll ? "Ver cercanas" : "Ver todas"}
+            </Button>
           </div>
         )}
 
@@ -2571,6 +2576,17 @@ function PizzaMap({
           .map-controls-container {
             top: var(--buttons-top-desktop, 160px);
             right: var(--buttons-right-desktop, 16px) !important;
+          }
+        }
+
+        .map-view-all-container {
+          top: var(--view-all-top-mobile, 260px) !important;
+          right: var(--view-all-right-mobile, 16px) !important;
+        }
+        @media (min-width: 768px) {
+          .map-view-all-container {
+            top: var(--view-all-top-desktop, 260px) !important;
+            right: var(--view-all-right-desktop, 16px) !important;
           }
         }
 
