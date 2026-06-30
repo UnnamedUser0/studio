@@ -1412,9 +1412,9 @@ function PizzaMap({
         }
       });
 
-      // Unlock map center tracking on manual interactions (drag, zoom, rotate, pitch)
+      // Unlock map center tracking on manual interactions (drag, zoom, rotate, pitch, touch, click)
       const unlockMap = (e: any) => {
-        if (isNavigatingRef.current && e?.originalEvent) {
+        if (isNavigatingRef.current && (e?.originalEvent || e?.type === 'touchstart' || e?.type === 'mousedown')) {
           changeLockState(false);
         }
       };
@@ -1423,6 +1423,8 @@ function PizzaMap({
       map.on('zoomstart', unlockMap);
       map.on('rotatestart', unlockMap);
       map.on('pitchstart', unlockMap);
+      map.on('touchstart', unlockMap);
+      map.on('mousedown', unlockMap);
 
       let savedBaseLayerName = 'Estándar';
       try {
@@ -2144,27 +2146,30 @@ function PizzaMap({
               </div>
             )}
 
-            {isAdmin && (
-              <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 border-2 border-white/20"
-                    title="Configuración del Mapa"
-                    aria-label="Configuración"
-                  >
-                    <Settings className="h-4 w-4 md:h-5 md:w-5" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-h-[85vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Configuración del Mapa</DialogTitle>
-                  </DialogHeader>
-                  <LayoutSettingsManager onSettingsChange={onSettingsChange} />
-                </DialogContent>
-              </Dialog>
-            )}
+          </div>
+        )}
+
+        {isAdmin && (
+          <div className="absolute z-[1001] pointer-events-auto map-settings-btn-container">
+            <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 border-2 border-white/20"
+                  title="Configuración del Mapa"
+                  aria-label="Configuración"
+                >
+                  <Settings className="h-4 w-4 md:h-5 md:w-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Configuración del Mapa</DialogTitle>
+                </DialogHeader>
+                <LayoutSettingsManager onSettingsChange={onSettingsChange} />
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 
@@ -2587,6 +2592,17 @@ function PizzaMap({
           .map-view-all-container {
             top: var(--view-all-top-desktop, 260px) !important;
             right: var(--view-all-right-desktop, 16px) !important;
+          }
+        }
+
+        .map-settings-btn-container {
+          top: var(--map-settings-top-mobile, 400px) !important;
+          right: var(--map-settings-right-mobile, 16px) !important;
+        }
+        @media (min-width: 768px) {
+          .map-settings-btn-container {
+            top: var(--map-settings-top-desktop, 400px) !important;
+            right: var(--map-settings-right-desktop, 16px) !important;
           }
         }
 

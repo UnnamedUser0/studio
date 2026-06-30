@@ -1538,6 +1538,185 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         onValueCommit={([val]) => handleSettingCommit('viewAllRight', val)}
                                     />
                                 </div>
+
+                                {/* Map Settings Button Positioning */}
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Vertical de Configuración del Mapa</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.mapSettingsTop ?? 400}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('mapSettingsTop', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('mapSettingsTop', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.mapSettingsTop ?? 400]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('mapSettingsTop', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('mapSettingsTop', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Lateral de Configuración del Mapa</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.mapSettingsRight ?? 16}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('mapSettingsRight', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('mapSettingsRight', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.mapSettingsRight ?? 16]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('mapSettingsRight', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('mapSettingsRight', val)}
+                                    />
+                                </div>
+
+                                {/* Header Actions Customization */}
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Lateral de Botones de Header (Usuarios/Tema/Perfil)</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.headerActionsLeft ?? 0}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('headerActionsLeft', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('headerActionsLeft', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.headerActionsLeft ?? 0]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('headerActionsLeft', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('headerActionsLeft', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Vertical de Botones de Header (Usuarios/Tema/Perfil)</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.headerActionsTop ?? 0}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('headerActionsTop', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('headerActionsTop', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.headerActionsTop ?? 0]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('headerActionsTop', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('headerActionsTop', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Escala de Botones de Header (Usuarios/Tema/Perfil)</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.headerActionsScale ?? 1.0}
+                                                step={0.05}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('headerActionsScale', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('headerActionsScale', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">x</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.headerActionsScale ?? 1.0]}
+                                        min={0.05}
+                                        max={10.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('headerActionsScale', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('headerActionsScale', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Espaciado Interno de Botones de Header (Acercar/Alejar)</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.headerActionsGap ?? 16}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('headerActionsGap', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('headerActionsGap', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.headerActionsGap ?? 16]}
+                                        min={-500}
+                                        max={1000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('headerActionsGap', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('headerActionsGap', val)}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2818,6 +2997,185 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         step={1}
                                         onValueChange={([val]) => handleLocalSettingChange('viewAllRightMobile', val)}
                                         onValueCommit={([val]) => handleSettingCommit('viewAllRightMobile', val)}
+                                    />
+                                </div>
+
+                                {/* Map Settings Button Positioning Mobile */}
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Vertical de Configuración de Mapa Móvil</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.mapSettingsTopMobile ?? 400}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('mapSettingsTopMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('mapSettingsTopMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.mapSettingsTopMobile ?? 400]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('mapSettingsTopMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('mapSettingsTopMobile', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Lateral de Configuración de Mapa Móvil</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.mapSettingsRightMobile ?? 16}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('mapSettingsRightMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('mapSettingsRightMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.mapSettingsRightMobile ?? 16]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('mapSettingsRightMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('mapSettingsRightMobile', val)}
+                                    />
+                                </div>
+
+                                {/* Header Actions Customization Mobile */}
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Lateral de Botones de Header Móvil</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.headerActionsLeftMobile ?? 0}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('headerActionsLeftMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('headerActionsLeftMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.headerActionsLeftMobile ?? 0]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('headerActionsLeftMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('headerActionsLeftMobile', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Vertical de Botones de Header Móvil</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.headerActionsTopMobile ?? 0}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('headerActionsTopMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('headerActionsTopMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.headerActionsTopMobile ?? 0]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('headerActionsTopMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('headerActionsTopMobile', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Escala de Botones de Header Móvil</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.headerActionsScaleMobile ?? 1.0}
+                                                step={0.05}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('headerActionsScaleMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('headerActionsScaleMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">x</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.headerActionsScaleMobile ?? 1.0]}
+                                        min={0.05}
+                                        max={10.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('headerActionsScaleMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('headerActionsScaleMobile', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Espaciado Interno de Botones de Header Móvil (Acercar/Alejar)</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.headerActionsGapMobile ?? 16}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('headerActionsGapMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('headerActionsGapMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.headerActionsGapMobile ?? 16]}
+                                        min={-500}
+                                        max={1000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('headerActionsGapMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('headerActionsGapMobile', val)}
                                     />
                                 </div>
                             </div>

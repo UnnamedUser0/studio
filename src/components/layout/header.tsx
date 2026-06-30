@@ -178,123 +178,135 @@ export default function Header() {
             Bienvenida
           </Link>
         </nav>
-        <div className="flex flex-1 items-center justify-end space-x-4">
-          <div className="flex items-center gap-2">
-            <OnlineUsersIndicator />
-            <div className="hidden md:block">
-              <CursorSwitcher />
+        <div className="flex flex-1 items-center justify-end">
+          <div 
+            className="flex items-center header-actions-container"
+            style={{
+              '--actions-left-desktop': `${layoutSettings?.headerActionsLeft ?? 0}px`,
+              '--actions-left-mobile': `${layoutSettings?.headerActionsLeftMobile ?? 0}px`,
+              '--actions-top-desktop': `${layoutSettings?.headerActionsTop ?? 0}px`,
+              '--actions-top-mobile': `${layoutSettings?.headerActionsTopMobile ?? 0}px`,
+              '--actions-scale-desktop': `${layoutSettings?.headerActionsScale ?? 1.0}`,
+              '--actions-scale-mobile': `${layoutSettings?.headerActionsScaleMobile ?? 1.0}`,
+              '--actions-gap-desktop': `${layoutSettings?.headerActionsGap ?? 16}px`,
+              '--actions-gap-mobile': `${layoutSettings?.headerActionsGapMobile ?? 16}px`,
+            } as React.CSSProperties}
+          >
+            <div className="flex items-center gap-2">
+              <OnlineUsersIndicator />
+              <div className="hidden md:block">
+                <CursorSwitcher />
+              </div>
             </div>
-          </div>
-          <ThemeSwitcher />
-          {isUserLoading || (user && isProfileLoading) ? (
-            <Skeleton className="h-9 w-24" />
-          ) : user ? (
-            <div className="flex items-center gap-4">
-              {isAdmin ? (
-                <Link href="/admin">
-                  <Badge variant="default" className="cursor-pointer hover:bg-primary/80">
-                    Administrador
+            <ThemeSwitcher />
+            {isUserLoading || (user && isProfileLoading) ? (
+              <Skeleton className="h-9 w-24" />
+            ) : user ? (
+              <div className="flex items-center gap-4">
+                {isAdmin ? (
+                  <Link href="/admin">
+                    <Badge variant="default" className="cursor-pointer hover:bg-primary/80">
+                      Administrador
+                    </Badge>
+                  </Link>
+                ) : (
+                  <Badge variant="secondary" className="cursor-default">
+                    Usuario
                   </Badge>
-                </Link>
-              ) : (
-                <Badge variant="secondary" className="cursor-default">
-                  Usuario
-                </Badge>
-              )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-primary/20">
-                    <Avatar className="h-9 w-9 border-2 border-primary/50">
-                      <AvatarImage src={user.image || `https://api.dicebear.com/8.x/micah/svg?seed=${user.email}`} alt={user.name || user.email || ''} />
-                      <AvatarFallback>{user.email ? user.email.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none truncate">{userProfile?.username || user.name || user.email}</p>
-                      <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    {isAdmin && (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link href="/admin">
-                            <Shield className="mr-2 h-4 w-4" />
-                            <span>Panel de Admin</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/admin/messages">
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            <span>Mensajes de Soporte</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        {user.email === "va21070541@bachilleresdesonora.edu.mx" && (
-                          <>
-                            <DropdownMenuItem asChild>
-                              <Link href="/admin/granting">
-                                <Skull className="mr-2 h-4 w-4 text-destructive" />
-                                <span>Otorgamiento y Eliminación</span>
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href="http://localhost:5555" target="_blank" rel="noopener noreferrer">
-                                <div className="flex items-center">
-                                  <svg
-                                    className="mr-2 h-4 w-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-primary/20">
+                      <Avatar className="h-9 w-9 border-2 border-primary/50">
+                        <AvatarImage src={user.image || `https://api.dicebear.com/8.x/micah/svg?seed=${user.email}`} alt={user.name || user.email || ''} />
+                        <AvatarFallback>{user.email ? user.email.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none truncate">{userProfile?.username || user.name || user.email}</p>
+                        <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      {isAdmin && (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link href="/admin">
+                              <Shield className="mr-2 h-4 w-4" />
+                              <span>Panel de Admin</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/admin/messages">
+                              <MessageSquare className="mr-2 h-4 w-4" />
+                              <span>Mensajes de Soporte</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          {user.email === "va21070541@bachilleresdesonora.edu.mx" && (
+                            <>
+                              <DropdownMenuItem asChild>
+                                <Link href="/admin/granting">
+                                  <Skull className="mr-2 h-4 w-4 text-destructive" />
+                                  <span>Otorgamiento y Eliminación</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href="http://localhost:5555" target="_blank" rel="noopener noreferrer">
+                                  <div className="flex items-center">
+                                    <svg
+                                      className="mr-2 h-4 w-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-                                    />
-                                  </svg>
-                                  <span>Base de datos</span>
-                                </div>
-                              </Link>
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </>
-                    )}
-                    {!isAdmin && (
-                      <DropdownMenuItem asChild>
-                        <Link href="/messages">
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          <span>Mis Mensajes</span>
-                        </Link>
+                                    >
+                                      <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+                                      <path d="M9 18c-4.51 2-5-2-7-2" />
+                                    </svg>
+                                    <span>Base de datos (Prisma)</span>
+                                  </div>
+                                </Link>
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </>
+                      )}
+                      {isAdmin && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/messages">
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            <span>Mis Mensajes</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+                        <SettingsIcon className="mr-2 h-4 w-4" />
+                        <span>Configuración</span>
                       </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-                      <SettingsIcon className="mr-2 h-4 w-4" />
-                      <span>Configuración</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={async () => {
-                      import('@/app/actions/admin').then(({ markUserOffline }) => {
-                        markUserOffline().finally(() => signOut());
-                      });
-                    }}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Cerrar Sesión</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
-            </div>
-          ) : (
-            <Button asChild>
-              <Link href="/login">Iniciar Sesión</Link>
-            </Button>
-          )}
+                      <DropdownMenuItem onClick={async () => {
+                        import('@/app/actions/admin').then(({ markUserOffline }) => {
+                          markUserOffline().finally(() => signOut());
+                        });
+                      }}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Cerrar Sesión</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+              </div>
+            ) : (
+              <Button asChild>
+                <Link href="/login">Iniciar Sesión</Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
       <style jsx global>{`
@@ -311,6 +323,23 @@ export default function Header() {
             top: var(--logo-top-desktop, 0px) !important;
             transform: scale(var(--logo-scale-desktop, 1.0)) !important;
             width: var(--logo-width-desktop, auto) !important;
+          }
+        }
+
+        .header-actions-container {
+          position: relative !important;
+          left: var(--actions-left-mobile, 0px) !important;
+          top: var(--actions-top-mobile, 0px) !important;
+          transform: scale(var(--actions-scale-mobile, 1.0)) !important;
+          transform-origin: right center !important;
+          gap: var(--actions-gap-mobile, 16px) !important;
+        }
+        @media (min-width: 768px) {
+          .header-actions-container {
+            left: var(--actions-left-desktop, 0px) !important;
+            top: var(--actions-top-desktop, 0px) !important;
+            transform: scale(var(--actions-scale-desktop, 1.0)) !important;
+            gap: var(--actions-gap-desktop, 16px) !important;
           }
         }
       `}</style>
