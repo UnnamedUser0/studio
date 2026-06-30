@@ -1599,6 +1599,96 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     />
                                 </div>
 
+                                {/* Locate Me Button Positioning */}
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Vertical de Recentrar</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.locateBtnTop ?? 160}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('locateBtnTop', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('locateBtnTop', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.locateBtnTop ?? 160]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('locateBtnTop', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('locateBtnTop', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Lateral de Recentrar</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.locateBtnRight ?? 16}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('locateBtnRight', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('locateBtnRight', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.locateBtnRight ?? 16]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('locateBtnRight', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('locateBtnRight', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Tamaño de Recentrar (Escala)</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.locateBtnScale ?? 1.0}
+                                                step={0.05}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('locateBtnScale', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('locateBtnScale', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">x</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.locateBtnScale ?? 1.0]}
+                                        min={0.05}
+                                        max={10.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('locateBtnScale', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('locateBtnScale', val)}
+                                    />
+                                </div>
+
                                 {/* Header Actions Customization */}
                                 <div className="space-y-2 pt-2 border-t border-dashed">
                                     <div className="flex justify-between items-center">
@@ -3057,6 +3147,96 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                         step={1}
                                         onValueChange={([val]) => handleLocalSettingChange('mapSettingsRightMobile', val)}
                                         onValueCommit={([val]) => handleSettingCommit('mapSettingsRightMobile', val)}
+                                    />
+                                </div>
+
+                                {/* Locate Me Button Positioning Mobile */}
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Vertical de Recentrar Móvil</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.locateBtnTopMobile ?? 160}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('locateBtnTopMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('locateBtnTopMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.locateBtnTopMobile ?? 160]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('locateBtnTopMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('locateBtnTopMobile', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Lateral de Recentrar Móvil</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.locateBtnRightMobile ?? 16}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('locateBtnRightMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('locateBtnRightMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.locateBtnRightMobile ?? 16]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('locateBtnRightMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('locateBtnRightMobile', val)}
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Tamaño de Recentrar Móvil (Escala)</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.locateBtnScaleMobile ?? 1.0}
+                                                step={0.05}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('locateBtnScaleMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('locateBtnScaleMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">x</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.locateBtnScaleMobile ?? 1.0]}
+                                        min={0.05}
+                                        max={10.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('locateBtnScaleMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('locateBtnScaleMobile', val)}
                                     />
                                 </div>
 

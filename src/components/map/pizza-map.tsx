@@ -1244,10 +1244,6 @@ function PizzaMap({
     setIsNavigating(true);
     isNavigatingRef.current = true;
     changeLockState(true);
-    
-    if (!isManualLocationRef.current) {
-      handleLocateMe();
-    }
 
     const map = mapInstanceRef.current;
     if (map && userLocation) {
@@ -2058,22 +2054,11 @@ function PizzaMap({
           </div>
         )}
 
-        {/* Map Controls Container (Locate Me & Fullscreen) - Positioned with buttons-top variables */}
+        {/* Map Controls Container (Fullscreen only now) - Positioned with buttons-top variables */}
         {!isNavigating && (
           <div
             className="absolute right-4 z-[1001] flex flex-col gap-2 transition-all duration-300 pointer-events-auto map-controls-container"
           >
-            {/* Locate Me */}
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={() => handleLocateMe(true)}
-              className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white dark:bg-slate-950"
-              aria-label="Find my location"
-            >
-              <LocateFixed className="h-4 w-4 md:h-5 md:w-5" />
-            </Button>
-
             {/* Toggle Fullscreen */}
             <Button
               variant="secondary"
@@ -2146,6 +2131,21 @@ function PizzaMap({
               </div>
             )}
 
+          </div>
+        )}
+
+        {/* Independent Locate Me (Recentrar) button */}
+        {!isNavigating && (
+          <div className="absolute z-[1001] pointer-events-auto map-locate-btn-container">
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={() => handleLocateMe(true)}
+              className="shadow-lg rounded-full h-8 w-8 md:h-10 md:w-10 bg-white dark:bg-slate-950 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-900 border-0"
+              aria-label="Recentrar ubicación"
+            >
+              <LocateFixed className="h-4 w-4 md:h-5 md:w-5" />
+            </Button>
           </div>
         )}
 
@@ -2603,6 +2603,21 @@ function PizzaMap({
           .map-settings-btn-container {
             top: var(--map-settings-top-desktop, 400px) !important;
             right: var(--map-settings-right-desktop, 16px) !important;
+          }
+        }
+
+        .map-locate-btn-container {
+          top: var(--locate-btn-top-mobile, 160px) !important;
+          right: var(--locate-btn-right-mobile, 16px) !important;
+          transform: scale(var(--locate-btn-scale-mobile, 1.0)) !important;
+          transform-origin: top right !important;
+        }
+        @media (min-width: 768px) {
+          .map-locate-btn-container {
+            top: var(--locate-btn-top-desktop, 160px) !important;
+            right: var(--locate-btn-right-desktop, 16px) !important;
+            transform: scale(var(--locate-btn-scale-desktop, 1.0)) !important;
+            transform-origin: top right !important;
           }
         }
 

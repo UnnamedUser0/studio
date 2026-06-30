@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { User, CornerDownLeft, X, Loader2 } from 'lucide-react';
+import { User, CornerDownLeft, X, Loader2, Settings } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { PizzaBotIcon } from '../icons/pizza-bot-icon';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { getAllPizzerias } from '@/app/actions';
 import { getMenuItems } from '@/app/actions/menu';
+import { useSession } from 'next-auth/react';
 
 type Message = {
   role: 'user' | 'model';
@@ -159,6 +160,47 @@ export default function Chatbot() {
   const dragStartRef = useRef({ x: 0, y: 0 });
   const elementPositionRef = useRef({ x: 0, y: 0 });
   const hasMovedRef = useRef(false);
+
+  const { data: session } = useSession();
+  const user = session?.user;
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [layoutSettings, setLayoutSettings] = useState<any>(null);
+  const [showChatSettings, setShowChatSettings] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      import('@/app/actions').then(({ getUserProfile }) => {
+        getUserProfile(user.id!).then((profile: any) => {
+          setIsAdmin((user as any).isAdmin === true || profile?.isAdmin === true);
+        });
+      });
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    import('@/app/actions').then(({ getLayoutSettings }) => {
+      getLayoutSettings().then(setLayoutSettings);
+    });
+  }, []);
+
+  const handleChatSettingChange = (key: string, val: number) => {
+    setLayoutSettings((prev: any) => {
+      if (!prev) return prev;
+      return { ...prev, [key]: val };
+    });
+  };
+
+  const saveChatSettings = async () => {
+    try {
+      const { updateLayoutSettings } = await import('@/app/actions');
+      await updateLayoutSettings(layoutSettings);
+      setShowChatSettings(false);
+    } catch (err) {
+      console.error("Failed to save chatbot settings:", err);
+    }
+  };
 
   const toggleChat = () => setIsOpen(!isOpen);
 
@@ -809,23 +851,173 @@ export default function Chatbot() {
       </div>
 
       {isOpen && (
-        <div className={cn(
-          "fixed bottom-44 md:bottom-28 w-full max-w-sm z-[1001] animate-fade-in-down",
-          isChatOnLeft ? "left-6" : "right-6"
-        )}>
-          <Card className="flex flex-col h-[60vh] shadow-2xl">
-            <CardHeader className="flex-row items-center gap-3">
-              <div className="h-10 w-10"><PizzaBotIcon /></div>
-              <div>
-                <CardTitle className="font-headline text-2xl">Pizzi, tu Asistente</CardTitle>
-                <p className="text-sm text-muted-foreground">¿Cómo puedo ayudarte hoy?</p>
+        <div 
+          className={cn(
+            "fixed bottom-44 md:bottom-28 w-full z-[1001] animate-fade-in-down chatbot-window-container",
+            isChatOnLeft ? "left-6" : "right-6"
+          )}
+          style={{
+            '--chatbot-width-desktop': `${layoutSettings?.chatbotWidth ?? 380}px`,
+            '--chatbot-width-mobile': `${layoutSettings?.chatbotWidthMobile ?? 320}px`,
+            '--chatbot-height-desktop': `${layoutSettings?.chatbotHeight ?? 500}px`,
+            '--chatbot-height-mobile': `${layoutSettings?.chatbotHeightMobile ?? 450}px`,
+            '--chatbot-scale-desktop': `${layoutSettings?.chatbotScale ?? 1.0}`,
+            '--chatbot-scale-mobile': `${layoutSettings?.chatbotScaleMobile ?? 1.0}`,
+            '--transform-origin-x': isChatOnLeft ? 'left' : 'right'
+          } as React.CSSProperties}
+        >
+          <style jsx global>{`
+            .chatbot-window-container {
+              width: var(--chatbot-width-mobile, 320px) !important;
+              transform: scale(var(--chatbot-scale-mobile, 1.0)) !important;
+              transform-origin: bottom var(--transform-origin-x, right) !important;
+            }
+            .chatbot-card-element {
+              height: var(--chatbot-height-mobile, 450px) !important;
+            }
+            @media (min-width: 768px) {
+              .chatbot-window-container {
+                width: var(--chatbot-width-desktop, 380px) !important;
+                transform: scale(var(--chatbot-scale-desktop, 1.0)) !important;
+                transform-origin: bottom var(--transform-origin-x, right) !important;
+              }
+              .chatbot-card-element {
+                height: var(--chatbot-height-desktop, 500px) !important;
+              }
+            }
+          `}</style>
+          <Card className="flex flex-col shadow-2xl chatbot-card-element">
+            <CardHeader className="flex-row items-center justify-between gap-3 py-3 px-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10"><PizzaBotIcon /></div>
+                <div>
+                  <CardTitle className="font-headline text-lg md:text-xl">Pizzi, tu Asistente</CardTitle>
+                  <p className="text-xs text-muted-foreground">¿Cómo puedo ayudarte hoy?</p>
+                </div>
               </div>
+              {isAdmin && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowChatSettings(!showChatSettings)}
+                  title="Configurar Tamaño del Chat"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden relative">
-              <div 
-                className="h-full overflow-y-auto p-4 space-y-4" 
-                ref={scrollContainerRef}
-              >
+              {showChatSettings ? (
+                <div className="absolute inset-0 bg-background/98 z-20 p-4 overflow-y-auto space-y-4 text-sm flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <h3 className="font-bold text-base text-primary">Ajustar Tamaño del Chat</h3>
+                      <Button variant="ghost" size="sm" className="h-8" onClick={() => setShowChatSettings(false)}>Cerrar</Button>
+                    </div>
+                    
+                    {/* Desktop Settings */}
+                    <div className="space-y-3">
+                      <div className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Vista Escritorio</div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span>Ancho</span>
+                          <span>{layoutSettings?.chatbotWidth ?? 380}px</span>
+                        </div>
+                        <input 
+                          type="range" min="250" max="1000" step="10"
+                          value={layoutSettings?.chatbotWidth ?? 380}
+                          onChange={(e) => handleChatSettingChange('chatbotWidth', parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span>Alto</span>
+                          <span>{layoutSettings?.chatbotHeight ?? 500}px</span>
+                        </div>
+                        <input 
+                          type="range" min="300" max="1000" step="10"
+                          value={layoutSettings?.chatbotHeight ?? 500}
+                          onChange={(e) => handleChatSettingChange('chatbotHeight', parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span>Escala</span>
+                          <span>{layoutSettings?.chatbotScale ?? 1.0}x</span>
+                        </div>
+                        <input 
+                          type="range" min="0.5" max="2.5" step="0.05"
+                          value={layoutSettings?.chatbotScale ?? 1.0}
+                          onChange={(e) => handleChatSettingChange('chatbotScale', parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Mobile Settings */}
+                    <div className="space-y-3 pt-3 border-t">
+                      <div className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Vista Móvil</div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span>Ancho Móvil</span>
+                          <span>{layoutSettings?.chatbotWidthMobile ?? 320}px</span>
+                        </div>
+                        <input 
+                          type="range" min="200" max="600" step="10"
+                          value={layoutSettings?.chatbotWidthMobile ?? 320}
+                          onChange={(e) => handleChatSettingChange('chatbotWidthMobile', parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span>Alto Móvil</span>
+                          <span>{layoutSettings?.chatbotHeightMobile ?? 450}px</span>
+                        </div>
+                        <input 
+                          type="range" min="200" max="800" step="10"
+                          value={layoutSettings?.chatbotHeightMobile ?? 450}
+                          onChange={(e) => handleChatSettingChange('chatbotHeightMobile', parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span>Escala Móvil</span>
+                          <span>{layoutSettings?.chatbotScaleMobile ?? 1.0}x</span>
+                        </div>
+                        <input 
+                          type="range" min="0.5" max="2.0" step="0.05"
+                          value={layoutSettings?.chatbotScaleMobile ?? 1.0}
+                          onChange={(e) => handleChatSettingChange('chatbotScaleMobile', parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button 
+                    className="w-full mt-4" 
+                    size="sm"
+                    onClick={saveChatSettings}
+                  >
+                    Guardar Ajustes
+                  </Button>
+                </div>
+              ) : (
+                <div 
+                  className="h-full overflow-y-auto p-4 space-y-4" 
+                  ref={scrollContainerRef}
+                >
                 {messages.map((msg, index) => (
                   <div key={index} className={cn('flex items-start gap-3', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
                     {msg.role === 'model' && (
@@ -862,6 +1054,7 @@ export default function Chatbot() {
                   </div>
                 )}
               </div>
+            )}
             </CardContent>
             <CardFooter className="border-t p-3 bg-background z-10 shadow-sm">
               <form
