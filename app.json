@@ -14,9 +14,16 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.username01.pizzapp",
       "adaptiveIcon": {
         "backgroundColor": "#000000"
       }
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3d870d5e-9edc-4373-b57c-8dc67f7f4747"
+      }
+    },
+    "owner": "username.01"
   }
 }

@@ -22,3 +22,9 @@
 {"_e":"devserver:start","_t":1779829273481,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\src\\app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
 {"_e":"metro:config","_t":1779829274027,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
 {"_e":"metro:instantiate","_t":1779829287552,"atlas":false,"workers":8,"host":"::","port":8081}
+{"_e":"root:init","_t":1782939851662,"format":"v0-jsonl","version":"56.1.12"}
+{"_e":"env:mode","_t":1782939851663,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1782939851668,"mode":"development","files":["../..\\..\\.env"],"env":{"AUTH_SECRET":"3ca9bbf8703a11b6d1b91316b2cfd86a60db6e3957245c3bbbfd98ea6e8bf832","DATABASE_URL":"postgresql://neondb_owner:npg_ORJ5DyaGTm0Q@ep-shiny-king-apxzpjkg-pooler.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require","NEXT_PUBLIC_HERE_API_KEY":""}}
+{"_e":"devserver:start","_t":1782939851994,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\src\\app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1782939853437,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"metro:instantiate","_t":1782939880028,"atlas":false,"workers":8,"host":"::","port":8081}
