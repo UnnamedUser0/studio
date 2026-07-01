@@ -463,6 +463,7 @@ function HomeContent() {
       '--start-trip-left-mobile': `${layoutSettings.startTripLeftMobile ?? 0}px`,
       '--start-trip-scale-desktop': `${layoutSettings.startTripScale ?? 1.0}`,
       '--start-trip-scale-mobile': `${layoutSettings.startTripScaleMobile ?? 1.0}`,
+      '--mobile-page-zoom': `${layoutSettings.mobilePageZoom ?? 0.85}`,
     } as React.CSSProperties;
   }, [layoutSettings]);
 

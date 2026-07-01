@@ -189,3 +189,12 @@ body.map-fullscreen .mobile-bottom-nav {
 body.map-fullscreen main {
   padding-bottom: 0 !important;
 }
+
+@media (max-width: 768px) {
+  body {
+    zoom: var(--mobile-page-zoom, 0.85);
+  }
+  #ranking {
+    zoom: calc(1 / var(--mobile-page-zoom, 0.85));
+  }
+}

@@ -947,8 +947,8 @@ function PizzaMap({
 
     let origin = originOverride || userLocationRef.current;
 
-    // Try to get fresh location if not overridden and not manual location
-    if (!originOverride && !isManualLocationRef.current && navigator.geolocation) {
+    // Try to get fresh location if not origin, not overridden and not manual location
+    if (!origin && !originOverride && !isManualLocationRef.current && navigator.geolocation) {
       try {
         const freshPos = await new Promise<GeolocationPosition>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {

@@ -99,7 +99,8 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
         startTripLeft: 0,
         startTripLeftMobile: 0,
         startTripScale: 1.0,
-        startTripScaleMobile: 1.0
+        startTripScaleMobile: 1.0,
+        mobilePageZoom: 0.85
     })
 
     useEffect(() => {
@@ -1914,6 +1915,42 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                     </div>
                 ) : (
                     <div className="space-y-5 animate-in fade-in duration-300">
+                        {/* Zoom Global de la Página (Móvil) */}
+                        <div className="space-y-3 border p-4 rounded-lg bg-muted/20">
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <Label className="text-sm font-semibold text-foreground">Zoom Global de la Página (Móvil)</Label>
+                                    <div className="flex items-center gap-1">
+                                        <input
+                                            type="number"
+                                            className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                            value={settings.mobilePageZoom ?? 0.85}
+                                            step={0.05}
+                                            onChange={(e) => {
+                                                const val = parseFloat(e.target.value) || 0;
+                                                handleLocalSettingChange('mobilePageZoom', val);
+                                            }}
+                                            onBlur={(e) => {
+                                                const val = parseFloat(e.target.value) || 0;
+                                                handleSettingCommit('mobilePageZoom', val);
+                                            }}
+                                        />
+                                        <span className="text-[11px] font-medium text-muted-foreground">x</span>
+                                    </div>
+                                </div>
+                                <Slider
+                                    value={[settings.mobilePageZoom ?? 0.85]}
+                                    min={0.5}
+                                    max={1.5}
+                                    step={0.05}
+                                    onValueChange={([val]) => handleLocalSettingChange('mobilePageZoom', val)}
+                                    onValueCommit={([val]) => handleSettingCommit('mobilePageZoom', val)}
+                                />
+                                <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                    Ajusta el zoom global de todos los elementos de la página en móvil (excluyendo el podio, que mantendrá su tamaño relativo al viewport).
+                                </p>
+                            </div>
+                        </div>
                         {/* Mobile Height */}
                         <div className="space-y-3 border p-4 rounded-lg bg-muted/20">
                             <div className="space-y-2">

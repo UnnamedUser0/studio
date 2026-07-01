@@ -387,7 +387,8 @@ export async function getLayoutSettings() {
         startTripLeft: 0,
         startTripLeftMobile: 0,
         startTripScale: 1.0,
-        startTripScaleMobile: 1.0
+        startTripScaleMobile: 1.0,
+        mobilePageZoom: 0.85
     }
     if (!setting) return defaultSettings;
     try {
