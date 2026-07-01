@@ -191,7 +191,7 @@ body.map-fullscreen main {
 }
 
 @media (max-width: 768px) {
-  body {
+  body:not(.map-fullscreen) {
     zoom: var(--mobile-page-zoom, 0.85);
   }
   #ranking {

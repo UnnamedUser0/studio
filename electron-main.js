@@ -1,0 +1,40 @@
+const { app, BrowserWindow } = require('electron');
+const path = require('path');
+
+function createWindow() {
+  const win = new BrowserWindow({
+    width: 1280,
+    height: 800,
+    title: "PizzApp - Hermosillo",
+    // Use the public logo icon if available
+    icon: path.join(__dirname, 'public', 'favicon.ico'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+
+  // URL del sitio oficial desplegado en Netlify
+  // CAMBIA ESTA URL POR TU URL DE NETLIFY REAL:
+  const netlifyUrl = 'https://pizzapp-hermosillo.netlify.app';
+
+  // Cargar URL
+  win.loadURL(netlifyUrl);
+
+  // Ocultar menú de navegación superior por defecto para una experiencia más limpia de app nativa
+  win.setMenuBarVisibility(false);
+}
+
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
