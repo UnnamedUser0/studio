@@ -46,3 +46,9 @@ firestore-debug.log
 certificates
 # Local Netlify folder
 .netlify
+
+# electron
+/dist
+/public/downloads/*.exe
+/public/downloads/*.apk
+

@@ -95,6 +95,7 @@
   "build": {
     "appId": "com.pizzapp.app",
     "productName": "PizzApp",
+    "npmRebuild": false,
     "win": {
       "target": "portable"
     },
