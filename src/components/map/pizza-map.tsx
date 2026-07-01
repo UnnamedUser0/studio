@@ -48,6 +48,7 @@ type PizzaMapProps = {
   explicitPizzeriasToShow?: Pizzeria[];
   onNavigationStateChange?: (navigating: boolean) => void;
   onCloseDetail?: () => void;
+  onRouteActiveChange?: (active: boolean) => void;
 };
 
 type Coord = { lat: number; lng: number };
@@ -422,6 +423,7 @@ function PizzaMap({
   explicitPizzeriasToShow = [],
   onSettingsChange,
   onNavigationStateChange,
+  onRouteActiveChange,
   onCloseDetail
 }: PizzaMapProps & { isAdmin?: boolean, onSettingsChange?: (settings: any) => void }) {
   
@@ -495,6 +497,15 @@ function PizzaMap({
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [isAdjustingLocation, setIsAdjustingLocation] = useState(false);
   const activeRouteRef = useRef<{ lat: number, lng: number } | null>(null);
+
+  const userLocationRef = useRef<{ lat: number, lng: number } | null>(null);
+  useEffect(() => {
+    userLocationRef.current = userLocation;
+  }, [userLocation]);
+
+  useEffect(() => {
+    onRouteActiveChange?.(activeRoute !== null);
+  }, [activeRoute, onRouteActiveChange]);
 
   useEffect(() => {
     activeRouteRef.current = activeRoute;
@@ -934,7 +945,7 @@ function PizzaMap({
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    let origin = originOverride || userLocation;
+    let origin = originOverride || userLocationRef.current;
 
     // Try to get fresh location if not overridden and not manual location
     if (!originOverride && !isManualLocationRef.current && navigator.geolocation) {
@@ -1381,10 +1392,11 @@ function PizzaMap({
   };
 
   useEffect(() => {
-    if (routeDestination) {
-      drawRoute(routeDestination);
+    const targetDest = routeDestination || activeRoute;
+    if (targetDest && userLocation && !isNavigating) {
+      drawRoute(targetDest);
     }
-  }, [routeDestination, userLocation]);
+  }, [routeDestination, userLocation, activeRoute, isNavigating]);
 
   useEffect(() => {
     if (mapContainerRef.current && !mapInstanceRef.current) {
@@ -2189,7 +2201,7 @@ function PizzaMap({
 
         {/* Start Trip / Navigation Controls */}
         {activeRoute && !isNavigating && (
-          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-[1002] flex items-center gap-3 animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto">
+          <div className="absolute left-1/2 z-[1002] flex items-center gap-3 animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto start-trip-container">
             <Button
               onClick={startNavigation}
               className="bg-[#4285F4] hover:bg-[#3367d6] text-white shadow-xl rounded-full px-6 h-12 text-base font-semibold border-2 border-white/20"
@@ -2784,6 +2796,18 @@ function PizzaMap({
           }
           .nav-next-sub-bar span, .nav-next-sub-bar div {
             font-size: var(--nav-next-font-size-desktop, 14px) !important;
+          }
+        }
+
+        .start-trip-container {
+          bottom: var(--start-trip-bottom-mobile, 40px);
+          transform: translateX(calc(-50% + var(--start-trip-left-mobile, 0px))) scale(var(--start-trip-scale-mobile, 1.0));
+          transform-origin: bottom center;
+        }
+        @media (min-width: 768px) {
+          .start-trip-container {
+            bottom: var(--start-trip-bottom-desktop, 40px);
+            transform: translateX(calc(-50% + var(--start-trip-left-desktop, 0px))) scale(var(--start-trip-scale-desktop, 1.0));
           }
         }
       `}</style>

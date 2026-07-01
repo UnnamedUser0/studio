@@ -457,6 +457,12 @@ function HomeContent() {
       '--nav-next-width-mobile': `${layoutSettings.navNextWidthMobile ?? 100}%`,
       '--nav-next-font-size-desktop': `${layoutSettings.navNextFontSize ?? 14}px`,
       '--nav-next-font-size-mobile': `${layoutSettings.navNextFontSizeMobile ?? 14}px`,
+      '--start-trip-bottom-desktop': `${layoutSettings.startTripBottom ?? 40}px`,
+      '--start-trip-bottom-mobile': `${layoutSettings.startTripBottomMobile ?? 40}px`,
+      '--start-trip-left-desktop': `${layoutSettings.startTripLeft ?? 0}px`,
+      '--start-trip-left-mobile': `${layoutSettings.startTripLeftMobile ?? 0}px`,
+      '--start-trip-scale-desktop': `${layoutSettings.startTripScale ?? 1.0}`,
+      '--start-trip-scale-mobile': `${layoutSettings.startTripScaleMobile ?? 1.0}`,
     } as React.CSSProperties;
   }, [layoutSettings]);
 

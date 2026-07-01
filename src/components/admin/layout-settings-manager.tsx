@@ -93,7 +93,13 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
         navNextFontSize: 14,
         navNextFontSizeMobile: 14,
         buttonsRight: 16,
-        buttonsRightMobile: 16
+        buttonsRightMobile: 16,
+        startTripBottom: 40,
+        startTripBottomMobile: 40,
+        startTripLeft: 0,
+        startTripLeftMobile: 0,
+        startTripScale: 1.0,
+        startTripScaleMobile: 1.0
     })
 
     useEffect(() => {
@@ -1343,6 +1349,102 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Ajusta el tamaño (escala) del indicador de ubicación del usuario (y flecha de navegación).
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Margen Inferior de Iniciar Viaje</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.startTripBottom ?? 40}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('startTripBottom', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('startTripBottom', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.startTripBottom ?? 40]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('startTripBottom', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('startTripBottom', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Margen inferior en píxeles del botón de Iniciar viaje y el botón X.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Lateral de Iniciar Viaje</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.startTripLeft ?? 0}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('startTripLeft', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('startTripLeft', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.startTripLeft ?? 0]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('startTripLeft', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('startTripLeft', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Desplazamiento horizontal (izquierda/derecha) del botón de Iniciar viaje.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Escala de Iniciar Viaje</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.startTripScale ?? 1.0}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('startTripScale', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('startTripScale', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">x</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.startTripScale ?? 1.0]}
+                                        min={0.05}
+                                        max={10.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('startTripScale', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('startTripScale', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta la escala física (tamaño) del botón de Iniciar viaje y el botón X.
                                     </p>
                                 </div>
                             </div>
@@ -2894,6 +2996,102 @@ export default function LayoutSettingsManager({ onSettingsChange }: { onSettings
                                     />
                                     <p className="text-[11px] text-muted-foreground leading-normal mt-1">
                                         Ajusta el tamaño (escala) del indicador de ubicación del usuario (y flecha de navegación) en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Margen Inferior de Iniciar Viaje Móvil</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.startTripBottomMobile ?? 40}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('startTripBottomMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('startTripBottomMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.startTripBottomMobile ?? 40]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('startTripBottomMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('startTripBottomMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Margen inferior en píxeles del botón de Iniciar viaje y el botón X en dispositivos móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Desplazamiento Lateral de Iniciar Viaje Móvil</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.startTripLeftMobile ?? 0}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('startTripLeftMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('startTripLeftMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">px</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.startTripLeftMobile ?? 0]}
+                                        min={-2000}
+                                        max={2000}
+                                        step={1}
+                                        onValueChange={([val]) => handleLocalSettingChange('startTripLeftMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('startTripLeftMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Desplazamiento horizontal (izquierda/derecha) del botón de Iniciar viaje en móviles.
+                                    </p>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-dashed">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-xs font-medium">Escala de Iniciar Viaje Móvil</Label>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                className="w-16 h-6 text-center text-[11px] font-bold text-primary bg-muted/50 border border-muted-foreground/20 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                                value={settings.startTripScaleMobile ?? 1.0}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleLocalSettingChange('startTripScaleMobile', val);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    handleSettingCommit('startTripScaleMobile', val);
+                                                }}
+                                            />
+                                            <span className="text-[11px] font-medium text-muted-foreground">x</span>
+                                        </div>
+                                    </div>
+                                    <Slider
+                                        value={[settings.startTripScaleMobile ?? 1.0]}
+                                        min={0.05}
+                                        max={10.0}
+                                        step={0.05}
+                                        onValueChange={([val]) => handleLocalSettingChange('startTripScaleMobile', val)}
+                                        onValueCommit={([val]) => handleSettingCommit('startTripScaleMobile', val)}
+                                    />
+                                    <p className="text-[11px] text-muted-foreground leading-normal mt-1">
+                                        Ajusta la escala física (tamaño) del botón de Iniciar viaje y el botón X en móviles.
                                     </p>
                                 </div>
                             </div>

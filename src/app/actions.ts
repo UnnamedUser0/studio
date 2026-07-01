@@ -381,7 +381,13 @@ export async function getLayoutSettings() {
         navNextWidth: 100,
         navNextWidthMobile: 100,
         navNextFontSize: 14,
-        navNextFontSizeMobile: 14
+        navNextFontSizeMobile: 14,
+        startTripBottom: 40,
+        startTripBottomMobile: 40,
+        startTripLeft: 0,
+        startTripLeftMobile: 0,
+        startTripScale: 1.0,
+        startTripScaleMobile: 1.0
     }
     if (!setting) return defaultSettings;
     try {

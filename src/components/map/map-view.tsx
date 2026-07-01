@@ -53,6 +53,7 @@ export default function MapView({
 }: MapViewProps & { layoutSettings?: any, onSettingsChange?: (settings: any) => void }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isRouteActive, setIsRouteActive] = useState(false);
 
   const toggleFullscreen = () => setIsFullscreen(!isFullscreen);
 
@@ -146,6 +147,12 @@ export default function MapView({
       '--nav-next-width-mobile': `${layoutSettings.navNextWidthMobile ?? 100}%`,
       '--nav-next-font-size-desktop': `${layoutSettings.navNextFontSize ?? 14}px`,
       '--nav-next-font-size-mobile': `${layoutSettings.navNextFontSizeMobile ?? 14}px`,
+      '--start-trip-bottom-desktop': `${layoutSettings.startTripBottom ?? 40}px`,
+      '--start-trip-bottom-mobile': `${layoutSettings.startTripBottomMobile ?? 40}px`,
+      '--start-trip-left-desktop': `${layoutSettings.startTripLeft ?? 0}px`,
+      '--start-trip-left-mobile': `${layoutSettings.startTripLeftMobile ?? 0}px`,
+      '--start-trip-scale-desktop': `${layoutSettings.startTripScale ?? 1.0}`,
+      '--start-trip-scale-mobile': `${layoutSettings.startTripScaleMobile ?? 1.0}`,
     } as React.CSSProperties;
   }, [layoutSettings]);
 
@@ -185,11 +192,12 @@ export default function MapView({
         iconAnchorY={layoutSettings?.iconAnchorY ?? 25}
         onSettingsChange={onSettingsChange}
         onNavigationStateChange={setIsNavigating}
+        onRouteActiveChange={setIsRouteActive}
         onCloseDetail={onCloseDetail}
       />
 
       {/* Smart Search Bar */}
-      {!isNavigating && (
+      {!isNavigating && !selectedPizzeria && !isRouteActive && (
         <div
           className="absolute left-1/2 -translate-x-1/2 z-[1001] transition-all duration-300 top-4 w-[var(--search-width-mobile,_90%)] md:w-[var(--search-width-desktop,_50%)] h-[var(--search-height-mobile,_2.5rem)] md:h-[var(--search-height-desktop,_3rem)]"
         >
