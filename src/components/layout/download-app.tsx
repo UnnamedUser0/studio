@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Monitor, Smartphone, Download, QrCode, X, Info } from 'lucide-react';
+import { Monitor, Smartphone, Download, QrCode, Info, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 
@@ -41,7 +41,7 @@ export default function DownloadApp() {
                   Disfruta de PizzApp en Windows de forma nativa e independiente del navegador.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-col justify-between h-[180px] pt-0">
+              <CardContent className="flex flex-col justify-between h-[210px] pt-0">
                 <ul className="text-sm text-muted-foreground space-y-2 mb-6">
                   <li className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
@@ -56,15 +56,20 @@ export default function DownloadApp() {
                     Mayor rendimiento y sin pestañas del navegador.
                   </li>
                 </ul>
-                <Button 
-                  asChild
-                  className="w-full bg-primary hover:bg-primary/90 text-white font-semibold flex items-center justify-center gap-2 h-11 shadow-md hover:shadow-lg transition-all duration-300"
-                >
-                  <a href="/downloads/PizzApp.exe" download>
-                    <Download className="w-4 h-4" />
-                    Descargar para Windows (.exe)
-                  </a>
-                </Button>
+                <div className="space-y-2">
+                  <Button 
+                    asChild
+                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold flex items-center justify-center gap-2 h-11 shadow-md hover:shadow-lg transition-all duration-300"
+                  >
+                    <a href="https://github.com/UnnamedUser0/studio/releases/latest" target="_blank" rel="noopener noreferrer">
+                      <Download className="w-4 h-4" />
+                      Descargar para Windows (.exe)
+                    </a>
+                  </Button>
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    Descarga segura desde la sección de versiones en nuestro repositorio GitHub.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </ScrollReveal>
@@ -81,7 +86,7 @@ export default function DownloadApp() {
                   Encuentra tu pizza ideal directamente desde tu teléfono mientras estás en la calle.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-col justify-between h-[180px] pt-0">
+              <CardContent className="flex flex-col justify-between h-[210px] pt-0">
                 <ul className="text-sm text-muted-foreground space-y-2 mb-6">
                   <li className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
@@ -102,47 +107,67 @@ export default function DownloadApp() {
                       className="w-full bg-foreground text-background hover:bg-foreground/90 font-semibold flex items-center justify-center gap-2 h-11 shadow-md hover:shadow-lg transition-all duration-300"
                     >
                       <QrCode className="w-4 h-4" />
-                      Instalar en Celular
+                      Obtener App Móvil
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px] bg-card border border-border/80 backdrop-blur-lg">
+                  <DialogContent className="sm:max-w-[450px] bg-card border border-border/80 backdrop-blur-lg overflow-y-auto max-h-[90vh]">
                     <DialogHeader>
-                      <DialogTitle className="text-2xl font-headline font-bold text-center">Instalar PizzApp en tu Móvil</DialogTitle>
+                      <DialogTitle className="text-2xl font-headline font-bold text-center">Instalar PizzApp en tu Celular</DialogTitle>
                       <DialogDescription className="text-center">
-                        Sigue estos sencillos pasos para instalar la aplicación móvil en tu celular.
+                        Elige el método de instalación adecuado para tu dispositivo.
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="py-6 space-y-6">
-                      {/* Option 1: PWA (Recommended) */}
-                      <div className="space-y-2 border-b border-border/50 pb-4">
+                    
+                    <div className="py-4 space-y-6">
+                      {/* Option 1: Android APK */}
+                      <div className="space-y-3 p-3 border border-primary/20 rounded-lg bg-primary/5">
                         <h4 className="font-bold text-sm text-primary flex items-center gap-1.5">
-                          <Info className="w-4 h-4" /> Método Rápido (Recomendado)
+                          <Smartphone className="w-4 h-4" /> App para Android (.APK)
                         </h4>
                         <p className="text-xs text-muted-foreground leading-normal">
-                          Entra a este sitio web desde el navegador de tu celular y haz lo siguiente:
+                          Descarga e instala la aplicación oficial nativa directamente en tu teléfono Android.
                         </p>
-                        <ul className="text-xs text-muted-foreground space-y-1.5 pl-4 list-disc leading-normal mt-2">
-                          <li><strong>En Android (Chrome):</strong> Toca los tres puntos de arriba y selecciona <strong>"Instalar aplicación"</strong> o <strong>"Añadir a pantalla de inicio"</strong>.</li>
-                          <li><strong>En iOS (Safari):</strong> Toca el botón de <strong>Compartir</strong> (cuadrado con flecha hacia arriba) y selecciona <strong>"Añadir a pantalla de inicio"</strong>.</li>
+                        <Button 
+                          asChild
+                          size="sm"
+                          className="w-full bg-primary hover:bg-primary/90 text-white font-semibold flex items-center justify-center gap-2 h-9 shadow-sm"
+                        >
+                          <a href="https://github.com/UnnamedUser0/studio/releases/latest" target="_blank" rel="noopener noreferrer">
+                            <Download className="w-4 h-4" />
+                            Descargar para Android (.apk)
+                          </a>
+                        </Button>
+                      </div>
+
+                      {/* Option 2: iOS PWA (Apple) */}
+                      <div className="space-y-2 border border-border/60 rounded-lg p-3 bg-muted/20">
+                        <h4 className="font-bold text-sm text-foreground flex items-center gap-1.5">
+                          <Info className="w-4 h-4" /> iPhone (iOS) - App en Pantalla de Inicio
+                        </h4>
+                        <p className="text-xs text-muted-foreground leading-normal">
+                          Debido a que Apple no permite descargas directas de archivos de terceros, puedes agregarla directamente a tu pantalla de inicio como una aplicación web nativa (PWA):
+                        </p>
+                        <ul className="text-xs text-muted-foreground space-y-1 pl-4 list-disc leading-normal mt-1">
+                          <li>Abre esta página en el navegador <strong>Safari</strong> de tu iPhone.</li>
+                          <li>Toca el botón <strong>Compartir</strong> (icono de cuadrado con una flecha hacia arriba).</li>
+                          <li>Selecciona la opción <strong>"Añadir a pantalla de inicio"</strong>.</li>
                         </ul>
                       </div>
 
-                      {/* Option 2: Expo QR */}
-                      <div className="space-y-3">
-                        <h4 className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                          <QrCode className="w-4 h-4" /> Método de Prueba (Expo Go)
+                      {/* Option 3: Expo QR */}
+                      <div className="space-y-2 border border-dashed border-border/80 rounded-lg p-3 bg-muted/10">
+                        <h4 className="font-bold text-xs text-muted-foreground flex items-center gap-1.5">
+                          <QrCode className="w-3.5 h-3.5" /> Modo Desarrollador (Expo Go)
                         </h4>
-                        <p className="text-xs text-muted-foreground leading-normal">
-                          Si estás en el entorno de desarrollo local y tienes Expo Go instalado en tu celular, escanea el código QR que se genera en la terminal al ejecutar:
+                        <p className="text-[11px] text-muted-foreground leading-normal">
+                          Para depuración y pruebas locales: Ejecuta `npm run mobile` en tu terminal y escanea el código QR desde la app **Expo Go** en Android o iOS.
                         </p>
-                        <div className="bg-muted p-2 rounded text-center font-mono text-xs text-primary font-bold">
-                          npm run mobile
-                        </div>
                       </div>
                     </div>
+
                     <div className="flex justify-end">
-                      <Button onClick={() => setIsMobileModalOpen(false)} className="bg-primary hover:bg-primary/90 text-white">
-                        Entendido
+                      <Button onClick={() => setIsMobileModalOpen(false)} className="bg-foreground text-background hover:bg-foreground/90">
+                        Cerrar
                       </Button>
                     </div>
                   </DialogContent>
