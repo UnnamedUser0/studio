@@ -28,6 +28,7 @@ const RankingManager = dynamic(() => import('@/components/admin/ranking-manager'
 const ExplorarPizzerias = dynamic(() => import('@/components/pizzeria/explorar-pizzerias'), { loading: () => null });
 const RankingStyler = dynamic(() => import('@/components/admin/ranking-styler').then(mod => mod.RankingStyler), { loading: () => null });
 const MenuModal = dynamic(() => import('@/components/pizzeria/menu-modal'), { loading: () => null });
+const DownloadApp = dynamic(() => import('@/components/layout/download-app'), { loading: () => null });
 
 function HomeContent() {
   const [selectedPizzeria, setSelectedPizzeria] = useState<Pizzeria | null>(null); // Used for Menu Sheet (Map/Explore)
@@ -794,6 +795,8 @@ function HomeContent() {
             </div>
 
             <WhyChoosePizzapp isAdmin={canManageContent} />
+
+            <DownloadApp />
 
             {/* Mobile Spacer to avoid content being hidden by fixed bottom elements */}
             <div className="h-24 md:hidden"></div>
