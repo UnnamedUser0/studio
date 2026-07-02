@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, HelpCircle, LifeBuoy, Mail, Pizza } from 'lucide-react';
+import { Home, HelpCircle, LifeBuoy, Mail, Pizza, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function MobileBottomNav() {
@@ -20,6 +20,7 @@ export default function MobileBottomNav() {
         { name: 'Inicio', href: '/', icon: Home },
         { name: 'FAQ', href: '/faq', icon: HelpCircle },
         { name: 'Bienvenida', href: '/?welcome=true', icon: Pizza },
+        { name: 'Descargas', href: '/download', icon: Download },
         { name: 'Ayuda', href: '/help', icon: LifeBuoy },
         { name: 'Contacto', href: '/contact', icon: Mail },
     ];

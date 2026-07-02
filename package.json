@@ -2,7 +2,6 @@
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
-  "main": "electron-main.js",
   "scripts": {
     "dev": "concurrently \"npm run next:dev\" \"node open-browser.js\"",
     "mobile": "npx expo start",
@@ -96,6 +95,9 @@
     "appId": "com.pizzapp.app",
     "productName": "PizzApp",
     "npmRebuild": false,
+    "extraMetadata": {
+      "main": "electron-main.js"
+    },
     "win": {
       "target": "portable"
     },

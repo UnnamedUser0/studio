@@ -3,4 +3,5 @@
 
 [build.environment]
   NPM_FLAGS = "--legacy-peer-deps"
+  NPM_CONFIG_LEGACY_PEER_DEPS = "true"
   AUTH_TRUST_HOST = "true"

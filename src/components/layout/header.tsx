@@ -177,6 +177,9 @@ export default function Header() {
           <Link href="/?welcome=true" className={navLinkClasses}>
             Bienvenida
           </Link>
+          <Link href="/download" className={navLinkClasses}>
+            Descargas
+          </Link>
         </nav>
         <div className="flex flex-1 items-center justify-end">
           <div 
