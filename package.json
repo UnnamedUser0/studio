@@ -6,7 +6,7 @@
     "dev": "concurrently \"npm run next:dev\" \"node open-browser.js\"",
     "mobile": "npx expo start",
     "desktop:dev": "electron .",
-    "desktop:build": "electron-builder --win portable",
+    "desktop:build": "electron-builder --win nsis",
     "next:dev": "next dev --experimental-https",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "build": "next build",
@@ -96,14 +96,23 @@
     "productName": "PizzApp",
     "npmRebuild": false,
     "extraMetadata": {
-      "main": "electron-main.js"
+      "main": "electron-main.js",
+      "dependencies": {}
     },
     "win": {
-      "target": "portable"
+      "target": "nsis",
+      "icon": "public/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
     },
     "files": [
       "electron-main.js",
-      "public/**/*"
+      "public/icon.png"
     ],
     "directories": {
       "output": "dist"

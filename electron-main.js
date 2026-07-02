@@ -16,7 +16,7 @@ function createWindow() {
 
   // URL del sitio oficial desplegado en Netlify
   // CAMBIA ESTA URL POR TU URL DE NETLIFY REAL:
-  const netlifyUrl = 'https://pizzapp-hermosillo.netlify.app';
+  const netlifyUrl = 'https://pizzappoficial.netlify.app';
 
   // Cargar URL
   win.loadURL(netlifyUrl);
