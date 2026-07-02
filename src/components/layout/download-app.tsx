@@ -61,7 +61,7 @@ export default function DownloadApp() {
                     asChild
                     className="w-full bg-primary hover:bg-primary/90 text-white font-semibold flex items-center justify-center gap-2 h-11 shadow-md hover:shadow-lg transition-all duration-300"
                   >
-                    <a href="https://github.com/UnnamedUser0/studio/releases/latest" target="_blank" rel="noopener noreferrer">
+                    <a href="https://github.com/UnnamedUser0/studio/releases/latest/download/PizzApp.exe" target="_blank" rel="noopener noreferrer">
                       <Download className="w-4 h-4" />
                       Descargar para Windows (.exe)
                     </a>
