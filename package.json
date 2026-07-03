@@ -50,6 +50,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
+    "electron-updater": "6.8.9",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "expo": "^56.0.5",
@@ -95,6 +96,11 @@
     "appId": "com.pizzapp.app",
     "productName": "PizzApp",
     "npmRebuild": false,
+    "publish": {
+      "provider": "github",
+      "owner": "UnnamedUser0",
+      "repo": "studio"
+    },
     "extraMetadata": {
       "main": "electron-main.js",
       "dependencies": {}
