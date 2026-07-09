@@ -118,7 +118,29 @@
     },
     "files": [
       "electron-main.js",
-      "public/icon.png"
+      "public/icon.png",
+      "node_modules/**/*",
+      "!node_modules/@prisma/**/*",
+      "!node_modules/prisma/**/*",
+      "!node_modules/@react-three/**/*",
+      "!node_modules/three/**/*",
+      "!node_modules/react-native/**/*",
+      "!node_modules/hermes-compiler/**/*",
+      "!node_modules/fb-dotslash/**/*",
+      "!node_modules/next/**/*",
+      "!node_modules/genkit/**/*",
+      "!node_modules/@esbuild/**/*",
+      "!node_modules/esbuild/**/*",
+      "!node_modules/typescript/**/*",
+      "!node_modules/@types/**/*",
+      "!node_modules/leaflet/**/*",
+      "!node_modules/maplibre-gl/**/*",
+      "!node_modules/recharts/**/*",
+      "!node_modules/tailwindcss/**/*",
+      "!node_modules/postcss/**/*",
+      "!node_modules/autoprefixer/**/*",
+      "!node_modules/@google-genai/**/*",
+      "!node_modules/@radix-ui/**/*"
     ],
     "directories": {
       "output": "dist"

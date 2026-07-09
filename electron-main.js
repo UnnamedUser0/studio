@@ -2,10 +2,21 @@ const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 
-// Configuración de actualizaciones automáticas en segundo plano
-autoUpdater.on('update-downloaded', () => {
-  autoUpdater.quitAndInstall(false, true); // Reinicia e instala automáticamente
-});
+// Configuración de actualizaciones automáticas seguras
+try {
+  autoUpdater.on('error', (err) => {
+    console.error('Error en autoUpdater:', err);
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    console.log('Actualización descargada. Se instalará al cerrar la aplicación.');
+  });
+
+  // Instalar la actualización de forma segura al cerrar la app
+  autoUpdater.autoInstallOnAppQuit = true;
+} catch (e) {
+  console.error('Error al inicializar autoUpdater:', e);
+}
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -30,10 +41,16 @@ function createWindow() {
   // Ocultar menú de navegación superior por defecto para una experiencia más limpia de app nativa
   win.setMenuBarVisibility(false);
 
-  // Buscar actualizaciones de forma silenciosa al iniciar la aplicación
-  win.once('ready-to-show', () => {
-    autoUpdater.checkForUpdatesAndNotify();
-  });
+  // Buscar actualizaciones de forma silenciosa solo si la app está empaquetada (producción)
+  if (app.isPackaged) {
+    win.once('ready-to-show', () => {
+      try {
+        autoUpdater.checkForUpdatesAndNotify();
+      } catch (e) {
+        console.error('Error al buscar actualizaciones:', e);
+      }
+    });
+  }
 }
 
 app.whenReady().then(createWindow);
