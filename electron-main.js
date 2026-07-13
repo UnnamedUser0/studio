@@ -2,12 +2,10 @@ const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 
-// Desactivar aceleración por hardware y sandbox para prevenir bloqueos de Windows Defender
-// y errores de inicialización del proceso GPU (Código de excepción 0x80000003 STATUS_BREAKPOINT)
-app.commandLine.appendSwitch('disable-gpu');
+// Desactivar sandbox de Chromium para prevenir bloqueos de Windows Defender
+// y resolver el error de inicialización del sandbox (Código de excepción 0x80000003 STATUS_BREAKPOINT)
 app.commandLine.appendSwitch('no-sandbox');
 app.commandLine.appendSwitch('disable-gpu-sandbox');
-app.commandLine.appendSwitch('disable-software-rasterizer');
 
 // Configuración de actualizaciones automáticas interactivas
 autoUpdater.autoDownload = false; // Evita la descarga automática silenciosa
@@ -78,6 +76,11 @@ function createMainWindow() {
 
   // Cargar URL
   mainWindow.loadURL(netlifyUrl);
+
+  // Imprimir mensajes de consola del navegador en la terminal para depuración
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    console.log(`[Navegador - Consola] ${message} (Línea: ${line}, Archivo: ${sourceId})`);
+  });
 
   // Ocultar menú de navegación superior por defecto para una experiencia más limpia de app nativa
   mainWindow.setMenuBarVisibility(false);
