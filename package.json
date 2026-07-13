@@ -118,6 +118,7 @@
     },
     "files": [
       "electron-main.js",
+      "update.html",
       "public/icon.png",
       "node_modules/**/*",
       "!node_modules/@prisma/**/*",

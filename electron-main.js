@@ -12,49 +12,55 @@ app.commandLine.appendSwitch('disable-software-rasterizer');
 // Configuración de actualizaciones automáticas interactivas
 autoUpdater.autoDownload = false; // Evita la descarga automática silenciosa
 
-try {
-  autoUpdater.on('error', (err) => {
-    console.error('Error en autoUpdater:', err);
+let mainWindow = null;
+let updateWindow = null;
+
+function createUpdateWindow() {
+  updateWindow = new BrowserWindow({
+    width: 450,
+    height: 300,
+    frame: false, // Ventana sin bordes
+    resizable: false,
+    transparent: true,
+    show: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false // Permitir ipcRenderer en update.html
+    }
   });
 
-  // 1. Cuando hay una actualización disponible, preguntar al usuario
-  autoUpdater.on('update-available', (info) => {
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'Actualización disponible',
-      message: `Una nueva versión (v${info.version}) de PizzApp está disponible. ¿Deseas descargarla e instalarla ahora?`,
-      buttons: ['Actualizar ahora', 'Más tarde'],
-      defaultId: 0,
-      cancelId: 1
-    }).then((result) => {
-      if (result.response === 0) {
-        autoUpdater.downloadUpdate();
-        dialog.showMessageBox({
-          type: 'info',
-          title: 'Descargando actualización',
-          message: 'La actualización se está descargando en segundo plano. Te notificaremos cuando esté lista para instalarse.'
-        });
+  updateWindow.loadFile(path.join(__dirname, 'update.html'));
+
+  updateWindow.once('ready-to-show', () => {
+    updateWindow.show();
+    
+    // Iniciar verificación solo en producción (empaquetado)
+    if (app.isPackaged) {
+      try {
+        autoUpdater.checkForUpdatesAndNotify();
+      } catch (e) {
+        console.error('Error al buscar actualizaciones:', e);
+        closeUpdateWindowAndOpenMain();
       }
-    });
+    } else {
+      // En desarrollo, saltamos la actualización y cargamos la web tras 1.5s
+      setTimeout(() => {
+        closeUpdateWindowAndOpenMain();
+      }, 1500);
+    }
   });
-
-  // 2. Cuando la actualización esté descargada, pedir confirmación para reiniciar
-  autoUpdater.on('update-downloaded', () => {
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'Actualización lista',
-      message: 'La actualización se ha descargado con éxito. La aplicación se reiniciará ahora para completar la instalación.',
-      buttons: ['Aceptar']
-    }).then(() => {
-      autoUpdater.quitAndInstall();
-    });
-  });
-} catch (e) {
-  console.error('Error al inicializar autoUpdater:', e);
 }
 
-function createWindow() {
-  const win = new BrowserWindow({
+function closeUpdateWindowAndOpenMain() {
+  if (updateWindow) {
+    updateWindow.close();
+    updateWindow = null;
+  }
+  createMainWindow();
+}
+
+function createMainWindow() {
+  mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     title: "PizzApp - Hermosillo",
@@ -71,24 +77,62 @@ function createWindow() {
   const netlifyUrl = 'https://pizzappoficial.netlify.app';
 
   // Cargar URL
-  win.loadURL(netlifyUrl);
+  mainWindow.loadURL(netlifyUrl);
 
   // Ocultar menú de navegación superior por defecto para una experiencia más limpia de app nativa
-  win.setMenuBarVisibility(false);
-
-  // Buscar actualizaciones de forma silenciosa solo si la app está empaquetada (producción)
-  if (app.isPackaged) {
-    win.once('ready-to-show', () => {
-      try {
-        autoUpdater.checkForUpdatesAndNotify();
-      } catch (e) {
-        console.error('Error al buscar actualizaciones:', e);
-      }
-    });
-  }
+  mainWindow.setMenuBarVisibility(false);
 }
 
-app.whenReady().then(createWindow);
+// Configuración de los eventos de autoUpdater para comunicarse con la pantalla de carga
+try {
+  autoUpdater.on('checking-for-update', () => {
+    if (updateWindow && !updateWindow.isDestroyed()) {
+      updateWindow.webContents.send('status', 'Buscando actualizaciones...');
+    }
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    if (updateWindow && !updateWindow.isDestroyed()) {
+      updateWindow.webContents.send('status', 'Aplicación al día');
+      setTimeout(() => {
+        closeUpdateWindowAndOpenMain();
+      }, 1000);
+    }
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    if (updateWindow && !updateWindow.isDestroyed()) {
+      updateWindow.webContents.send('status', 'Actualizando aplicación...');
+      autoUpdater.downloadUpdate(); // Descargar automáticamente
+    }
+  });
+
+  autoUpdater.on('download-progress', (progressObj) => {
+    if (updateWindow && !updateWindow.isDestroyed()) {
+      updateWindow.webContents.send('status', 'Instalando actualizaciones...');
+      updateWindow.webContents.send('progress', progressObj.percent);
+    }
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    if (updateWindow && !updateWindow.isDestroyed()) {
+      updateWindow.webContents.send('status', 'Listo para instalar');
+      setTimeout(() => {
+        autoUpdater.quitAndInstall();
+      }, 1000);
+    }
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.error('Error en actualizador:', err);
+    // Si hay error (ej. sin internet), continuar a la app
+    closeUpdateWindowAndOpenMain();
+  });
+} catch (e) {
+  console.error('Error al inicializar autoUpdater:', e);
+}
+
+app.whenReady().then(createUpdateWindow);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
