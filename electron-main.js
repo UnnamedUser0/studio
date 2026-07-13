@@ -7,6 +7,10 @@ const { autoUpdater } = require('electron-updater');
 app.commandLine.appendSwitch('no-sandbox');
 app.commandLine.appendSwitch('disable-gpu-sandbox');
 
+// Forzar el uso de WebGL y omitir listas de bloqueo de GPU por caídas anteriores
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-webgl');
+
 // Configuración de actualizaciones automáticas interactivas
 autoUpdater.autoDownload = false; // Evita la descarga automática silenciosa
 
@@ -74,8 +78,10 @@ function createMainWindow() {
   // CAMBIA ESTA URL POR TU URL DE NETLIFY REAL:
   const netlifyUrl = 'https://pizzappoficial.netlify.app';
 
-  // Cargar URL
-  mainWindow.loadURL(netlifyUrl);
+  // Limpiar caché de sesión antes de cargar para garantizar la actualización de componentes web
+  mainWindow.webContents.session.clearCache().finally(() => {
+    mainWindow.loadURL(netlifyUrl);
+  });
 
   // Imprimir mensajes de consola del navegador en la terminal para depuración
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
