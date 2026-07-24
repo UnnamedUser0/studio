@@ -202,50 +202,41 @@ export default function DownloadApp() {
                             Elige el método de instalación adecuado para tu dispositivo.
                           </DialogDescription>
                         </DialogHeader>
-                        
                         <div className="py-4 space-y-6">
-                          {/* Option 1: Android APK */}
-                          <div className="space-y-3 p-3 border border-primary/20 rounded-lg bg-primary/5">
+                          {/* Option 1: PWA (Recommended for maximum safety & auto-updates) */}
+                          <div className="space-y-3 p-4 border border-emerald-500/30 rounded-xl bg-emerald-500/10">
+                            <h4 className="font-bold text-sm text-emerald-400 flex items-center gap-2">
+                              <ShieldCheck className="w-4 h-4 text-emerald-400" /> Opción Recomendada: Instalar sin avisos de seguridad (PWA)
+                            </h4>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              Agrega PizzApp a tu pantalla de inicio directamente desde tu navegador (Chrome o Safari). Es el método más seguro ya que **no muestra alertas de fuentes desconocidas** y **se actualiza automáticamente** en tiempo real.
+                            </p>
+                            <ul className="text-xs text-muted-foreground space-y-1.5 pl-4 list-disc leading-normal">
+                              <li>En Android (Chrome): Toca los <strong>3 puntos (⋮)</strong> en la esquina superior derecha y selecciona <strong>"Añadir a pantalla de inicio"</strong>.</li>
+                              <li>En iPhone (Safari): Toca el botón <strong>Compartir</strong> (cuadrado con flecha) y selecciona <strong>"Añadir a pantalla de inicio"</strong>.</li>
+                            </ul>
+                          </div>
+
+                          {/* Option 2: Android APK */}
+                          <div className="space-y-3 p-4 border border-primary/20 rounded-xl bg-primary/5">
                             <h4 className="font-bold text-sm text-primary flex items-center gap-1.5">
-                              <Smartphone className="w-4 h-4" /> App para Android (.APK)
+                              <Smartphone className="w-4 h-4" /> Opción 2: App para Android (.APK)
                             </h4>
                             <p className="text-xs text-muted-foreground leading-normal">
-                              Descarga e instala la aplicación oficial nativa directamente en tu teléfono Android.
+                              Descarga e instala el archivo instalador nativo directamente en tu celular Android.
                             </p>
                             <Button 
                               asChild
                               size="sm"
-                              className="w-full bg-primary hover:bg-primary/90 text-white font-semibold flex items-center justify-center gap-2 h-9 shadow-sm"
+                              className="w-full bg-primary hover:bg-primary/90 text-white font-semibold flex items-center justify-center gap-2 h-10 shadow-sm"
                             >
-                                      <a href="https://github.com/UnnamedUser0/studio/releases/download/v1.1.0/PizzApp.apk" target="_blank" rel="noopener noreferrer">
+                              <a href="https://github.com/UnnamedUser0/studio/releases/download/v1.1.0/PizzApp.apk" target="_blank" rel="noopener noreferrer">
                                 <Download className="w-4 h-4" />
-                                Descargar para Android (.apk)
+                                Descargar APK Oficial (.apk)
                               </a>
                             </Button>
-                          </div>
-
-                          {/* Option 2: iOS PWA (Apple) */}
-                          <div className="space-y-2 border border-border/60 rounded-lg p-3 bg-muted/20">
-                            <h4 className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                              <Info className="w-4 h-4" /> iPhone (iOS) - App en Pantalla de Inicio
-                            </h4>
-                            <p className="text-xs text-muted-foreground leading-normal">
-                              Debido a que Apple no permite descargas directas de archivos de terceros, puedes agregarla directamente a tu pantalla de inicio como una aplicación web nativa (PWA):
-                            </p>
-                            <ul className="text-xs text-muted-foreground space-y-1 pl-4 list-disc leading-normal mt-1">
-                              <li>Abre esta página en el navegador <strong>Safari</strong> de tu iPhone.</li>
-                              <li>Toca el botón <strong>Compartir</strong> (icono de cuadrado con una flecha hacia arriba).</li>
-                              <li>Selecciona la opción <strong>"Añadir a pantalla de inicio"</strong>.</li>
-                            </ul>
-                          </div>
-
-                          {/* Option 3: Expo QR */}
-                          <div className="space-y-2 border border-dashed border-border/80 rounded-lg p-3 bg-muted/10">
-                            <h4 className="font-bold text-xs text-muted-foreground flex items-center gap-1.5">
-                              <QrCode className="w-3.5 h-3.5" /> Modo Desarrollador (Expo Go)
-                            </h4>
-                            <p className="text-[11px] text-muted-foreground leading-normal">
-                              Para depuración y pruebas locales: Ejecuta `npm run mobile` en tu terminal y escanea el código QR desde la app **Expo Go** en Android o iOS.
+                            <p className="text-[11px] text-muted-foreground leading-normal italic">
+                              Nota: Si Android muestra el aviso <em>"Aplicación desconocida"</em>, es una advertencia estándar de Google para instaladores fuera de Play Store. Puedes conceder el permiso con total seguridad.
                             </p>
                           </div>
                         </div>

@@ -1,25 +1,55 @@
-import React from 'react';
-import { SafeAreaView, StyleSheet, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, StatusBar, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 export default function App() {
   // URL del sitio oficial desplegado en Netlify
-  // CAMBIA ESTA URL POR TU URL DE NETLIFY REAL:
   const netlifyUrl = 'https://pizzappoficial.netlify.app';
+  const [hasError, setHasError] = useState(false);
+  const [key, setKey] = useState(0);
+
+  const handleReload = () => {
+    setHasError(false);
+    setKey(prev => prev + 1);
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
-      <WebView 
-        source={{ uri: netlifyUrl }}
-        style={{ flex: 1 }}
-        domStorageEnabled={true}
-        javaScriptEnabled={true}
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-        startInLoadingState={true}
-      />
-    </SafeAreaView>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" translucent={false} />
+      {hasError ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>PizzApp Móvil</Text>
+          <Text style={styles.errorText}>No se pudo conectar con el servidor de PizzApp. Verifica tu conexión a internet e reintenta.</Text>
+          <TouchableOpacity style={styles.button} onPress={handleReload} activeOpacity={0.8}>
+            <Text style={styles.buttonText}>Reintentar Conexión</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <WebView 
+          key={key}
+          source={{ uri: netlifyUrl }}
+          style={{ flex: 1, backgroundColor: '#000000' }}
+          domStorageEnabled={true}
+          javaScriptEnabled={true}
+          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
+          startInLoadingState={true}
+          originWhitelist={['*']}
+          allowsInlineMediaPlayback={true}
+          mixedContentMode="always"
+          onError={() => setHasError(true)}
+          onRenderProcessGone={() => {
+            setKey(prev => prev + 1);
+            return true;
+          }}
+          renderLoading={() => (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#e11d48" />
+            </View>
+          )}
+        />
+      )}
+    </View>
   );
 }
 
@@ -28,4 +58,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorTitle: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  errorText: {
+    color: '#a1a1aa',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  button: {
+    backgroundColor: '#e11d48',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
 });
+
