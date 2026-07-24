@@ -101,7 +101,7 @@ export default function DownloadApp() {
                       asChild
                       className="w-full bg-primary hover:bg-primary/90 text-white font-semibold flex items-center justify-center gap-2 h-11 shadow-md"
                     >
-                      <a href="https://github.com/UnnamedUser0/studio/releases/latest" target="_blank" rel="noopener noreferrer">
+                              <a href="https://github.com/UnnamedUser0/studio/releases/download/v1.1.0/PizzApp.apk" target="_blank" rel="noopener noreferrer">
                         <Download className="w-4 h-4" />
                         Descargar APK para Android
                       </a>
@@ -217,7 +217,7 @@ export default function DownloadApp() {
                               size="sm"
                               className="w-full bg-primary hover:bg-primary/90 text-white font-semibold flex items-center justify-center gap-2 h-9 shadow-sm"
                             >
-                              <a href="https://github.com/UnnamedUser0/studio/releases/latest" target="_blank" rel="noopener noreferrer">
+                                      <a href="https://github.com/UnnamedUser0/studio/releases/download/v1.1.0/PizzApp.apk" target="_blank" rel="noopener noreferrer">
                                 <Download className="w-4 h-4" />
                                 Descargar para Android (.apk)
                               </a>
