@@ -10,14 +10,16 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.username01.pizzapp",
+      "package": "com.pizzapp.hermosillo.official",
       "adaptiveIcon": {
         "foregroundImage": "./public/icon.png",
         "backgroundColor": "#000000"
       },
       "permissions": [
         "INTERNET",
-        "ACCESS_NETWORK_STATE"
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
       ]
     },
     "extra": {

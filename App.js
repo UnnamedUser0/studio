@@ -1,9 +1,43 @@
-import React, { useState } from 'react';
+import React, { Component, useState } from 'react';
 import { StyleSheet, StatusBar, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-export default function App() {
-  // URL del sitio oficial desplegado en Netlify
+// React Error Boundary para capturar cualquier excepción y prevenir cierres inesperados
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.warn("PizzApp Mobile Captured Error:", error, errorInfo);
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>PizzApp Hermosillo</Text>
+          <Text style={styles.errorText}>Se produjo un ajuste temporal de renderizado. Toca para reiniciar la interfaz.</Text>
+          <TouchableOpacity style={styles.button} onPress={this.handleRetry} activeOpacity={0.8}>
+            <Text style={styles.buttonText}>Reiniciar Aplicación</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function MainApp() {
   const netlifyUrl = 'https://pizzappoficial.netlify.app';
   const [hasError, setHasError] = useState(false);
   const [key, setKey] = useState(0);
@@ -19,7 +53,7 @@ export default function App() {
       {hasError ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorTitle}>PizzApp Móvil</Text>
-          <Text style={styles.errorText}>No se pudo conectar con el servidor de PizzApp. Verifica tu conexión a internet e reintenta.</Text>
+          <Text style={styles.errorText}>No se pudo conectar con el servidor. Verifica tu conexión a internet e reintenta.</Text>
           <TouchableOpacity style={styles.button} onPress={handleReload} activeOpacity={0.8}>
             <Text style={styles.buttonText}>Reintentar Conexión</Text>
           </TouchableOpacity>
@@ -37,6 +71,14 @@ export default function App() {
           originWhitelist={['*']}
           allowsInlineMediaPlayback={true}
           mixedContentMode="always"
+          androidLayerType="hardware"
+          androidHardwareAccelerationDisabled={false}
+          overScrollMode="never"
+          thirdPartyCookiesEnabled={true}
+          allowFileAccess={true}
+          allowUniversalAccessFromFileURLs={true}
+          geolocationEnabled={true}
+          userAgent="Mozilla/5.0 (Linux; Android 15; RedMagic 11 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36 PizzApp/1.0"
           onError={() => setHasError(true)}
           onRenderProcessGone={() => {
             setKey(prev => prev + 1);
@@ -50,6 +92,14 @@ export default function App() {
         />
       )}
     </View>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <MainApp />
+    </ErrorBoundary>
   );
 }
 
