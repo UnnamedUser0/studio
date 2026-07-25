@@ -12,8 +12,13 @@
     "android": {
       "package": "com.username01.pizzapp",
       "adaptiveIcon": {
+        "foregroundImage": "./public/icon.png",
         "backgroundColor": "#000000"
-      }
+      },
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "extra": {
       "eas": {
