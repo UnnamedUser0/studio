@@ -2,6 +2,7 @@
   "expo": {
     "name": "PizzApp",
     "slug": "pizzapp",
+    "entryPoint": "./App.js",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./public/icon.png",

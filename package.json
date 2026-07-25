@@ -1,6 +1,7 @@
 {
   "name": "nextn",
   "version": "1.1.0",
+  "main": "App.js",
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run next:dev\" \"node open-browser.js\"",
