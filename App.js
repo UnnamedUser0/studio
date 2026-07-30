@@ -71,15 +71,11 @@ function MainApp() {
           originWhitelist={['*']}
           allowsInlineMediaPlayback={true}
           mixedContentMode="always"
-          androidLayerType="hardware"
-          androidHardwareAccelerationDisabled={false}
           overScrollMode="never"
           thirdPartyCookiesEnabled={true}
-          allowFileAccess={true}
-          allowUniversalAccessFromFileURLs={true}
           geolocationEnabled={true}
-          userAgent="Mozilla/5.0 (Linux; Android 15; RedMagic 11 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36 PizzApp/1.0"
           onError={() => setHasError(true)}
+          onHttpError={() => setHasError(true)}
           onRenderProcessGone={() => {
             setKey(prev => prev + 1);
             return true;

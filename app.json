@@ -4,7 +4,7 @@
     "slug": "pizzapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./public/icon.png",
+    "icon": "./public/mobile-icon.png",
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true
@@ -12,7 +12,7 @@
     "android": {
       "package": "com.pizzapp.hermosillo.official",
       "adaptiveIcon": {
-        "foregroundImage": "./public/icon.png",
+        "foregroundImage": "./public/mobile-icon.png",
         "backgroundColor": "#000000"
       },
       "permissions": [
