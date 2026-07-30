@@ -1,7 +1,6 @@
 import React, { Component, useState } from 'react';
-import { StyleSheet, StatusBar, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, StatusBar, View, Text, TouchableOpacity, ActivityIndicator, AppRegistry } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { registerRootComponent } from 'expo';
 
 // React Error Boundary para capturar cualquier excepción y prevenir cierres inesperados
 class ErrorBoundary extends Component {
@@ -104,7 +103,7 @@ export default function App() {
   );
 }
 
-registerRootComponent(App);
+AppRegistry.registerComponent('main', () => App);
 
 const styles = StyleSheet.create({
   container: {
