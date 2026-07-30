@@ -99,8 +99,6 @@ export default function App() {
   );
 }
 
-AppRegistry.registerComponent('main', () => App);
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
