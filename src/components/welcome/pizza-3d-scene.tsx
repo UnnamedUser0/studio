@@ -13,15 +13,26 @@ function Model(props: any) {
     return <primitive object={scene} {...props} />
 }
 
-export default function Pizza3DScene() {
-    const [scale, setScale] = useState(3.0);
+interface Pizza3DSceneProps {
+    scale?: number;
+    fov?: number;
+    rotationSpeed?: number;
+}
+
+export default function Pizza3DScene({
+    scale: propScale,
+    fov: propFov,
+    rotationSpeed = 2.0
+}: Pizza3DSceneProps) {
+    const [defaultScale, setDefaultScale] = useState(3.0);
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         const handleResize = () => {
             const width = window.innerWidth;
-            setIsMobile(width < 768);
-            setScale(width < 768 ? 1.9 : 3.0);
+            const mobile = width < 768;
+            setIsMobile(mobile);
+            setDefaultScale(mobile ? 3.2 : 3.0);
         };
 
         // Initial check
@@ -31,50 +42,50 @@ export default function Pizza3DScene() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    const effectiveScale = propScale !== undefined ? propScale : defaultScale;
+    const effectiveFov = propFov !== undefined ? propFov : (isMobile ? 42 : 45);
+
     return (
-        <div className="w-full h-full" style={{ touchAction: 'none' }}>
+        <div className="w-full h-full flex items-center justify-center relative select-none" style={{ touchAction: 'none' }}>
             <Canvas
-                dpr={isMobile ? 1 : [1, 1.5]}
+                key={`canvas-fov-${effectiveFov}`}
+                dpr={[1, 2]}
                 performance={{ min: 0.5 }}
-                camera={{ fov: 45, position: [0, 1, 5] }}
+                camera={{ fov: effectiveFov, position: [0, 0.6, 4.3] }}
                 gl={{ 
                     alpha: true, 
-                    antialias: !isMobile, 
+                    antialias: true, 
                     powerPreference: "high-performance",
-                    precision: isMobile ? "mediump" : "highp"
+                    precision: "highp"
                 }}
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'transparent' }}
             >
-                {/* Dynamic Lighting: Reduced shader overhead on Mobile */}
-                {isMobile ? (
-                    <>
-                        <ambientLight intensity={0.9} />
-                        <directionalLight position={[2, 5, 2]} intensity={1.5} />
-                    </>
-                ) : (
-                    <>
-                        {/* Premium Studio Lighting for Desktop */}
-                        <ambientLight intensity={0.7} />
-                        <directionalLight position={[5, 8, 5]} intensity={1.8} />
-                        <directionalLight position={[-5, 5, -5]} intensity={0.6} />
-                        <pointLight position={[0, -4, 3]} intensity={0.8} />
-                        <spotLight position={[0, 10, 0]} intensity={1.5} angle={0.6} penumbra={0.8} />
-                    </>
-                )}
+                {/* Premium Studio Lighting */}
+                <ambientLight intensity={0.75} />
+                <directionalLight position={[5, 8, 5]} intensity={1.8} />
+                <directionalLight position={[-5, 5, -5]} intensity={0.7} />
+                <pointLight position={[0, -4, 3]} intensity={0.8} />
+                <spotLight position={[0, 10, 0]} intensity={1.5} angle={0.6} penumbra={0.8} />
 
                 <Suspense fallback={null}>
                     <Environment preset="city" />
                 </Suspense>
                 
                 <Suspense fallback={<Loader />}>
-                    <Model scale={scale} position={[0, -0.2, 0]} />
+                    <Model
+                        scale={effectiveScale}
+                        position={[0, 0, 0]}
+                    />
                     <OrbitControls
+                        target={[0, 0, 0]}
                         enableZoom={false}
                         enablePan={false}
                         enableDamping={true}
-                        dampingFactor={0.08}
-                        autoRotate={true}
-                        autoRotateSpeed={2.5}
+                        dampingFactor={0.05}
+                        autoRotate={rotationSpeed > 0}
+                        autoRotateSpeed={rotationSpeed}
+                        minPolarAngle={0}
+                        maxPolarAngle={Math.PI}
                         makeDefault
                     />
                 </Suspense>
