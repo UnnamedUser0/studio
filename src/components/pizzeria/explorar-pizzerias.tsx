@@ -45,7 +45,12 @@ export default function ExplorarPizzerias({
 
     useEffect(() => {
         if (initialLayoutSettings) {
-            setLayoutSettings(initialLayoutSettings);
+            setLayoutSettings(prev => {
+                if (JSON.stringify(prev) === JSON.stringify(initialLayoutSettings)) {
+                    return prev;
+                }
+                return initialLayoutSettings;
+            });
         }
     }, [initialLayoutSettings]);
 

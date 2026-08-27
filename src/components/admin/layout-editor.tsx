@@ -31,14 +31,22 @@ export default function LayoutEditor({ initialSettings, onSettingsChange }: Layo
     const [activeTab, setActiveTab] = useState<'desktop' | 'mobile'>('desktop');
     const { toast } = useToast();
 
+    // Update local state if initialSettings updates from outside without triggering infinite loop
     useEffect(() => {
-        onSettingsChange(settings);
-    }, [settings, onSettingsChange]);
-
-    // Update local state if initialSettings updates from outside (e.g. data loaded from server)
-    useEffect(() => {
-        setSettings(initialSettings);
+        if (initialSettings) {
+            setSettings(prev => {
+                if (JSON.stringify(prev) === JSON.stringify(initialSettings)) {
+                    return prev;
+                }
+                return initialSettings;
+            });
+        }
     }, [initialSettings]);
+
+    const updateSetting = (newSettings: LayoutSettings) => {
+        setSettings(newSettings);
+        onSettingsChange(newSettings);
+    };
 
     const handleSave = async () => {
         try {
@@ -105,7 +113,7 @@ export default function LayoutEditor({ initialSettings, onSettingsChange }: Layo
                                 min={30}
                                 max={95}
                                 step={1}
-                                onValueChange={([val]) => setSettings({ ...settings, sheetWidth: val })}
+                                onValueChange={([val]) => updateSetting({ ...settings, sheetWidth: val })}
                             />
                         </div>
 
@@ -118,7 +126,7 @@ export default function LayoutEditor({ initialSettings, onSettingsChange }: Layo
                                 min={0.5}
                                 max={1.5}
                                 step={0.1}
-                                onValueChange={([val]) => setSettings({ ...settings, cardScale: val })}
+                                onValueChange={([val]) => updateSetting({ ...settings, cardScale: val })}
                             />
                         </div>
 
@@ -131,7 +139,7 @@ export default function LayoutEditor({ initialSettings, onSettingsChange }: Layo
                                 min={0.5}
                                 max={1.5}
                                 step={0.1}
-                                onValueChange={([val]) => setSettings({ ...settings, buttonScale: val })}
+                                onValueChange={([val]) => updateSetting({ ...settings, buttonScale: val })}
                             />
                         </div>
 
@@ -139,7 +147,7 @@ export default function LayoutEditor({ initialSettings, onSettingsChange }: Layo
                             <Label>Diseño de Botones (Grid/Stack)</Label>
                             <Switch
                                 checked={settings.buttonLayout === 'grid'}
-                                onCheckedChange={(checked) => setSettings({ ...settings, buttonLayout: checked ? 'grid' : 'stack' })}
+                                onCheckedChange={(checked) => updateSetting({ ...settings, buttonLayout: checked ? 'grid' : 'stack' })}
                             />
                         </div>
                     </div>
@@ -154,7 +162,7 @@ export default function LayoutEditor({ initialSettings, onSettingsChange }: Layo
                                 min={50}
                                 max={100}
                                 step={1}
-                                onValueChange={([val]) => setSettings({ ...settings, sheetWidthMobile: val })}
+                                onValueChange={([val]) => updateSetting({ ...settings, sheetWidthMobile: val })}
                             />
                         </div>
 
@@ -167,7 +175,7 @@ export default function LayoutEditor({ initialSettings, onSettingsChange }: Layo
                                 min={0.5}
                                 max={1.5}
                                 step={0.1}
-                                onValueChange={([val]) => setSettings({ ...settings, cardScaleMobile: val })}
+                                onValueChange={([val]) => updateSetting({ ...settings, cardScaleMobile: val })}
                             />
                         </div>
 
@@ -180,7 +188,7 @@ export default function LayoutEditor({ initialSettings, onSettingsChange }: Layo
                                 min={0.5}
                                 max={1.5}
                                 step={0.1}
-                                onValueChange={([val]) => setSettings({ ...settings, buttonScaleMobile: val })}
+                                onValueChange={([val]) => updateSetting({ ...settings, buttonScaleMobile: val })}
                             />
                         </div>
                     </div>

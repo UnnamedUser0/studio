@@ -217,6 +217,21 @@ export default function Chatbot() {
 
   useEffect(() => {
     setIsMounted(true);
+    try {
+      const saved = localStorage.getItem('pizzi_custom_pos');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+          const maxX = Math.max(16, window.innerWidth - 72);
+          const maxY = Math.max(16, window.innerHeight - 72);
+          setPosition({
+            x: Math.min(Math.max(8, parsed.x), maxX),
+            y: Math.min(Math.max(8, parsed.y), maxY)
+          });
+          return;
+        }
+      }
+    } catch {}
     // Position at bottom-right initially, keeping room for bottom bars on mobile
     const defaultX = window.innerWidth - 80;
     const defaultY = window.innerHeight - 100;
@@ -227,10 +242,10 @@ export default function Chatbot() {
     if (!isMounted) return;
     const handleResize = () => {
       setPosition(prev => {
-        const maxX = window.innerWidth - 80;
-        const maxY = window.innerHeight - 80;
-        const newX = Math.min(Math.max(16, prev.x), maxX);
-        const newY = Math.min(Math.max(16, prev.y), maxY);
+        const maxX = Math.max(16, window.innerWidth - 72);
+        const maxY = Math.max(16, window.innerHeight - 72);
+        const newX = Math.min(Math.max(8, prev.x), maxX);
+        const newY = Math.min(Math.max(8, prev.y), maxY);
         return { x: newX, y: newY };
       });
     };
@@ -257,17 +272,18 @@ export default function Chatbot() {
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
     
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
       hasMovedRef.current = true;
     }
     
     const targetX = elementPositionRef.current.x + dx;
     const targetY = elementPositionRef.current.y + dy;
     
-    const maxX = window.innerWidth - 80;
-    const maxY = window.innerHeight - 80;
-    const clampedX = Math.min(Math.max(16, targetX), maxX);
-    const clampedY = Math.min(Math.max(16, targetY), maxY);
+    // Free dragging across the entire screen and map without snapping limitations
+    const maxX = Math.max(8, window.innerWidth - 72);
+    const maxY = Math.max(8, window.innerHeight - 72);
+    const clampedX = Math.min(Math.max(8, targetX), maxX);
+    const clampedY = Math.min(Math.max(8, targetY), maxY);
     
     setPosition({ x: clampedX, y: clampedY });
   };
@@ -281,13 +297,10 @@ export default function Chatbot() {
     if (!hasMovedRef.current) {
       toggleChat();
     } else {
-      // Snap to left or right screen boundary
-      const snapLeft = 16;
-      const snapRight = window.innerWidth - 80;
-      const middle = window.innerWidth / 2;
-      const targetX = position.x < middle ? snapLeft : snapRight;
-      
-      setPosition(prev => ({ ...prev, x: targetX }));
+      // Free placement anywhere user drops Pizzi with persistent coordinate memory
+      try {
+        localStorage.setItem('pizzi_custom_pos', JSON.stringify({ x: position.x, y: position.y }));
+      } catch {}
     }
   };
 
