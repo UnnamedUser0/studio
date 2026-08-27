@@ -1969,7 +1969,7 @@ function PizzaMap({
         }
         const remainingGeoJsonCoords: [number, number][] = [
           [currentLng, currentLat],
-          ...fullRouteCoordinatesRef.current.slice(segIdx + 1).map(c => [c[1], c[0]])
+          ...fullRouteCoordinatesRef.current.slice(segIdx + 1).map(c => [c[1], c[0]] as [number, number])
         ];
         if (map.getSource('route')) {
           (map.getSource('route') as maplibregl.GeoJSONSource).setData({
@@ -2010,7 +2010,7 @@ function PizzaMap({
           pitch: 60,
           bearing: currentHeading,
           offset: pixelOffset
-        });
+        } as any);
         setMapRotation(currentHeading);
       } else {
         setMapRotation(currentHeading);
@@ -2345,7 +2345,7 @@ function PizzaMap({
           // 1. Erase passed route behind the vehicle in real time (Uber/DiDi system)
           const remainingGeoJsonCoords: [number, number][] = [
             [pos.lng, pos.lat],
-            ...fullRouteCoordinatesRef.current.slice(pos.segIdx + 1).map(c => [c[1], c[0]])
+            ...fullRouteCoordinatesRef.current.slice(pos.segIdx + 1).map(c => [c[1], c[0]] as [number, number])
           ];
           if (mapInstanceRef.current?.getSource('route')) {
             (mapInstanceRef.current.getSource('route') as maplibregl.GeoJSONSource).setData({
@@ -2386,7 +2386,7 @@ function PizzaMap({
               pitch: 60,
               zoom: 19.5,
               offset: [0, h * 0.22]
-            });
+            } as any);
             setMapRotation(smoothedHeadingRef.current);
           }
 
@@ -2457,7 +2457,7 @@ function PizzaMap({
     // Erase passed route behind vehicle
     const remainingGeoJsonCoords: [number, number][] = [
       [pos.lng, pos.lat],
-      ...fullRouteCoordinatesRef.current.slice(pos.segIdx + 1).map(c => [c[1], c[0]])
+      ...fullRouteCoordinatesRef.current.slice(pos.segIdx + 1).map(c => [c[1], c[0]] as [number, number])
     ];
     if (mapInstanceRef.current?.getSource('route')) {
       (mapInstanceRef.current.getSource('route') as maplibregl.GeoJSONSource).setData({
@@ -2479,7 +2479,7 @@ function PizzaMap({
         pitch: 60,
         zoom: 19.5,
         offset: [0, h * 0.22]
-      });
+      } as any);
       setMapRotation(pos.bearing);
     }
 
