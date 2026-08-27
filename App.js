@@ -65,6 +65,9 @@ function MainApp() {
           style={{ flex: 1, backgroundColor: '#000000' }}
           domStorageEnabled={true}
           javaScriptEnabled={true}
+          cacheEnabled={true}
+          androidLayerType="hardware"
+          androidHardwareAccelerationDisabled={false}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           startInLoadingState={true}
@@ -74,10 +77,13 @@ function MainApp() {
           overScrollMode="never"
           thirdPartyCookiesEnabled={true}
           geolocationEnabled={true}
+          javaScriptCanOpenWindowsAutomatically={true}
+          setSupportMultipleWindows={false}
           onError={() => setHasError(true)}
           onHttpError={() => setHasError(true)}
-          onRenderProcessGone={() => {
-            setKey(prev => prev + 1);
+          onRenderProcessGone={(syntheticEvent) => {
+            const { didCrash } = syntheticEvent?.nativeEvent || {};
+            console.warn("WebView onRenderProcessGone captured safely, didCrash:", didCrash);
             return true;
           }}
           renderLoading={() => (
